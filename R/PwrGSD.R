@@ -3223,7 +3223,7 @@ function (formula = formula(data), data = parent.frame(), subset,
     Arm <- 0 * Event
     Arm.levs <- 0
     nb <- 1
-    int.only <- is.empty.model(mt)
+    int.only <- (length(attr(mt, "factors"))==0)
     if(!int.only){
         Arm <- model.matrix(mt, m)[,-1]
         Arm.f <- as.factor(as.character(Arm))

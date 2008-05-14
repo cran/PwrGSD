@@ -189,8 +189,7 @@ test.example <-
     ## into the current call
     
     test.example.set$Elements[[k]]$call$hc0 <-
-    test.example.set$Elements[[k]]$call$hc1 <-
-                               exp(descr[k, "cens.amt"] * log(hc))
+    test.example.set$Elements[[k]]$call$hc1 <- descr[k, "cens.amt"] * hc
 
     ## Now the current call corresponds exactly to the selection
     ## variable values in row `k' of `descr'. The computation is

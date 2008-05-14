@@ -2,6 +2,9 @@ agghaz                  Aggregated Hazard
 as.boundaries           Convert a "PwrGSD" object to a "boundaries"
                         object
 CDFOR2LRR               Convert CDF Odds Ratio to Logged Relative Risks
+CondPower               Conditional type I and type II error
+                        probabilities given current value of the test
+                        statistic
 cpd.PwrGSD              Create a skeleton compound PwrGSD object
 CRRtoRR                 Cumulative-risk ratios to risk ratios
 CY2TOShaz               Calender year rates to Study Year Rates
@@ -21,5 +24,4 @@ RCM2RR                  Relative cumulative mortality to Relative Risk
 RR2RCM                  Relative risk to Relative Cumulative Mortality
 SimGSB                  Verifies the results of "GrpSeqBnds" via
                         simulation
-Surv                    Create a Survival Object
 wtdlogrank              Weighted log-rank test
