@@ -216,7 +216,7 @@ void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *
   CS_q_dEta = (double *)Calloc(nstat*njmp,double);
   q = (double *)Calloc(njmp,double);
 
-  if(*sided==-1)    
+  if(*sided==-1 || *sided==-2)    
     for(l=0;l<nlook*nstat;l++) {
       *(mufu+l) = *(mufu+l) * (-1.0);
       *(mu+l) = *(mu+l) * (-1.0);
@@ -281,8 +281,10 @@ void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *
         *mufuforSC = *(mufu + nlook*j + k);
         *(mufuforSC + 1) = *(mufu + nlook*j + nlook - 1);
         StCu2Bnds(mufuforSC,pInfTnew,palphatot,sided,rho_sc+1,pef,pbounds+nstat*nlook+nlook*j+k);
-        Rprintf("j:%d, k:%d, mu_k:%g, mu_end:%g, fnew:%g, alpha:%g, sided:%d, rho:%g, pef:%d, b:%g\n",
-                j,k,*mufuforSC, *(mufuforSC+1), *pInfTnew, * palphatot, *sided, *(rho_sc+1), *pef, *(pbounds+nstat*nlook+nlook*j+k));
+        /*-----------------------------------------------------------------------------------------------------------------------|
+        | Rprintf("j:%d, k:%d, mu_k:%g, mu_end:%g, fnew:%g, alpha:%g, sided:%d, rho:%g, pef:%d, b:%g\n",                         |
+        |          j,k,*mufuforSC,*(mufuforSC+1),*pInfTnew,* palphatot,*sided,*(rho_sc+1),*pef,*(pbounds+nstat*nlook+nlook*j+k));|
+        |-----------------------------------------------------------------------------------------------------------------------*/
         *(mybounds + 1) = 1;
         *(nbnd + 1) = 1;
       }
@@ -450,7 +452,7 @@ void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *
     for(istat=0;istat<nstat;istat++){
       for(k=0;k<nlook;k++){
         V_ = *(Var + njmp*istat + *(t_idx + k));
-        b = *(pbounds + nstat*nlook*ef + nlook*istat + k) * (1.0 - 2 * (*sided==-1));
+        b = *(pbounds + nstat*nlook*ef + nlook*istat + k) * (1.0 - 2 * (*sided==-1||*sided==-2));
         *(betabdry + nstat*nlook*ef + nlook*istat + k) = 
           pow(V_,0.5) * b/(xntrialhlf* *(CS_q_dEta + njmp*istat + *(t_idx + k)));
       }

@@ -17,7 +17,7 @@
 \usage{
 PwrGSD(EfficacyBoundary = LanDemets(alpha = 0.05, spending = ObrienFleming),
     FutilityBoundary = LanDemets(alpha = 0.1, spending = ObrienFleming),
-    sided = c("2", ">", "<"), method = c("S", "A"), accru, accrat,
+    sided = c("2>", "2<", "1>", "1<"), method = c("S", "A"), accru, accrat,
     tlook, tcut0 = NULL, h0 = NULL, s0 = NULL, tcut1 = NULL,
     rhaz = NULL, h1 = NULL, s1 = NULL, tcutc0 = NULL, hc0 = NULL,
     sc0 = NULL, tcutc1 = NULL, hc1 = NULL, sc1 = NULL, tcutd0A = NULL,
@@ -67,8 +67,10 @@ PwrGSD(EfficacyBoundary = LanDemets(alpha = 0.05, spending = ObrienFleming),
     then exceeding the threshold at the current analysis. A good value for the threshold value for the conditional type I error,
     \code{crit} is 0.90 or greater.} 
     \item{(iv)}{User supplied boundary points in the form \code{c(b1, b2, b3, ..., b_m)}, where \code{m} is the number of looks.}}
-  \item{sided}{If two-sided tests of H0, set to \dQuote{2} (quoted). If one-sided test of H0, set to \dQuote{>} for upper tail,
-    \dQuote{<} for lower tail. If \code{method}==\dQuote{S} then this must be of the same length as \code{StatType} because the
+  \item{sided}{Set to \dQuote{2>} (quoted) for two sided tests of the null hypothesis when a positive drift corresponds to
+    efficacy. Set to \dQuote{2<} (quoted) for two sided tests of the null hypothesis when a negative drift corresponds to
+    efficacy. Set to \dQuote{1>} or \dQuote{1<} for one sided tests of H0 when efficacy corresponds to a positive or negative drift,
+    respectively. If \code{method}==\dQuote{S} then this must be of the same length as \code{StatType} because the
     interpretation of \code{sided} is different depending upon whether \code{StatType}==\dQuote{WLR} 
     (negative is benefit) or \code{StatType}==\dQuote{ISD} (positive is benefit)}
   \item{method}{Determines how to calculate the power.  Set to \dQuote{A} (Asymptotic method, the default) or \dQuote{S}
@@ -261,7 +263,7 @@ library(PwrGSD)
 test.example <-
   PwrGSD(EfficacyBoundary = LanDemets(alpha = 0.05, spending = ObrienFleming),
          FutilityBoundary = LanDemets(alpha = 0.1, spending = ObrienFleming),
-	 RR.Futility = 0.82, sided="<",method="A",accru =7.73, accrat =9818.65,
+	 RR.Futility = 0.82, sided="1<",method="A",accru =7.73, accrat =9818.65,
          tlook =c(7.14, 8.14, 9.14, 10.14, 10.64, 11.15, 12.14, 13.14,
                   14.14, 15.14, 16.14, 17.14, 18.14, 19.14, 20.14),
          tcut0 =0:19, h0 =c(rep(3.73e-04, 2), rep(7.45e-04, 3),

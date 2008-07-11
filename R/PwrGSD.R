@@ -22,7 +22,7 @@ DX <- function(x)c(x[1],diff(x))
 "PwrGSD" <- 
 function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
          FutilityBoundary = LanDemets(alpha=0.10,spending=ObrienFleming),
-         sided =c("2",">","<"),method=c("S","A"),accru,accrat,tlook,
+         sided =c("2>", "2<", "1>", "1<"),method=c("S","A"),accru,accrat,tlook,
          tcut0 = NULL,h0 = NULL,s0 = NULL,tcut1 = NULL,rhaz = NULL,
          h1 = NULL,s1 = NULL,tcutc0 = NULL,hc0 = NULL,sc0 = NULL,tcutc1 = NULL,hc1 = NULL,
          sc1 = NULL,tcutd0A = NULL,hd0A = NULL,sd0A = NULL,tcutd0B = NULL,hd0B = NULL,sd0B = NULL,
@@ -54,7 +54,7 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
 "AsyPwrGSD" <- 
 function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
          FutilityBoundary = LanDemets(alpha=0.10,spending=ObrienFleming),
-         sided=c("2",">","<"),accru,accrat,tlook,tcut0=NULL,h0=NULL,s0=NULL,tcut1=NULL,
+         sided=c("2>","2<", "1>","1<"),accru,accrat,tlook,tcut0=NULL,h0=NULL,s0=NULL,tcut1=NULL,
          rhaz=NULL, h1=NULL, s1=NULL, tcutc0=NULL, hc0 = NULL, sc0=NULL, 
          tcutc1=NULL, hc1 = NULL, sc1 = NULL, tcutd0A=NULL, hd0A=NULL, 
          sd0A=NULL, tcutd0B=NULL, hd0B=NULL, sd0B=NULL, tcutd1A=NULL, hd1A=NULL, 
@@ -94,10 +94,11 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
         }
         nlook <- length(tlook)
 	tend <- tlook[nlook]
-	if (missing(sided)) sided <- "2"
-	if(!(sided%in%c("2",">","<"))) stop("Argument 'sided' must be " %,%
-                                            "equal to '2', '>' or '<'")
-        sided <- c(2,1,-1)[grep(sided, c("2",">","<"))]
+	if (missing(sided)) sided <- "2>"
+	if(!(sided%in%c("2>","2<","1>","1<")))
+          stop("Argument 'sided' must be " %,% 
+               "equal to \"2>\", \"2<\", \"1>\" or \"1<\"")
+        sided <- c(2,-2, 1,-1)[grep(sided, c("2>","2<", "1>","1<"))]
         
         # determine type of Efficacy Boundary Specification
         mode.E <- "WRONG"
@@ -180,7 +181,8 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
             stop("User supplied futility boundary in 'FutilityBoundary' must be of the same length as 'frac'")
           b.f <- my.Futility
         }
-    
+        Alpha.Efficacy <- Alpha.Efficacy/2^(abs(sided) == 2)
+        
 #	if(missing(Alpha.Efficacy)) stop("Missing argument 'Alpha.Efficacy', the total type I error")	
 #	Alpha.Efficacy <- Alpha.Efficacy/2^(sided == 2)
 #        
@@ -727,7 +729,7 @@ function(accru,accrat,tlook, tcut0=NULL,h0=NULL,s0=NULL,tcut1=NULL,
          gradual = FALSE, WtFun=c("FH","SFH","Ramp"), ppar=c(0, 0),
          Boundary.Efficacy = c("Lan-Demets", "Haybittle"), 
          Boundary.Futility = c("Lan-Demets", "Haybittle"),
-         Alpha.Efficacy=0,  Alpha.Futility=0, sided=c("2",">","<"),
+         Alpha.Efficacy=0,  Alpha.Futility=0, sided=c("2>","2<","1>","1<"),
          RR.Futility=NULL, Spend.Info=c("Variance", "Events", "Hybrid(k)", "Calendar"),
          Spending.Efficacy = c("Obrien-Fleming", "Pocock", "Power"), 
          Spending.Futility = c("Obrien-Fleming", "Pocock", "Power"), 
@@ -1792,7 +1794,7 @@ function(object, ...)
 "SimPwrGSD" <-
 function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
          FutilityBoundary = LanDemets(alpha=0.10,spending=ObrienFleming),
-         sided =c("2",">","<"),accru,accrat,tlook,
+         sided =c("2>","2<","1>","1<"),accru,accrat,tlook,
          tcut0 = NULL,h0 = NULL,s0 = NULL,tcut1 = NULL,rhaz = NULL,
          h1 = NULL,s1 = NULL,tcutc0 = NULL,hc0 = NULL,sc0 = NULL,tcutc1 = NULL,hc1 = NULL,
          sc1 = NULL,tcutd0A = NULL,hd0A = NULL,sd0A = NULL,tcutd0B = NULL,hd0B = NULL,sd0B = NULL,
@@ -1834,12 +1836,14 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
     n <- ndbl/2
     nlook <- length(tlook)
     if (missing(sided))
-        sided <- "2"
-    if (!all(sided %in% c("2", ">", "<")))
-        stop("Elements of argument 'sided' must be " %,% "equal to '2', '>' or '<'")
+        sided <- "2>"
+    if (!all(sided %in% c("2>","2<","1>", "1<")))
+        stop("Elements of argument \"sided\" must be " %,%
+             "equal to \"2>\", \"2<\", \"1>\" or \"1<\"")
     if(length(sided)!=nstat)
-        stop("Argument 'sided' must be a vector of length " %,% nstat %,% "containing elements '2', '>' or '<'")
-    sided <- c(2, 1, -1)[sapply(sided, c("2", ">", "<"), FUN=grep)]
+        stop("Argument 'sided' must be a vector of length " %,% nstat %,%
+             "containing elements \"2>\", \"2<\", \"1>\" or \"1<\"")
+    sided <- c(2, -2, 1, -1)[sapply(sided, c("2>", "2<", "1>", "1<"), FUN=grep)]
     
     # determine type of Efficacy Boundary Specification
     mode.E <- "WRONG"
@@ -1922,6 +1926,7 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
         stop("User supplied futility boundary in 'FutilityBoundary' must be of the same length as 'frac'")
       b.f <- my.Futility
     }
+    Alpha.Efficacy <- Alpha.Efficacy/2^(abs(sided) == 2)
     
 #    if(missing(Alpha.Efficacy)) stop("Missing argument 'Alpha.Efficacy', the total type I error")
 #    Alpha.Efficacy <- Alpha.Efficacy/2^(sided == 2)
@@ -2489,8 +2494,8 @@ function(object, ...)
 
 "SimPwrGSDcall" <-
 function (Nsim, accru, accrat, tlook,
-    Alpha.Efficacy=0, Alpha.Futility=0, sided = c("2", ">",
-    "<"), tcut0 = NULL, h0 = NULL, s0 = NULL, tcut1 = NULL, 
+    Alpha.Efficacy=0, Alpha.Futility=0, sided = c("2>", "2<",
+    "1>","1<"), tcut0 = NULL, h0 = NULL, s0 = NULL, tcut1 = NULL, 
     rhaz = NULL, h1 = NULL, s1 = NULL, tcutc0 = NULL, hc0 = NULL, 
     sc0 = NULL, tcutc1 = NULL, hc1 = NULL, sc1 = NULL, tcutd0A = NULL, 
     hd0A = NULL, sd0A = NULL, tcutd0B = NULL, hd0B = NULL, 

@@ -13,6 +13,7 @@
 <<PwrGSDpd,include=FALSE,echo=FALSE>>=
 options(keep.source = TRUE, width = 70)
 PwrGSDpd <- packageDescription("PwrGSD")
+library(PwrGSD)
 @
 
 \title{Calculation of Efficacy and Futiltiy Boundaries using GrpSeqBnds (Version \Sexpr{PwrGSDpd$Version})}

@@ -13,7 +13,7 @@
 
 
 \title{Comparing the performance of a panel of candidate interim monitoring schemes over
-  a range of hypothetical trial scenarios, using cpd.PwrGSD (Version 1.1)}
+  a range of hypothetical trial scenarios, using cpd.PwrGSD (Version 1.15)}
 \author{Grant Izmirlian}
 \maketitle
 
@@ -90,7 +90,7 @@ and time 10 with constant weight thereafter.
 > library(PwrGSD)
 > test.example <- PwrGSD(EfficacyBoundary = LanDemets(alpha = 0.05, 
 +     spending = ObrienFleming), FutilityBoundary = LanDemets(alpha = 0.1, 
-+     spending = ObrienFleming), RR.Futility = 0.82, sided = "<", 
++     spending = ObrienFleming), RR.Futility = 0.82, sided = "1<", 
 +     method = "A", accru = 7.73, accrat = 9818.65, tlook = tlook, 
 +     tcut0 = t0, h0 = h0, tcut1 = t0, rhaz = rhaz, tcutc0 = t0, 
 +     hc0 = hc, tcutc1 = t0, hc1 = hc, tcutd0B = c(0, 13), 

@@ -88,7 +88,7 @@ cpd.PwrGSD(descr)
 test.example <-
   PwrGSD(EfficacyBoundary = LanDemets(alpha = 0.05, spending = ObrienFleming),
          FutilityBoundary = LanDemets(alpha = 0.1, spending = ObrienFleming),
-	 RR.Futility = 0.82, sided="<",method="A",accru =7.73, accrat =9818.65,
+	 RR.Futility = 0.82, sided="1<",method="A",accru =7.73, accrat =9818.65,
          tlook =c(7.14, 8.14, 9.14, 10.14, 10.64, 11.15, 12.14, 13.14,
                   14.14, 15.14, 16.14, 17.14, 18.14, 19.14, 20.14),
          tcut0 =0:19, h0 =c(rep(3.73e-04, 2), rep(7.45e-04, 3),
