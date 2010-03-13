@@ -34,18 +34,14 @@ so a_k = (a_m - (mu(t_m)-mu(t_k)) - (1-f_k)^0.5 *qnorm(rho))/f_k^0.5
 
 */
 
-void StCu2Bnds(double *pmu, double *pfrac, double *palpha, int *psided, double *prho, int *pef, double *b)
+void StCu2Bnds(double *pmu, double *pfrac, double *pzcrit, double *prho, int *pef, double *b)
 {
   int ef, k;
-  double rho, sided, err_I, be_end, alpha, mu_end, f_k, mu_k;
+  double rho, be_end, mu_end, f_k, mu_k;
 
   ef = *pef;
   rho = *prho;
-  sided = fabs(*psided);
-  err_I = *palpha;
-  err_I = err_I/sided;
-  be_end = qnorm5(1.0 - err_I,0.0,1.0,1,0);
-  alpha = *(palpha + ef);
+  be_end = *pzcrit;
   mu_end = *(pmu + 1);
 
   f_k = *pfrac;

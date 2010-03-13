@@ -97,9 +97,7 @@ increase between time 0 and time 10 with constant weight thereafter.
 
 In the next example, we construct the efficacy boundary using the stochastic curtailment procedure.
 <<example-2>>=
-  example.2 <- example.1
-  example.2$call$EfficacyBoundary <- as.call(expression(SC, alpha=0.05, crit=0.90))
-  example.2 <- update(example.2)
+  example.2 <- update(example.1, EfficacyBoundary=LanDemets(alpha=0.05, spending=Pow(1)))
 @ 
 
 \end{document}

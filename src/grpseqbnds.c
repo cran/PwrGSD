@@ -1,16 +1,16 @@
-#include<R.h>
+ #include<R.h>
 #include<Rmath.h>
 
 #define MIN(x,y) (x <= y ? x : y);
+#define ratiodnorm(x, y) exp(-0.5*(x*x - y*y))
 
-double ratiodnorm(double x,double y);
-void  grpseqbndsL(int *pef, double (*spfu)(double frac, double alphatot, double rho), double *rho,
-		  int *islast, int *pnlook, double *palphtot, double *palpha, double *pfmin, 
-		  int *dlact, double *pfracold, double *pfracnew, double *pfracold_ii, 
+void  grpseqbndsL(int *pef, double (*spfu)(double frac, double alphatot, double rho), 
+                  double *rho, int *islast, int *pnlook, double *palphtot, double *palpha, 
+                  double *pfmin, int *dlact, double *pfracold, double *pfracnew, double *pfracold_ii, 
 		  double *pfracnew_ii, double *x, double *y, double *tmp, double *intgrndx, 
 		  double *gqxw, int *pngqnodes, double *mufu, double *bold, 
 		  double *bnew, int *mybound);
-void      updateL(int *dofu, int *pef, int *pnlook, double *pfracold, double *pfracnew, 
+void      updateL(int *nbf, int *dofu, int *pef, int *pnlook, double *pfracold, double *pfracnew, 
 		  double *x, double *y, double *tmp, double *intgrndx, double *gqxw, 
 		  int *pngqnodes, double *mufu, double *bnew);
 void  grpseqbndsH(int *islast, int *pnlook, double *palphtot, double *palpha,
@@ -34,7 +34,7 @@ brownian motion scale achieving a process with independent increments.  NOTE:  p
 the alpha spending scale and pinffrac is the original variance scale.
 */
 
-void grpseqbnds(int *dofu, int *nbnd, int *nsf, double *rho, int *pnlook, double *palphtot, 
+void grpseqbnds(int *dofu, int *nbf, int *nbnd, int *nsf, double *rho, int *pnlook, double *palphtot, 
 		double *palpha, double *psimin, int *dlact, double *pfracold, double *pfracnew, 
 		double *pfracold_ii, double *pfracnew_ii, double *x, double *y, double *tmp, 
 		double *intgrndx, double *gqxw, int *pngqnodes, double *mufu, double *bold, 
@@ -69,7 +69,7 @@ void grpseqbnds(int *dofu, int *nbnd, int *nsf, double *rho, int *pnlook, double
       spfu = &powersp;
       *pfmin = pow(*psimin/(*(palphtot+ef)),1.0/(*(rho+ef)));
     }
-    if(*(nbnd+ef)==1)
+    if(*(nbnd+ef)==1 || *(nbnd+ef)==3 || *(nbnd+ef)==4)
       grpseqbndsL(pef, spfu, rho+ef, islast, pnlook+ef, palphtot+ef, palpha+ef, pfmin, 
 		  dlact+ef, pfracold + ef, pfracnew, pfracold_ii + ef, pfracnew_ii, x+ef*ngq, y+ef*ngq, 
 		  tmp+ef*ngq, intgrndx+ef*ngq, gqxw, pngqnodes, mufu, bold, bnew, mybound);
@@ -83,8 +83,8 @@ void grpseqbnds(int *dofu, int *nbnd, int *nsf, double *rho, int *pnlook, double
   if(*islast==0){
     for(ef=0;ef<1+*dofu;ef++){
       *pef = ef;
-      if(*(nbnd+ef)==1 && *(dlact+ef)==1)
-	updateL(dofu, pef, pnlook+ef, pfracold + ef, pfracnew, x+ef*ngq, y+ef*ngq, 
+      if((*(nbnd+ef)==1 || *(nbnd+ef)==3 || *(nbnd+ef)==4) && *(dlact+ef)==1)
+	updateL(nbf, dofu, pef, pnlook+ef, pfracold + ef, pfracnew, x+ef*ngq, y+ef*ngq, 
 		tmp+ef*ngq, intgrndx+ef*ngq, gqxw, pngqnodes, mufu, bnew);
       if(*(nbnd+ef)==2)
 	updateH(dofu, islast, pnlook+ef, pfracold + ef, pfracnew, x+ef*ngq, y+ef*ngq, 
@@ -99,9 +99,9 @@ void grpseqbnds(int *dofu, int *nbnd, int *nsf, double *rho, int *pnlook, double
   Free(pfmin);
 }
 
-void grpseqbndsL(int *pef, double (*spfu)(double frac, double alphatot, double rho), double *rho,
-		 int *islast, int *pnlook, double *palphtot, double *palpha, double *pfmin, 
-		 int *dlact, double *pfracold, double *pfracnew, double *pfracold_ii, 
+void grpseqbndsL(int *pef, double (*spfu)(double frac, double alphatot, double rho), 
+                 double *rho, int *islast, int *pnlook, double *palphtot, double *palpha, 
+                 double *pfmin, int *dlact, double *pfracold, double *pfracnew, double *pfracold_ii, 
 		 double *pfracnew_ii, double *x, double *y, double *tmp, double *intgrndx, 
 		 double *gqxw, int *pngqnodes, double *mufu, double *bold, double *bnew,
 		 int *mybound)
@@ -302,7 +302,7 @@ double powersp(double frac, double alphtot, double rho)
 // to add include the corresponding function prototype declaration above.
 
 
-void updateL(int *dofu, int *pef, int *pnlook, double *pfracold, double *pfracnew, 
+void updateL(int *nbf, int *dofu, int *pef, int *pnlook, double *pfracold, double *pfracnew, 
 	     double *x, double *y, double *tmp, double *intgrndx, double *gqxw,
 	     int *pngqnodes, double *mufu, double *bnew)
 {
@@ -321,7 +321,7 @@ void updateL(int *dofu, int *pef, int *pnlook, double *pfracold, double *pfracne
   sqrf = pow(*pfracnew,0.5);
   sqrdf = pow(*pfracnew - *pfracold,0.5);
   a=-9.0;
-  if(*dofu==1){
+  if(*dofu==1 && (*nbf==0 || ef==1)){
     a = *(bnew+1);
     Phia = pnorm5(sqrf * a - sw * *mufu,0.0,1.0,one,zero);
   }

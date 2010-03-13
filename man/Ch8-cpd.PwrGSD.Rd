@@ -128,11 +128,11 @@ test.example <-
   n.ca <- length(cens.amt)
 
 ## we may also wish to compare the Lan-Demets/O'Brien-Fleming efficacy
-## boundary with a Pocock efficacy boundary
+## boundary with a Lan-Demets/linear spending boundary
 
   Eff.bound.choice <- 1:2
   ebc.nms <- c("LanDemets(alpha=0.05, spending=ObrienFleming)",
-               "SC(alpha=0.05, crit=0.90)")
+               "LanDemets(alpha=0.05, spending=Pow(1))")
   n.ec <- length(Eff.bound.choice)
 
 ## The following line creates the indexing dataframe, `descr', with one
@@ -195,8 +195,7 @@ test.example <-
     ## variable values in row `k' of `descr'. The computation is
     ## done by calling `update'
 
-    test.example.set$Elements[[k]] <-
-                          update(test.example.set$Elements[[k]])
+    test.example.set$Elements[[k]] <- update(test.example.set$Elements[[k]])
     cat(k/n.descr, "\r")
   }
 
@@ -204,17 +203,17 @@ test.example <-
   ## the selection variables in `descr':
 
   Elements(test.example.set, 
-           subset=(substring(Eff.bound.choice, 1,9)=="LanDemets" &
+           subset=(substring(Eff.bound.choice, 32, 34)=="Obr" &
                             max.effect >= 1))
 
 
   ## or we can plot the results -- see the help under `plot.cpd.PwrGSD'
 
   plot(test.example.set, formula = ~ max.effect | stat * cens.amt,
-       subset=(substring(Eff.bound.choice, 1,9)=="LanDemets"))
+       subset=(substring(Eff.bound.choice, 32, 34)=="Obr"))
 
   plot(test.example.set, formula = ~ max.effect | stat * cens.amt,
-       subset=(substring(Eff.bound.choice, 1,2)=="SC"))
+       subset=(substring(Eff.bound.choice, 32, 34)=="Pow"))
 
   ## Notice the appearance of the selection variable `stat' which was
   ## not defined in the dataset `descr'. 
@@ -233,7 +232,7 @@ test.example <-
   ## computations.
 
   Power(test.example.set,
-        subset=(substring(Eff.bound.choice, 1,2)=="SC" & stat \%in\% c(1,3)))
+        subset=(substring(Eff.bound.choice, 32, 34)=="Pow" & stat \%in\% c(1,3)))
 
 }
 }

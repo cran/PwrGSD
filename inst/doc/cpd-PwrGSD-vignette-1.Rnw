@@ -16,7 +16,7 @@ PwrGSDpd <- packageDescription("PwrGSD")
 @
 
 \title{Comparing the performance of a panel of candidate interim monitoring schemes over
-  a range of hypothetical trial scenarios, using cpd.PwrGSD (Version \Sexpr{PwrGSDpd$Version})}
+  a range of hypothetical trial scenarios, using cpd.PwrGSD (Version \Sexpr{PwrGSDpd[["Version"]]})}
 \author{Grant Izmirlian}
 \maketitle
 
@@ -122,12 +122,12 @@ Next the vector of censoring amounts:
   n.ca <- length(cens.amt)
 @ 
 
-Finally the two methods of efficacy boundary construction: Lan-Demets method
-with O'Brien-Fleming spending verus stochastic curtailment:  
+Our candidate monitoring plans use the Lan-Demets boundary construction 
+method. We wish to compare O'Brien-Fleming spending with linear spending:
 <<boundary-settings>>=
   Eff.bound.choice <- 1:2
   ebc.nms <- c("LanDemets(alpha=0.05, spending=ObrienFleming)",
-               "SC(alpha=0.05, crit=0.90)")
+               "LanDemets(alpha=0.05, spending=Pow(1))")
   n.ec <- length(Eff.bound.choice)
 @ 
 
@@ -139,7 +139,7 @@ of the possible 9 * 3 * 2 possible choices.  This is done in the following line.
                     cens.amt=rep(rep(cens.amt, each=n.me), n.ec),
                     max.effect=rep(max.effect, n.ec*n.ca)))
 
-  descr$Eff.bound.choice <- ebc.nms[descr$Eff.bound.choice]
+  descr$Eff.bound.choice <- ebc.nms[descr[["Eff.bound.choice"]]]
 @ 
 
 Now the descriptor data.frame, {\bf descr} contains one row for each combination of the
@@ -198,7 +198,7 @@ the selection variables in {\bf descr} as the first line below.
 <<elements>>=
   test.example.subset <- 
       Elements(test.example.set, 
-               subset=(substring(Eff.bound.choice, 1,9)=="LanDemets" &   
+               subset=(substring(Eff.bound.choice, 32, 34)=="Obr" &   
                                  max.effect >= 1))
 @ 
 
@@ -210,43 +210,43 @@ This is done via a formula argument of the form \verb`~ x | a` or
 \verb`~ x | a*b` which specify, a stacked plot of power and type II error as the magnitude
 of effect, $x$ varies, that is conditioned on values of $a$ alone, in the
 first case, and $a$ by $b$ in the second case, respectively. Subsetting is
-also allowed.  In the first plot, \ref{fig:LanDemets}, we have subsetted to
-the elements having Lan-Demets boundaries while in the second plot,
-\ref{fig:StochCurt}, we have subsetted to the elements having boundaries
-created via stochastic curtailment.
+also allowed.  In the first plot, \ref{fig:OBrien}, we have subsetted to
+the elements in which Lan-Demets/O'Brien-Fleming efficacy boundary was used,
+while in the second plot, \ref{fig:Pow}, we have subsetted to the elements in which
+Lan-Demets/linear spending efficacy boundaries were used.
 
 <<label=fig1LanDemets,include=FALSE>>=
   plot(test.example.set, formula = ~ max.effect | stat * cens.amt,
-       subset=(substring(Eff.bound.choice, 1,9)=="LanDemets"))
+       subset=(substring(Eff.bound.choice, 32, 34)=="Obr"))
 @
 
 <<label=fig2StochCurt,include=FALSE>>=
   plot(test.example.set, formula = ~ max.effect | stat * cens.amt,
-       subset=(substring(Eff.bound.choice, 1,2)=="SC"))
+       subset=(substring(Eff.bound.choice, 32, 34)=="Pow"))
 @
 
 \begin{figure}
 \begin{center}
-<<label=fig1-LanDemets,fig=TRUE,echo=FALSE>>=
+<<label=fig1-OBrien,fig=TRUE,echo=FALSE>>=
 <<fig1LanDemets>>
 @
 \end{center}
-\caption{Power (magenta) and type II error (cyan) at each analysis versus the
+\caption{Power (cyan) and type II error (magenta) at each analysis versus the
   maximum benefit. Lan-Demets efficacy and futility boundary using
   Obrien-Fleming spending.}
-\label{fig:LanDemets}
+\label{fig:OBrien}
 \end{figure}
 
 \begin{figure}
 \begin{center}
-<<label=fig2-StochCurt,fig=TRUE,echo=FALSE>>=
+<<label=fig2-Pow,fig=TRUE,echo=FALSE>>=
 <<fig2StochCurt>>
 @
 \end{center}
-\caption{Power (magenta) and type II error (cyan) at each analysis versus the
-  maximum benefit. Efficacy boundary constructed via stochastic curtailment,
-  Lan-Demets futility boundary using Obrien-Fleming spending.}
-\label{fig:StochCurt}
+\caption{Power (cyan) and type II error (magenta) at each analysis versus the
+  maximum benefit. Lan-Demets efficacy and futility boundary, using
+  linear spending and O'Brien-Fleming spending respectively.}
+\label{fig:Pow}
 \end{figure}
 
 Notice the appearance of the selection variable {\bf stat} which was not defined

@@ -5,6 +5,7 @@
 #define COMPH(xh,h,H,n,l) *H=0.0;for(l=1;l<n;l++) *(H+l)=*(H+l-1)+ *(h+l-1) * (*(xh+l) - *(xh+l-1))
 #define hHatX(x,xh,h,H,h_,H_,n,l) l=0;while(*(xh+l)<=x && l<n) l++; h_ = *(h+l-1); H_ = *(H+l-1) + h_ * (x-*(xh+l-1))
 #define HIatW(W,xh,h,H,HI_,n,l) l=0;while(*(H+l)<=W && l<n) l++; HI_ = *(xh+l-1) + (W - *(H+l-1))/(*(h+l-1))
+#define wchidx(x,xgrid,n,l) l=0;while(*(xgrid+l)<=x && l<n) l++
 #define unique(x,n,y,m,l,old) m = 0;                           \
                               l = 0;                           \
                               old = -10 + *x;                  \
@@ -46,7 +47,7 @@ void drift(int *ints,double *accru,double *accrat,double *tlook,double *ppar,dou
 	   int *wttyp, double *RR,int *pnnjmp,double *InfFrac,double *InfFrac_ii,
 	   double *mu,double *Var_uw, double *Var, double *Eta,int *puserVend,double *Vend)
 {
-  int nnstat,nngq,l,j,istat,nnh0,nnh1,nnsm,nnjmp,nnhc0,nnhc1,nnlA0,nnlB0,nnlA1,nmx,flaguserVE;
+  int nnstat,nngq,l,j,j0,j1,istat,nnh0,nnh1,nnsm,nnjmp,nnhc0,nnhc1,nnlA0,nnlB0,nnlA1,nmx,flaguserVE;
   int nnlB1,nnhA0,nnhB0,nnhA1,nnhB1,nhmax,nnlook,ilook,ijmp,ntrial,isumppar,istop, nppar;
   int *ntlook,*nstat,*ngq,*nh0,*nh1,*nhc0,*nhc1,*nlA0,*nlB0,*nlA1,*nlB1,*nhA0,*nhB0,*nhA1;
   int *nhB1,*gradual,*one;
@@ -145,6 +146,12 @@ void drift(int *ints,double *accru,double *accrat,double *tlook,double *ppar,dou
     *(RR+l) = *(tjmp+l);
     *(RR+nnjmp+l) = *(htlde0+l);
     *(RR+2*nnjmp+l) = *(htlde1+l)/(*(htlde0+l));
+    wchidx(*(tjmp+l),th0,nnh0,j0);
+    j0 = MAX(j0-1,0);
+    *(RR+3*nnjmp+l) = *(h0+j0);
+    wchidx(*(tjmp+l),th1,nnh1,j1);
+    j1 = MAX(j1-1,0);
+    *(RR+4*nnjmp+l) = *(h1+j1)/(*(h0+j0));
   }
 
   for(l=0;l<nngq;l++) *(xi+l) = (*(gqx+l)+1.0)*t_END/2.0;

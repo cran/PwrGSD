@@ -1,0 +1,15 @@
+as of 7/9/2009 the project is 
+
+language
+written 
+in     size (bytes)   percent
+------------------------------
+C            116676    14.3
+R            245889    30.2
+doc          450675    55.5
+------------------------------
+total        813240
+
+My PhD thesis is 188 kb, so this 
+project could aptly be called PhD
+theses #'s 3, 4, 5, 6 and 1/2 of 7.

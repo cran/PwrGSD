@@ -22,6 +22,7 @@ DX <- function(x)c(x[1],diff(x))
 "PwrGSD" <- 
 function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
          FutilityBoundary = LanDemets(alpha=0.10,spending=ObrienFleming),
+         NonBindingFutility=TRUE,
          sided =c("2>", "2<", "1>", "1<"),method=c("S","A"),accru,accrat,tlook,
          tcut0 = NULL,h0 = NULL,s0 = NULL,tcut1 = NULL,rhaz = NULL,
          h1 = NULL,s1 = NULL,tcutc0 = NULL,hc0 = NULL,sc0 = NULL,tcutc1 = NULL,hc1 = NULL,
@@ -54,6 +55,7 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
 "AsyPwrGSD" <- 
 function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
          FutilityBoundary = LanDemets(alpha=0.10,spending=ObrienFleming),
+         NonBindingFutility=TRUE,
          sided=c("2>","2<", "1>","1<"),accru,accrat,tlook,tcut0=NULL,h0=NULL,s0=NULL,tcut1=NULL,
          rhaz=NULL, h1=NULL, s1=NULL, tcutc0=NULL, hc0 = NULL, sc0=NULL, 
          tcutc1=NULL, hc1 = NULL, sc1 = NULL, tcutd0A=NULL, hd0A=NULL, 
@@ -66,677 +68,585 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
          Spend.Info=c("Variance", "Events", "Hybrid(k)", "Calendar"),
          RR.Futility=NULL, V.end = NULL,qProp.one.or.Q = c("one","Q"))
 {
-
-#
-#          Alpha.Efficacy=0.05,Alpha.Futility=0.90,
-#          Boundary.Efficacy = c("Lan-Demets","Haybittle","SC"),
-#          Boundary.Futility = c("Lan-Demets", "Haybittle","SC"),
-#          Spending.Efficacy = c("Obrien-Fleming", "Pocock", "Power"),
-#          Spending.Futility = c("Obrien-Fleming", "Pocock", "Power"), 
-#          rho.Efficacy=0, rho.Futility=0, b.Haybittle = 3,
-#          rho.Eff.SC = 1.0, rho.Fut.SC = 1.0,
-#
-        .call. <- match.call()
-        normut <- 8.20953615160139
-        psimin <- 1.0e-15
-
-        if(missing(WtFun)) {
-          WtFun <- "FH"
-          wttyp <- 0
-          ppar <- c(0,0)
-          nstat <- 1
-        }
-        else{
-          if(missing(ppar) && any(WtFun!="FH"))
-            stop("You must specify parameters for the chosen weight function(s) in the 'ppar' argument.")
-          nstat <- length(WtFun)
-          wttyp <- charmatch(WtFun, c("FH", "SFH", "Ramp"))-1
-        }
-        nlook <- length(tlook)
-	tend <- tlook[nlook]
-	if (missing(sided)) sided <- "2>"
-	if(!(sided%in%c("2>","2<","1>","1<")))
-          stop("Argument 'sided' must be " %,% 
-               "equal to \"2>\", \"2<\", \"1>\" or \"1<\"")
-        sided <- c(2,-2, 1,-1)[grep(sided, c("2>","2<", "1>","1<"))]
-        
-        # determine type of Efficacy Boundary Specification
-        mode.E <- "WRONG"
-        BE.missing <- missing(EfficacyBoundary)
-        if(BE.missing) mode.E <- "NULL"
-        if(!BE.missing){
-          try.BE <- try(EfficacyBoundary, silent=TRUE)
-          if(is.null(attr(try.BE, "class"))) mode.E <- mode(EfficacyBoundary)
-          else if(attr(try.BE, "class")=="try-error") mode.E <- "call"
-        }
-        if (!(mode.E %in% c("call", "numeric", "NULL"))) 
-          stop("Argument 'EfficacyBoundary' must be of mode 'call', 'numeric' or 'NULL'")
-        is.myE <- FALSE
-        n.myE <- 0
-        if (mode.E == "numeric") {
-          n.myE <- length(EfficacyBoundary)
-          is.myE <- TRUE
-          my.Efficacy <- EfficacyBoundary
-          .call.$EfficacyBoundary <- as.call(expression(LanDemets, alpha=0.05, spending=ObrienFleming))
-        }
-        do.efficacy <- !BE.missing || is.myE
-        if (mode.E == "NULL" && do.efficacy) 
-          .call.$EfficacyBoundary <- as.call(expression(LanDemets, alpha=0.05, spending=ObrienFleming))
-        
-        # determine type of Futility Boundary Specification
-        mode.F <- "WRONG"
-        BF.missing <- missing(FutilityBoundary)
-        if(BF.missing) mode.F <- "NULL"
-        if(!BF.missing){
-          try.BF <- try(FutilityBoundary, silent=TRUE)
-          if(is.null(attr(try.BF, "class"))) mode.F <- mode(FutilityBoundary)
-          else if(attr(try.BF, "class")=="try-error") mode.F <- "call"
-        }
-        if (!(mode.F %in% c("call", "numeric", "NULL"))) 
-          stop("Argument 'FutilityBoundary' must be of mode 'call', 'numeric' or 'NULL'")
-        is.myF <- FALSE
-        n.myF <- 0
-        if (mode.F == "numeric") {
-          n.myF <- length(FutilityBoundary)
-          is.myF <- TRUE
-          my.Futility <- FutilityBoundary
-          .call.$FutilityBoundary <- as.call(expression(LanDemets, alpha=0.10, spending=ObrienFleming))
-        }
-        do.futility <- !BF.missing || is.myF
-        if(!do.futility) Alpha.Futility <- psimin
-        if (mode.F == "NULL" && do.futility)
-          .call.$FutilityBoundary <- as.call(expression(LanDemets, alpha=0.10, spending=ObrienFleming))
-        
-        
-        # Parse Boundary Methods:
-        ..call. <- .call.
-        ..call.[[1]] <- as.name("ParseBoundaryMethods")
-        nms.call <- names(..call.)[-1]
-        ind.del <- which(!(nms.call %in% c("EfficacyBoundary", "FutilityBoundary")))
-        for(k in -sort(-ind.del))
-          ..call.[[1+k]] <- NULL
-        ..call.$nlooks <- nlook
-        eval(..call.)
-        
-        # Result:  Now the following are defined within this scope:
-        #
-        #   Alpha.Efficacy, Alpha.Futility, nbnd.e, nbnd.f, nsf.e, nsf.f, rho.Efficacy, rho.Futility,
-        #   b.Haybittle, drift.end, crit.e, crit.f
-        #
-        
-        if (!do.efficacy && !do.futility) 
-        stop("You must specify one or both of the arguments 'EfficacyBoundary' and 'FutilityBoundary', " %,% 
-             "see the documentation")
-
-        b.e <- rep(0, nlook)
-        if (is.myE){
-          if(n.myE != nlook )
-            stop("User supplied efficacy boundary in 'EfficacyBoundary' must be of the same length as 'frac'")
-          b.e <- my.Efficacy
-        }
-        
-        b.f <- rep(0, nlook)
-        if (is.myF){
-          if(n.myF != nlook )
-            stop("User supplied futility boundary in 'FutilityBoundary' must be of the same length as 'frac'")
-          b.f <- my.Futility
-        }
-        Alpha.Efficacy <- Alpha.Efficacy/2^(abs(sided) == 2)
-        
-#	if(missing(Alpha.Efficacy)) stop("Missing argument 'Alpha.Efficacy', the total type I error")	
-#	Alpha.Efficacy <- Alpha.Efficacy/2^(sided == 2)
-#        
-#       if (missing(Boundary.Efficacy))
-#          Boundary.Efficacy <- NULL
-#       mode.E <- mode(Boundary.Efficacy)
-#       if(!(mode.E %in% c("character", "numeric", "NULL")))
-#         stop("Argument 'Boundary.Efficacy' must be of character, numeric or NULL mode")
-#       b.e <- rep(0,nlook)
-#       is.myE <- FALSE
-#       if(mode.E=="numeric"){
-#         n.myE <- length(Boundary.Efficacy)
-#         if(n.myE != nlook)
-#           stop("User supplied efficacy boundary in 'Boundary.Efficacy' must be of the same length as 'frac'")
-#         is.myE <- TRUE
-#         b.e <- Boundary.Efficacy
-#         Boundary.Efficacy <- "Lan-Demets"
-#       }
-#       if(mode.E=="NULL") Boundary.Efficacy <- "Lan-Demets"
-#       nbnd.e <- grep(Boundary.Efficacy, c("Lan-Demets", "Haybittle", "SC"))
-#       if(nbnd.e==3 && missing(rho.Eff.SC))
-#         stop("Argument 'rho.Eff.SC' (total type I error for Stochastic Curtailment criterion) must be specified")
-
-#       if (missing(Spending.Efficacy))
-#         Spending.Efficacy <- "Obrien-Fleming"
-#	if(Spending.Efficacy=="Power" && missing(rho.Efficacy))
-#	  stop("Argument 'rho.Efficacy' must be supplied")
-#       nsf.e <- grep(Spending.Efficacy, c("Obrien-Fleming", "Pocock", "Power"))
-
-#       if(missing(Boundary.Futility))
-#         Boundary.Futility <- NULL          
-#       mode.F <- mode(Boundary.Futility)       
-#       if(!(mode.F %in% c("character", "numeric", "NULL")))
-#         stop("Argument 'Boundary.Futility' must be of character, numeric or NULL mode")
-#       b.f <- rep(0,nlook)
-#       is.myF <- FALSE
-#       if(mode.F=="numeric"){
-#         n.myF <- length(Boundary.Futility)
-#         if(n.myF != nlook)
-#           stop("User supplied futility boundary in 'Boundary.Futility' must be of the same length as 'frac'")
-#         is.myF <- TRUE
-#         b.f <- Boundary.Futility
-#         Boundary.Futility <- "Lan-Demets"
-#       }
-
-#     	dofu <- 1
-#       if(missing(Alpha.Futility) && mode.F != "NULL" && mode.F!="numeric")
-#         stop("You specified a futility boundary construction method in the argument 'Boundary.Futility' that requires" %,%
-#              " a probability of total type II error, 'Alpha.Futility'")
-#       if (missing(Alpha.Futility) && mode.F == "NULL" && (is.myF==0)){
-#         dofu <- 0
-#         Alpha.Futility <- psimin
-#       }
-        
-#       if(mode.F=="NULL") Boundary.Futility <- "Lan-Demets"
-#       nbnd.f <- grep(Boundary.Futility, c("Lan-Demets", "Haybittle", "SC"))
-#       if(nbnd.f==3 && missing(rho.Fut.SC))
-#         stop("Argument 'rho.Fut.SC' (total type II error for Stochastic Curtailment criterion) must be specified")
-
-#	if(nbnd.f == 2) stop("Haybittle futility boundary makes no sense so that " %,%
-#                            "understandibly, it is not supported")
-        
-#	if(missing(Spending.Futility)) Spending.Futility <- "Obrien-Fleming"
-#	if(Spending.Futility=="Power" && missing(rho.Futility))
-#	  stop("Argument 'rho.Futility' must be supplied")
-#       nsf.f <- grep(Spending.Futility, c("Obrien-Fleming", "Pocock", "Power"))
-        
-        no.SpndInfo <- missing(Spend.Info)
-        if(no.SpndInfo) Spend.Info <- "Variance"
-        if(!no.SpndInfo){
-          Spend.Info <- as.character(.call.$Spend.Info)
-          if(!(Spend.Info[1] %in% c("Variance", "Events", "Hybrid", "Calendar")))
-            stop("Argument 'Spend.Info' is an expression of the form 'Variance', 'Events', 'Hybrid(k)', or 'Calendar'")
-        }
-        spend.info <- grep(Spend.Info[1], c("Variance", "Events", "Hybrid", "Calendar")) - 1
-        spend.info.k <- 0
-        if(spend.info==2 && length(Spend.Info)>1) spend.info.k <- as.integer(as.numeric(Spend.Info[2])) - 1
-
-        user.V.end <- !missing(V.end)
-        if(!user.V.end) V.end <- 0
-
-        if(missing(qProp.one.or.Q))
-          qProp.one.or.Q <- 0
-        else{
-          if(!(qProp.one.or.Q %in% c("one","Q")))
-            stop("Argument 'qProp.one.or.Q' must be either \"one\" or \"Q\"")
-          qProp.one.or.Q <- grep(qProp.one.or.Q, c("one", "Q")) - 1
-        }
-        
-        nunq <- length(unique(sort(c(tcut0, tcut1, tcutc0, tcutc1, tcutd0A, tcutd0B, tcutd1A, tcutd1B, tcutx0A,
-                                     tcutx0B, tcutx1A, tcutx1B))))    
-        glegx <- glegx24
-        glegw <- glegw24
-
-        NGaussQ <- length(glegx)
-	stoh <- function(tcut, s)
-	{
-		ncut <- length(tcut)
-		Sold <- c(1, s[ - (ncut - 1)])
-		dt <- diff(tcut)
-		h <- log.0(s/Sold)/dt
-		h
-	}
-
-	no.t0 <- missing(tcut0)
-	no.s0 <- missing(s0)
-	no.h0 <- missing(h0)
-	if((no.s0 && no.h0) || no.t0)
-		stop("Must specify 'tcut0' and ('h0' or 's0').")
-	if(no.h0)
-		h0 <- stoh(tcut0, s0)
-	ncut0 <- length(tcut0)
-
-	no.t1 <- missing(tcut1)
-	no.s1 <- missing(s1)
-	no.h1 <- missing(h1)
-	no.rhaz <- missing(rhaz)
-	if((no.s1 && no.rhaz && no.h1) || no.t1)
-		stop("Must specify 'tcut1' and ('rhaz' or 'h1' or 's1').")
-	if(!no.s1)
-		h1 <- stoh(tcut1, s1)
-	if(!no.rhaz){
-		tcut.01 <- support(c(tcut0, tcut1))
-		h0.01 <- lookup(tcut0, h0, tcut.01)$y
-		rhaz.01 <- lookup(tcut1, rhaz, tcut.01)$y
-		tcut1 <- tcut.01
-		h1 <- rhaz.01 * h0.01
-	}
-	ncut1 <- length(tcut1)
-
-        use.rhaz.fu <- 0
-        if(missing(RR.Futility)){
-          RR.Futility <- rep(1,ncut0)
-          if(do.futility==1) use.rhaz.fu <- 1
-        }
-        if(length(RR.Futility)<ncut0) RR.Futility <- rep(RR.Futility[1], ncut0)
-        
-	no.tc0 <- missing(tcutc0)
-	no.sc0 <- missing(sc0)
-	no.hc0 <- missing(hc0)
-	if((no.sc0 && no.hc0) || no.tc0)
-		stop("Must specify 'tcutc0' and ('hc0' or 'sc0').")
-	if(no.hc0)
-		hc0 <- stoh(tcutc0, sc0)
-	ncutc0 <- length(tcutc0)
-	no.tc1 <- missing(tcutc1)
-	no.sc1 <- missing(sc1)
-	no.hc1 <- missing(hc1)
-	if((no.sc1 && no.hc1) || no.tc1)
-		stop("Must specify 'tcutc1' and ('hc1' or 'sc1').")
-	if(no.hc1)
-		hc1 <- stoh(tcutc1, sc1)
-	ncutc1 <- length(tcutc1)
-	noncompliance <- as.character(.call.$noncompliance)
-	no.noncomp <- (length(noncompliance) == 0)
-	if(no.noncomp)
-		noncompliance <- "none"
-	switch(noncompliance,
-		none = {
-			tcutd0A <- 0
-			hd0A <- 1e-7
-			ncutd0A <- 1
-
-			tcutd0B <- 0
-			hd0B <- 1e-7
-			ncutd0B <- 1
-
-			tcutd1A <- 0
-			hd1A <- 1e-7
-			ncutd1A <- 1
-
-			tcutd1B <- 0
-			hd1B <- 1e-7
-			ncutd1B <- 1
-
-			tcutx0A <- tcut0
-			hx0A <- h0
-			ncutx0A <- ncut0
-
-			tcutx0B <- tcut0
-			hx0B <- h0
-			ncutx0B <- ncut0
-
-			tcutx1A <- tcut1
-			hx1A <- h1
-			ncutx1A <- ncut1
-
-			tcutx1B <- tcut1
-			hx1B <- h1
-			ncutx1B <- ncut1
-		}
-		,
-		crossover = {
-			no.td0B <- missing(tcutd0B)
-			no.sd0B <- missing(sd0B)
-			no.hd0B <- missing(hd0B)
-
-			no.td1B <- missing(tcutd1B)
-			no.sd1B <- missing(sd1B)
-			no.hd1B <- missing(hd1B)
-
-			no.dB <- (no.sd0B && no.hd0B) || (no.sd1B && no.hd1B) || 
-                                  no.td0B || no.td1B
-			if(no.dB)
-                          stop("crossover option requires specification of \n'tcutd0B', 'tcutd1B', ('hd0B' or 'sd0B') and " %,%
-                               "('hd1B' or 'sd1B').\n")
-
-			if(no.hd0B) hd0B <- stoh(tcutd0B, sd0B)
-			ncutd0B <- length(tcutd0B)
-
-			if(no.hd1B) hd1B <- stoh(tcutd1B, sd1B)
-			ncutd1B <- length(tcutd1B)
-
-			tcutd0A <- 0
-			hd0A <- 1e-7
-			ncutd0A <- 1
-
-			tcutd1A <- 0
-			hd1A <- 1e-7
-			ncutd1A <- 1
-
-			tcutx0A <- tcut0
-			hx0A <- h0
-			ncutx0A <- ncut0
-
-			tcutx1A <- tcut1
-			hx1A <- h1
-			ncutx1A <- ncut1
-
-			tcutx0B <- tcut1
-			hx0B <- h1
-			ncutx0B <- ncut1
-
-			tcutx1B <- tcut0
-			hx1B <- h0
-			ncutx1B <- ncut0
-		}
-		,
-		mixed = {
-			no.td0A <- missing(tcutd0A)
-			no.sd0A <- missing(sd0A)
-			no.hd0A <- missing(hd0A)
-
-			no.td0B <- missing(tcutd0B)
-			no.sd0B <- missing(sd0B)
-			no.hd0B <- missing(hd0B)
-
-			no.td1A <- missing(tcutd1A)
-			no.sd1A <- missing(sd1A)
-			no.hd1A <- missing(hd1A)
-
-			no.td1B <- missing(tcutd1B)
-			no.sd1B <- missing(sd1B)
-			no.hd1B <- missing(hd1B)
-
-			no.tx0A <- missing(tcutx0A)
-			no.sx0A <- missing(sx0A)
-			no.hx0A <- missing(hx0A)
-
-			no.tx1A <- missing(tcutx1A)
-			no.sx1A <- missing(sx1A)
-			no.hx1A <- missing(hx1A)
-
-			no.dA <- (no.sd0A && no.hd0A) || (no.sd1A && no.hd1A) || 
-                                  no.td0A || no.td1A
-			no.dB <- (no.sd0B && no.hd0B) || (no.sd1B && no.hd1B) || 
-                                  no.td0B || no.td1B
-			no.xA <- (no.sx0A && no.hx0A) || (no.sx1A && no.hx1A) || 
-                                  no.tx0A || no.tx1A
-
-			if(no.dA || no.dB || no.xA) 
-                          stop("mixed option requires specification of \n'tcutd0A', 'tcutd1A', ('hd0A' or 'sd0A')," %,%
-                               " ('hd1A' or 'sd1A'),\n'tcutd0B', 'tcutd1B', ('hd0B' or 'sd0B')," %,%
-                               " ('hd1B' or 'sd1B'),\n'tcutx0A', 'tcutx1A', ('hx0A' or 'sx0A')," %,%
-                               " and ('hx1A' or 'sx1A').\n")
-
-			if(no.hd0A) hd0A <- stoh(tcutd0A, sd0A)
-			ncutd0A <- length(tcutd0A)
-
-			if(no.hd1A) hd1A <- stoh(tcutd1A, sd1A)
-			ncutd1A <- length(tcutd1A)
-
-			if(no.hd0B) hd0B <- stoh(tcutd0B, sd0B)
-			ncutd0B <- length(tcutd0B)
-
-			if(no.hd1B) hd1B <- stoh(tcutd1B, sd1B)
-			ncutd1B <- length(tcutd1B)
-
-			if(no.hx0A) hx0A <- stoh(tcutx0A, sx0A)
-			ncutx0A <- length(tcutx0A)
-
-			if(no.hx1A) hx1A <- stoh(tcutx1A, sx1A)
-			ncutx1A <- length(tcutx1A)
-
-			tcutx0B <- tcut1
-			hx0B <- h1
-			ncutx0B <- ncut1
-
-			tcutx1B <- tcut0
-			hx1B <- h0
-			ncutx1B <- ncut0
-		}
-		,
-		user = {
-			no.td0A <- missing(tcutd0A)
-			no.sd0A <- missing(sd0A)
-			no.hd0A <- missing(hd0A)
-
-			no.td0B <- missing(tcutd0B)
-			no.sd0B <- missing(sd0B)
-			no.hd0B <- missing(hd0B)
-
-			no.td1A <- missing(tcutd1A)
-			no.sd1A <- missing(sd1A)
-			no.hd1A <- missing(hd1A)
-
-			no.td1B <- missing(tcutd1B)
-			no.sd1B <- missing(sd1B)
-			no.hd1B <- missing(hd1B)
-
-			no.tx0A <- missing(tcutx0A)
-			no.sx0A <- missing(sx0A)
-			no.hx0A <- missing(hx0A)
-
-			no.tx1A <- missing(tcutx1A)
-			no.sx1A <- missing(sx1A)
-			no.hx1A <- missing(hx1A)
-
-			no.tx0B <- missing(tcutx0B)
-			no.sx0B <- missing(sx0B)
-			no.hx0B <- missing(hx0B)
-
-			no.tx1B <- missing(tcutx1B)
-			no.sx1B <- missing(sx1B)
-			no.hx1B <- missing(hx1B)
-
-			no.dA <- (no.sd0A && no.hd0A) || (no.sd1A && no.hd1A) || 
-                                  no.td0A || no.td1A
-			no.dB <- (no.sd0B && no.hd0B) || (no.sd1B && no.hd1B) || 
-                                  no.td0B || no.td1B
-			no.xA <- (no.sx0A && no.hx0A) || (no.sx1A && no.hx1A) || 
-                                  no.tx0A || no.tx1A
-			no.xB <- (no.sx0B && no.hx0B) || (no.sx1B && no.hx1B) || 
-                                  no.tx0B || no.tx1B
-
-			if((no.dA || no.xA) && (no.dB || no.xB)) 
-                          stop("user option requires specification of \n('tcutd0A', 'tcutd1A', ('hd0A' or 'sd0A')," %,%
-                               " ('hd1A' or 'sd1A') and\n'tcutx0A', 'tcutx1A', ('hx0A' or 'sx0A')," %,%
-                               " ('hx1A' or 'sx1A')) or \n('tcutd0B', 'tcutd1B', ('hd0B' or 'sd0B')," %,%
-                               " and ('hd1B' or 'sd1B') and\n 'tcutx0B', 'tcutx1B', ('hx0B' or 'sx0B')," %,%
-                               " and ('hx1B' or 'sx1B')).\n")
-
-			if(!no.dA) {
-				if(no.hd0A) hd0A <- stoh(tcutd0A, sd0A)
-				ncutd0A <- length(tcutd0A)
-
-				if(no.hd1A) hd1A <- stoh(tcutd1A, sd1A)
-				ncutd1A <- length(tcutd1A)
-
-				if(no.hx0A) hx0A <- stoh(tcutx0A, sx0A)
-				ncutx0A <- length(tcutx0A)
-
-				if(no.hx1A) hx1A <- stoh(tcutx1A, sx1A)
-				ncutx1A <- length(tcutx1A)
-
-				if(no.dB){
-					tcutd0B <- 0
-					hd0B <- 1e-7
-					ncutd0B <- 1
-
-					tcutd1B <- 0
-					hd1B <- 1e-7
-					ncutd1B <- 1
-
-					tcutx0B <- tcut0
-					hx0B <- h0
-					ncutx0B <- ncut0
-
-					tcutx1B <- tcut1
-					hx1B <- h1
-					ncutx1B <- ncut1
-				}
-			}
-			if(!no.dB){
-				if(no.hd0B) hd0B <- stoh(tcutd0B, sd0B)
-				ncutd0B <- length(tcutd0B)
-
-				if(no.hd1B) hd1B <- stoh(tcutd1B, sd1B)
-				ncutd1B <- length(tcutd1B)
-
-				if(no.hx0B) hx0B <- stoh(tcutx0B, sx0B)
-				ncutx0B <- length(tcutx0B)
-
-				if(no.hx1B) hx1B <- stoh(tcutx1B, sx1B)
-				ncutx1B <- length(tcutx1B)
-
-				if(no.dA){
-					tcutd0A <- 0
-					hd0A <- 1e-7
-					ncutd0A <- 1
-
-					tcutd1A <- 0
-					hd1A <- 1e-7
-					ncutd1A <- 1
-
-					tcutx0A <- tcut0
-					hx0A <- h0
-					ncutx0A <- ncut0
-
-					tcutx1A <- tcut1
-					hx1A <- h1
-					ncutx1A <- ncut1
-				}
-			}
-		}
-		)
-        nmax <- max(ncut0,ncut1,nlook)
-        cumsum.nppar <- 0
-        stat.nms <- NULL
-        for(j in 1:nstat){
-          prfx <- c("FH-", "SFH-", "R-")[1+wttyp[j]]
-          nppar <- c(2,3,1)[1+wttyp[j]]
-          ppar.j <- ppar[(cumsum.nppar+1):(cumsum.nppar+nppar)]
-          par.string <- glue.2.string(ppar.j, sep="|")
-          stat.nms <- c(stat.nms, prfx %,% par.string)
-          cumsum.nppar <- cumsum.nppar + nppar
-        }
-        nbetyp <- length(nbnd.e)
-        nbftyp <- length(nbnd.f)
-        nsum <- ncut0 + ncut1 + nlook - 2
-	ints <- c(nlook,nstat,NGaussQ,ncut0,ncut1,ncutc0,ncutc1,ncutd0A,ncutd0B,ncutd1A,
-                  ncutd1B,ncutx0A,ncutx0B,ncutx1A,ncutx1B,gradual,nbnd.e,nbnd.f,
-                  nsf.e,nsf.f,do.futility,use.rhaz.fu,spend.info,user.V.end,is.myE,is.myF,spend.info.k,
-                  qProp.one.or.Q, sided)        
-	ints.nms <- c("nlook","nstat","NGaussQ","ncut0","ncut1","ncutc0",
-                      "ncutc1","ncutd0A","ncutd0B","ncutd1A","ncutd1B","ncutx0A","ncutx0B",
-                      "ncutx1A","ncutx1B","gradual","nbnd.e." %,% (1:nlook),"nbnd.f." %,% (1:nlook),
-                      "nsf.e." %,% (1:nlook),"nsf.f." %,% (1:nlook),"do.futility","use.rhaz.fu",
-                      "spend.info","user.V.end","is.myE","is.myF","spend.info.k","qis1orQ","sided")
-
-        dbls <- c(accru, accrat, rho.Efficacy, rho.Futility, crit.e, crit.f)
-        ntrial <- floor(accru*accrat)
-        dbls.nms <- c("accru", "accrat", "rho.Efficacy." %,%(1:nlook), "rho.Futility." %,% (1:nlook),
-                      "crit.e." %,%(1:nlook), "crit.f." %,%(1:nlook))
-        
-	names(ints) <- ints.nms
-	ans <- .C(name = "AsyPwrGSD",
-		ints = as.integer(ints),
-                dbls = as.double(dbls),
-                pttlook = as.double(tlook),
-		palphatot = as.double(c(Alpha.Efficacy,Alpha.Futility)),
-		lrrf = as.double(log(RR.Futility)),
-                bHay = as.double(b.Haybittle),
-		ppar = as.double(ppar),
-		pgqxw = as.double(c(glegx,glegw)),
-		tcut0 = as.double(tcut0),
-		h0 = as.double(h0),
-		tcut1 = as.double(tcut1),
-		h1 = as.double(h1),
-		tcutc0 = as.double(tcutc0),
-		hc0 = as.double(hc0),
-		tcutc1 = as.double(tcutc1),
-		hc1 = as.double(hc1),
-		tcutd0A = as.double(tcutd0A),
-		hd0A = as.double(hd0A),
-		tcutd0B = as.double(tcutd0B),
-		hd0B = as.double(hd0B),
-		tcutd1A = as.double(tcutd1A),
-		hd1A = as.double(hd1A),
-		tcutd1B = as.double(tcutd1B),
-		hd1B = as.double(hd1B),
-		tcutx0A = as.double(tcutx0A),
-		hx0A = as.double(hx0A),
-		tcutx0B = as.double(tcutx0B),
-		hx0B = as.double(hx0B),
-		tcutx1A = as.double(tcutx1A),
-		hx1A = as.double(hx1A),
-		tcutx1B = as.double(tcutx1B),
-		hx1B = as.double(hx1B),
-                wttyp = as.integer(wttyp),
-                V.end = as.double(V.end),
-                pinffrac = double(nstat*nlook),
-                pinffrac.ii= double(nstat*nlook),
-		pbounds = as.double(c(rep(b.e, nstat), rep(b.f, nstat))),  
-		mufu = double(nstat*nlook),
-		mu = double(nstat*nlook),
-		palpha0vec = double(2*nstat*nlook),
-		palpha1vec = double(2*nstat*nlook),
-		RR = double(3*nsum),
-                pnnjmp = integer(1),
-                E.NT = double(nstat*nsum),
-                Var = double(nstat*nsum),
-                Eta = double(nstat*nsum),
-                betabdry = double(2*nstat*nlook),
-		PACKAGE = "PwrGSD")
-	detail <- ans
-        detail$ntrial <- ntrial
-	Pwr <- t(matrix(detail$palpha1vec,nlook,2*nstat))
-	dErrII <- Pwr[nstat + (1:nstat),,drop=FALSE]
-	Pwr <- Pwr[1:nstat,,drop=FALSE]
-	dimnames(dErrII) <- dimnames(Pwr) <- list(stat.nms,tlook)
-        njmp <- detail$pnnjmp
-	detail$pinffrac <- matrix(detail$pinffrac, nlook, nstat)
-        detail$pinffrac.ii <- matrix(detail$pinffrac.ii, nlook, nstat)
-	detail$pbounds <- matrix(detail$pbounds,nlook,2*nstat)
-        detail$betabdry <- matrix(detail$betabdry, nlook, 2*nstat)
-	detail$mu <- matrix(detail$mu, nlook, nstat)
-	detail$mufu <- matrix(detail$mufu, nlook, nstat)
-        detail$Var <- matrix(detail$Var[1:(njmp*nstat)], njmp, nstat)
-        detail$Eta <- matrix(detail$Eta[1:(njmp*nstat)], njmp, nstat)
-	detail$palpha0vec <- matrix(detail$palpha0vec, nlook, 2*nstat)
-	detail$palpha1vec <- matrix(detail$palpha1vec, nlook, 2*nstat)
-	detail$RR <- matrix(detail$RR[1:(3*njmp)],njmp,3)
-        detail$E.NT <- 4*matrix(detail$E.NT[1:(njmp*nstat)], njmp, nstat)
-	dimnames(detail$pinffrac) <-
- 	dimnames(detail$pinffrac.ii) <-
-	dimnames(detail$mu) <- list(tlook, stat.nms)
-	dimnames(detail$mufu) <- list(tlook, stat.nms)
-	dimnames(detail$Var) <-
-      	dimnames(detail$Eta) <-
-        dimnames(detail$E.NT) <- list(round(detail$RR[,1],7), stat.nms)
-	dimnames(detail$pbounds) <- 
-        dimnames(detail$betabdry) <- 
-	dimnames(detail$palpha0vec) <- 
-	dimnames(detail$palpha1vec) <- list(tlook, c(outer(stat.nms,c("-e","-f"),
-					    FUN="%,%")))
-	dimnames(detail$RR) <- list(rep("",njmp), c("t","htlde0","RR"))
-	names(detail$ints) <- ints.nms
-        names(detail$dbls) <- dbls.nms
-	out <- list(dPower = Pwr, dErrorII = dErrII, detail = detail,call=.call.)
-	class(out) <- "PwrGSD"
-	out
-}
-
-"AsyPwrGSDcall" <-
-function(accru,accrat,tlook, tcut0=NULL,h0=NULL,s0=NULL,tcut1=NULL, 
-         rhaz=NULL, h1=NULL, s1=NULL, tcutc0=NULL, hc0 = NULL, sc0=NULL, 
-         tcutc1=NULL, hc1 = NULL, sc1 = NULL, tcutd0A=NULL, hd0A=NULL, 
-         sd0A=NULL, tcutd0B=NULL, hd0B=NULL, sd0B=NULL, tcutd1A=NULL, hd1A=NULL, 
-         sd1A=NULL, tcutd1B=NULL, hd1B=NULL, sd1B=NULL, tcutx0A=NULL, hx0A=NULL, 
-         sx0A=NULL, tcutx0B=NULL, hx0B=NULL, sx0B=NULL, tcutx1A=NULL, hx1A=NULL, 
-         sx1A=NULL, tcutx1B=NULL, hx1B=NULL, sx1B=NULL, 
-         noncompliance=c("none", "crossover", "mixed", "user"), 
-         gradual = FALSE, WtFun=c("FH","SFH","Ramp"), ppar=c(0, 0),
-         Boundary.Efficacy = c("Lan-Demets", "Haybittle"), 
-         Boundary.Futility = c("Lan-Demets", "Haybittle"),
-         Alpha.Efficacy=0,  Alpha.Futility=0, sided=c("2>","2<","1>","1<"),
-         RR.Futility=NULL, Spend.Info=c("Variance", "Events", "Hybrid(k)", "Calendar"),
-         Spending.Efficacy = c("Obrien-Fleming", "Pocock", "Power"), 
-         Spending.Futility = c("Obrien-Fleming", "Pocock", "Power"), 
-         rho.Efficacy=0, rho.Futility=0, b.Haybittle = 3.0,
-         rho.Eff.SC = 1.0, rho.Fut.SC = 1.0, V.end = NULL)  
-{
-    match.call()
+    .call. <- match.call()
+    normut <- 8.20953615160139
+    psimin <- 1.0e-15
+
+    if(missing(WtFun)) {
+      WtFun <- "FH"
+      wttyp <- 0
+      ppar <- c(0,0)
+      nstat <- 1
+    }
+    else{
+      if(missing(ppar) && any(WtFun!="FH"))
+        stop("You must specify parameters for the chosen weight function(s) in the 'ppar' argument.")
+      nstat <- length(WtFun)
+      wttyp <- charmatch(WtFun, c("FH", "SFH", "Ramp"))-1
+    }
+    nlook <- length(tlook)
+    tend <- tlook[nlook]
+    if (missing(sided)) sided <- "2>"
+    if(!(sided%in%c("2>","2<","1>","1<")))
+      stop("Argument 'sided' must be " %,% 
+           "equal to \"2>\", \"2<\", \"1>\" or \"1<\"")
+    sided <- c(2,-2, 1,-1)[grep(sided, c("2>","2<", "1>","1<"))]
+
+    call.PBS <- .call.
+    call.PBS[[1]] <- as.name("ParseBoundarySelection")
+
+    call.PBS$sided <- call.PBS$accru <- call.PBS$accrat <- call.PBS$tlook <- 
+    call.PBS$tcut0 <- call.PBS$h0 <- call.PBS$s0 <- call.PBS$tcut1 <- 
+    call.PBS$rhaz <- call.PBS$h1 <- call.PBS$s1 <- call.PBS$tcutc0 <-
+    call.PBS$hc0  <- call.PBS$sc0 <- call.PBS$tcutc1 <- call.PBS$hc1 <-
+    call.PBS$sc1 <- call.PBS$tcutd0A <- call.PBS$hd0A <- call.PBS$sd0A <-
+    call.PBS$tcutd0B <- call.PBS$hd0B <- call.PBS$sd0B <- call.PBS$tcutd1A <-
+    call.PBS$hd1A <- call.PBS$sd1A <- call.PBS$tcutd1B <- call.PBS$hd1B <- 
+    call.PBS$sd1B<- call.PBS$tcutx0A<- call.PBS$hx0A<- call.PBS$sx0A <-
+    call.PBS$tcutx0B <- call.PBS$hx0B<- call.PBS$sx0B<- call.PBS$tcutx1A <-
+    call.PBS$hx1A <- call.PBS$sx1A <- call.PBS$tcutx1B <- call.PBS$hx1B <-
+    call.PBS$sx1B <- call.PBS$noncompliance <- call.PBS$gradual <-
+    call.PBS$WtFun <- call.PBS$ppar <- call.PBS$Spend.Info <-
+    call.PBS$RR.Futility <- call.PBS$V.end <- call.PBS$qProp.one.or.Q <- NULL
+    call.PBS$n.looks <- nlook
+    call.PBS$check.drift <- FALSE
+    
+    eval.PBS <- eval(call.PBS)
+
+    do.efficacy <- TRUE
+    do.futility <- !is.null(eval.PBS$frontend$FutilityBoundary)
+
+    Alpha.Efficacy <- eval.PBS$backend$Alpha.Efficacy
+    Alpha.Futility <- eval.PBS$backend$Alpha.Futility
+    if(is.null(Alpha.Futility)) Alpha.Futility <- 0
+    nbnd.e <- eval.PBS$backend$nbnd.e
+    nbnd.f <- eval.PBS$backend$nbnd.f
+    nsf.e <- eval.PBS$backend$nsf.e
+    nsf.f <- eval.PBS$backend$nsf.f
+    rho.Efficacy <- eval.PBS$backend$rho.Efficacy
+    rho.Futility <- eval.PBS$backend$rho.Futility
+    b.Haybittle.e <- eval.PBS$backend$b.Haybittle.e
+    b.Haybittle.f <- eval.PBS$backend$b.Haybittle.f
+    drift.end <- eval.PBS$backend$drift.end
+    be.end <- eval.PBS$backend$be.end
+    prob.e <- eval.PBS$backend$prob.e
+    prob.f <- eval.PBS$backend$prob.f
+    my.Efficacy <- eval.PBS$backend$my.Efficacy
+    my.Futility <- eval.PBS$backend$my.Futility
+    is.myE <- !all(my.Efficacy==0)
+    is.myF <- !all(my.Futility==0)                                          
+
+    b.e <- rep(0, nlook)
+    if (is.myE) b.e <- my.Efficacy
+    
+    b.f <- rep(0, nlook)
+    if (is.myF) b.f <- my.Futility
+
+    Alpha.Efficacy <- Alpha.Efficacy/2^(abs(sided) == 2)
+    
+    no.SpndInfo <- missing(Spend.Info)
+    if(no.SpndInfo) Spend.Info <- "Variance"
+    if(!no.SpndInfo){
+      Spend.Info <- as.character(.call.$Spend.Info)
+      if(!(Spend.Info[1] %in% c("Variance", "Events", "Hybrid", "Calendar")))
+        stop("Argument 'Spend.Info' is an expression of the form 'Variance', 'Events', 'Hybrid(k)', or 'Calendar'")
+    }
+    spend.info <- grep(Spend.Info[1], c("Variance", "Events", "Hybrid", "Calendar")) - 1
+    spend.info.k <- 0
+    if(spend.info==2 && length(Spend.Info)>1) spend.info.k <- as.integer(as.numeric(Spend.Info[2])) - 1
+
+    user.V.end <- !missing(V.end)
+    if(!user.V.end) V.end <- 0
+
+    if(missing(qProp.one.or.Q))
+      qProp.one.or.Q <- 0
+    else{
+      if(!(qProp.one.or.Q %in% c("one","Q")))
+        stop("Argument 'qProp.one.or.Q' must be either \"one\" or \"Q\"")
+      qProp.one.or.Q <- grep(qProp.one.or.Q, c("one", "Q")) - 1
+    }
+
+    tcut.u <- sort(unique(c(tcut0, tcut1, tcutc0, tcutc1, tcutd0A, tcutd0B, tcutd1A, tcutd1B, tcutx0A,
+                                 tcutx0B, tcutx1A, tcutx1B)))
+    nunq <- length(tcut.u)
+
+    glegx <- glegx24
+    glegw <- glegw24
+
+    NGaussQ <- length(glegx)
+    stoh <- function(tcut, s)
+    {
+    	ncut <- length(tcut)
+    	Sold <- c(1, s[ - (ncut - 1)])
+    	dt <- diff(tcut)
+        log.0 <-
+          function(x)
+          {
+            y <- x*0
+            y[x>0] <- log(x[x>0])
+            y
+          }
+    	h <- log.0(s/Sold)/dt
+    	h
+    }
+
+    no.t0 <- missing(tcut0)
+    no.s0 <- missing(s0)
+    no.h0 <- missing(h0)
+    if((no.s0 && no.h0) || no.t0)
+    	stop("Must specify 'tcut0' and ('h0' or 's0').")
+    if(no.h0)
+    	h0 <- stoh(tcut0, s0)
+    ncut0 <- length(tcut0)
+
+    no.t1 <- missing(tcut1)
+    no.s1 <- missing(s1)
+    no.h1 <- missing(h1)
+    no.rhaz <- missing(rhaz)
+    if((no.s1 && no.rhaz && no.h1) || no.t1)
+    	stop("Must specify 'tcut1' and ('rhaz' or 'h1' or 's1').")
+    if(!no.s1)
+    	h1 <- stoh(tcut1, s1)
+    if(!no.rhaz){
+    	tcut.01 <- support(c(tcut0, tcut1))
+    	h0.01 <- approx(tcut0, h0, tcut.01, meth="constant", f=0, yleft=0, yright=h0[ncut0])$y
+    	rhaz.01 <- approx(tcut1, rhaz, tcut.01, meth="constant", f=0, yleft=0, yright=rhaz[length(rhaz)])$y
+    	tcut1 <- tcut.01
+    	h1 <- rhaz.01 * h0.01
+    }
+    ncut1 <- length(tcut1)
+
+    tlook.not <- tlook[sapply(tlook, FUN=function(x,Y){all(abs(x - Y)>1e-8)}, Y=tcut0)]
+    tcut0.new <- sort(unique(c(tcut0, tlook.not)))
+    ncut0.new <- length(tcut0.new)
+    h0.new <- approx(tcut0, h0, tcut0.new, meth="const", f=0, yleft=0, yright=h0[ncut0])$y
+    tcut0 <- tcut0.new
+    h0 <- h0.new
+    ncut0 <- ncut0.new
+
+    tlook.not <- tlook[sapply(tlook, FUN=function(x,Y){all(abs(x - Y)>1e-8)}, Y=tcut1)]    
+    tcut1.new <- sort(unique(c(tcut1, tlook.not)))
+    ncut1.new <- length(tcut1.new)
+    h1.new <- approx(tcut1, h1, tcut1.new, meth="const", f=0, yleft=0, yright=h1[ncut1])$y
+    tcut1 <- tcut1.new
+    h1 <- h1.new
+    ncut1 <- ncut1.new
+    
+    
+    use.rhaz.fu <- 0
+    if(missing(RR.Futility)){
+      RR.Futility <- rep(1,ncut0)
+      if(do.futility==1) use.rhaz.fu <- 1
+    }
+    if(length(RR.Futility)<ncut0) RR.Futility <- rep(RR.Futility[1], ncut0)
+    
+    no.tc0 <- missing(tcutc0)
+    no.sc0 <- missing(sc0)
+    no.hc0 <- missing(hc0)
+    if((no.sc0 && no.hc0) || no.tc0)
+    	stop("Must specify 'tcutc0' and ('hc0' or 'sc0').")
+    if(no.hc0)
+    	hc0 <- stoh(tcutc0, sc0)
+    ncutc0 <- length(tcutc0)
+
+    
+    no.tc1 <- missing(tcutc1)
+    no.sc1 <- missing(sc1)
+    no.hc1 <- missing(hc1)
+    if((no.sc1 && no.hc1) || no.tc1)
+    	stop("Must specify 'tcutc1' and ('hc1' or 'sc1').")
+    if(no.hc1)
+    	hc1 <- stoh(tcutc1, sc1)
+    ncutc1 <- length(tcutc1)
+    noncompliance <- as.character(.call.$noncompliance)
+    no.noncomp <- (length(noncompliance) == 0)
+    if(no.noncomp)
+    	noncompliance <- "none"
+    switch(noncompliance,
+      none =
+      {
+          tcutd0A <- 0
+          hd0A <- 1e-7
+          ncutd0A <- 1
+
+          tcutd0B <- 0
+    	  hd0B <- 1e-7
+    	  ncutd0B <- 1
+          
+          tcutd1A <- 0
+          hd1A <- 1e-7
+          ncutd1A <- 1
+
+          tcutd1B <- 0
+          hd1B <- 1e-7
+          ncutd1B <- 1
+
+          tcutx0A <- tcut0
+          hx0A <- h0
+          ncutx0A <- ncut0
+
+          tcutx0B <- tcut0
+          hx0B <- h0
+          ncutx0B <- ncut0
+
+          tcutx1A <- tcut1
+          hx1A <- h1
+          ncutx1A <- ncut1
+
+          tcutx1B <- tcut1
+          hx1B <- h1
+          ncutx1B <- ncut1
+      },
+      crossover =
+      {
+          no.td0B <- missing(tcutd0B)
+          no.sd0B <- missing(sd0B)
+          no.hd0B <- missing(hd0B)
+
+          no.td1B <- missing(tcutd1B)
+          no.sd1B <- missing(sd1B)
+          no.hd1B <- missing(hd1B)
+
+          no.dB <- (no.sd0B && no.hd0B) || (no.sd1B && no.hd1B) || 
+                      no.td0B || no.td1B
+          if(no.dB)
+              stop("crossover option requires specification of \n'tcutd0B', 'tcutd1B', ('hd0B' or 'sd0B') and " %,%
+                   "('hd1B' or 'sd1B').\n")
+
+          if(no.hd0B) hd0B <- stoh(tcutd0B, sd0B)
+          ncutd0B <- length(tcutd0B)
+
+          if(no.hd1B) hd1B <- stoh(tcutd1B, sd1B)
+          ncutd1B <- length(tcutd1B)
+
+          tcutd0A <- 0
+          hd0A <- 1e-7
+          ncutd0A <- 1
+
+          tcutd1A <- 0
+          hd1A <- 1e-7
+          ncutd1A <- 1
+
+          tcutx0A <- tcut0
+          hx0A <- h0
+          ncutx0A <- ncut0
+
+          tcutx1A <- tcut1
+          hx1A <- h1
+          ncutx1A <- ncut1
+
+          tcutx0B <- tcut1
+          hx0B <- h1
+          ncutx0B <- ncut1
+
+          tcutx1B <- tcut0
+          hx1B <- h0
+          ncutx1B <- ncut0
+      },
+      mixed =
+      {
+          no.td0A <- missing(tcutd0A)
+          no.sd0A <- missing(sd0A)
+          no.hd0A <- missing(hd0A)
+
+          no.td0B <- missing(tcutd0B)
+          no.sd0B <- missing(sd0B)
+          no.hd0B <- missing(hd0B)
+
+          no.td1A <- missing(tcutd1A)
+          no.sd1A <- missing(sd1A)
+          no.hd1A <- missing(hd1A)
+
+          no.td1B <- missing(tcutd1B)
+          no.sd1B <- missing(sd1B)
+          no.hd1B <- missing(hd1B)
+
+          no.tx0A <- missing(tcutx0A)
+          no.sx0A <- missing(sx0A)
+          no.hx0A <- missing(hx0A)
+
+          no.tx1A <- missing(tcutx1A)
+          no.sx1A <- missing(sx1A)
+          no.hx1A <- missing(hx1A)
+
+          no.dA <- (no.sd0A && no.hd0A) || (no.sd1A && no.hd1A) || 
+                               no.td0A || no.td1A
+          no.dB <- (no.sd0B && no.hd0B) || (no.sd1B && no.hd1B) || 
+                               no.td0B || no.td1B
+          no.xA <- (no.sx0A && no.hx0A) || (no.sx1A && no.hx1A) || 
+                               no.tx0A || no.tx1A
+          if(no.dA || no.dB || no.xA) 
+              stop("mixed option requires specification of \n'tcutd0A', 'tcutd1A', ('hd0A' or 'sd0A')," %,%
+                   " ('hd1A' or 'sd1A'),\n'tcutd0B', 'tcutd1B', ('hd0B' or 'sd0B')," %,%
+                   " ('hd1B' or 'sd1B'),\n'tcutx0A', 'tcutx1A', ('hx0A' or 'sx0A')," %,%
+                   " and ('hx1A' or 'sx1A').\n")
+
+          if(no.hd0A) hd0A <- stoh(tcutd0A, sd0A)
+          ncutd0A <- length(tcutd0A)
+
+          if(no.hd1A) hd1A <- stoh(tcutd1A, sd1A)
+          ncutd1A <- length(tcutd1A)
+
+          if(no.hd0B) hd0B <- stoh(tcutd0B, sd0B)
+          ncutd0B <- length(tcutd0B)
+
+          if(no.hd1B) hd1B <- stoh(tcutd1B, sd1B)
+          ncutd1B <- length(tcutd1B)
+
+          if(no.hx0A) hx0A <- stoh(tcutx0A, sx0A)
+          ncutx0A <- length(tcutx0A)
+
+          if(no.hx1A) hx1A <- stoh(tcutx1A, sx1A)
+          ncutx1A <- length(tcutx1A)
+
+          tcutx0B <- tcut1
+          hx0B <- h1
+          ncutx0B <- ncut1
+
+          tcutx1B <- tcut0
+          hx1B <- h0
+          ncutx1B <- ncut0
+      },
+      user =
+      {
+          no.td0A <- missing(tcutd0A)
+          no.sd0A <- missing(sd0A)
+          no.hd0A <- missing(hd0A)
+
+          no.td0B <- missing(tcutd0B)
+          no.sd0B <- missing(sd0B)
+          no.hd0B <- missing(hd0B)
+
+          no.td1A <- missing(tcutd1A)
+          no.sd1A <- missing(sd1A)
+          no.hd1A <- missing(hd1A)
+
+          no.td1B <- missing(tcutd1B)
+          no.sd1B <- missing(sd1B)
+          no.hd1B <- missing(hd1B)
+
+          no.tx0A <- missing(tcutx0A)
+          no.sx0A <- missing(sx0A)
+          no.hx0A <- missing(hx0A)
+
+          no.tx1A <- missing(tcutx1A)
+          no.sx1A <- missing(sx1A)
+          no.hx1A <- missing(hx1A)
+
+          no.tx0B <- missing(tcutx0B)
+          no.sx0B <- missing(sx0B)
+          no.hx0B <- missing(hx0B)
+
+          no.tx1B <- missing(tcutx1B)
+          no.sx1B <- missing(sx1B)
+          no.hx1B <- missing(hx1B)
+
+          no.dA <- (no.sd0A && no.hd0A) || (no.sd1A && no.hd1A) || 
+                               no.td0A || no.td1A
+          no.dB <- (no.sd0B && no.hd0B) || (no.sd1B && no.hd1B) || 
+                               no.td0B || no.td1B
+          no.xA <- (no.sx0A && no.hx0A) || (no.sx1A && no.hx1A) || 
+                               no.tx0A || no.tx1A
+          no.xB <- (no.sx0B && no.hx0B) || (no.sx1B && no.hx1B) || 
+                               no.tx0B || no.tx1B
+
+          if((no.dA || no.xA) && (no.dB || no.xB)) 
+              stop("user option requires specification of \n('tcutd0A', 'tcutd1A', ('hd0A' or 'sd0A')," %,%
+                   " ('hd1A' or 'sd1A') and\n'tcutx0A', 'tcutx1A', ('hx0A' or 'sx0A')," %,%
+                   " ('hx1A' or 'sx1A')) or \n('tcutd0B', 'tcutd1B', ('hd0B' or 'sd0B')," %,%
+                   " and ('hd1B' or 'sd1B') and\n 'tcutx0B', 'tcutx1B', ('hx0B' or 'sx0B')," %,%
+                   " and ('hx1B' or 'sx1B')).\n")
+
+          if(!no.dA) {
+              if(no.hd0A) hd0A <- stoh(tcutd0A, sd0A)
+                 ncutd0A <- length(tcutd0A)
+
+              if(no.hd1A) hd1A <- stoh(tcutd1A, sd1A)
+                  ncutd1A <- length(tcutd1A)
+
+              if(no.hx0A) hx0A <- stoh(tcutx0A, sx0A)
+                 ncutx0A <- length(tcutx0A)
+
+              if(no.hx1A) hx1A <- stoh(tcutx1A, sx1A)
+                 ncutx1A <- length(tcutx1A)
+
+              if(no.dB){
+                  tcutd0B <- 0
+                  hd0B <- 1e-7
+                  ncutd0B <- 1
+
+                  tcutd1B <- 0
+                  hd1B <- 1e-7
+                  ncutd1B <- 1
+
+                  tcutx0B <- tcut0
+                  hx0B <- h0
+                  ncutx0B <- ncut0
+
+                  tcutx1B <- tcut1
+                  hx1B <- h1
+                  ncutx1B <- ncut1
+              }
+          }
+          if(!no.dB){
+              if(no.hd0B) hd0B <- stoh(tcutd0B, sd0B)
+              ncutd0B <- length(tcutd0B)
+
+              if(no.hd1B) hd1B <- stoh(tcutd1B, sd1B)
+              ncutd1B <- length(tcutd1B)
+
+              if(no.hx0B) hx0B <- stoh(tcutx0B, sx0B)
+              ncutx0B <- length(tcutx0B)
+
+              if(no.hx1B) hx1B <- stoh(tcutx1B, sx1B)
+              ncutx1B <- length(tcutx1B)
+
+              if(no.dA){
+                  tcutd0A <- 0
+                  hd0A <- 1e-7
+                  ncutd0A <- 1
+
+                  tcutd1A <- 0
+                  hd1A <- 1e-7
+                  ncutd1A <- 1
+
+                  tcutx0A <- tcut0
+                  hx0A <- h0
+                  ncutx0A <- ncut0
+
+                  tcutx1A <- tcut1
+                  hx1A <- h1
+                  ncutx1A <- ncut1
+              }
+          }
+      })
+    nmax <- max(ncut0,ncut1,nlook)
+    cumsum.nppar <- 0
+    stat.nms <- NULL
+    for(j in 1:nstat){
+      prfx <- c("FH-", "SFH-", "R-")[1+wttyp[j]]
+      nppar <- c(2,3,1)[1+wttyp[j]]
+      ppar.j <- ppar[(cumsum.nppar+1):(cumsum.nppar+nppar)]
+      par.string <- glue.2.string(ppar.j, sep="|")
+      stat.nms <- c(stat.nms, prfx %,% par.string)
+      cumsum.nppar <- cumsum.nppar + nppar
+    }
+    nbetyp <- length(nbnd.e)
+    nbftyp <- length(nbnd.f)
+    nsum <- ncut0 + ncut1 + nlook - 2
+    ints <- c(nlook,nstat,NGaussQ,ncut0,ncut1,ncutc0,ncutc1,ncutd0A,ncutd0B,ncutd1A,
+              ncutd1B,ncutx0A,ncutx0B,ncutx1A,ncutx1B,gradual,nbnd.e,nbnd.f,
+              nsf.e,nsf.f,do.futility,use.rhaz.fu,spend.info,user.V.end,is.myE,is.myF,spend.info.k,
+              qProp.one.or.Q, sided, NonBindingFutility)        
+    ints.nms <- c("nlook","nstat","NGaussQ","ncut0","ncut1","ncutc0",
+                  "ncutc1","ncutd0A","ncutd0B","ncutd1A","ncutd1B","ncutx0A","ncutx0B",
+                  "ncutx1A","ncutx1B","gradual","nbnd.e." %,% (1:nlook),"nbnd.f." %,% (1:nlook),
+                  "nsf.e." %,% (1:nlook),"nsf.f." %,% (1:nlook),"do.futility","use.rhaz.fu",
+                  "spend.info","user.V.end","is.myE","is.myF","spend.info.k","qis1orQ","sided","nbf")
+
+    dbls <- c(accru, accrat, rho.Efficacy, rho.Futility, prob.e, prob.f)
+    ntrial <- floor(accru*accrat)
+    dbls.nms <- c("accru", "accrat", "rho.Efficacy." %,%(1:nlook), "rho.Futility." %,% (1:nlook),
+                  "prob.e." %,%(1:nlook), "prob.f." %,%(1:nlook))
+    
+    names(ints) <- ints.nms
+    ans <- .C(name = "AsyPwrGSD",
+    	ints = as.integer(ints),
+        dbls = as.double(dbls),
+        pttlook = as.double(tlook),
+    	palphatot = as.double(c(Alpha.Efficacy,Alpha.Futility)),
+    	lrrf = as.double(log(RR.Futility)),
+        bHay = as.double(c(b.Haybittle.e, b.Haybittle.f)),
+    	ppar = as.double(ppar),
+    	pgqxw = as.double(c(glegx,glegw)),
+    	tcut0 = as.double(tcut0),
+    	h0 = as.double(h0),
+    	tcut1 = as.double(tcut1),
+    	h1 = as.double(h1),
+    	tcutc0 = as.double(tcutc0),
+    	hc0 = as.double(hc0),
+    	tcutc1 = as.double(tcutc1),
+    	hc1 = as.double(hc1),
+    	tcutd0A = as.double(tcutd0A),
+    	hd0A = as.double(hd0A),
+    	tcutd0B = as.double(tcutd0B),
+    	hd0B = as.double(hd0B),
+    	tcutd1A = as.double(tcutd1A),
+    	hd1A = as.double(hd1A),
+    	tcutd1B = as.double(tcutd1B),
+    	hd1B = as.double(hd1B),
+    	tcutx0A = as.double(tcutx0A),
+    	hx0A = as.double(hx0A),
+    	tcutx0B = as.double(tcutx0B),
+    	hx0B = as.double(hx0B),
+    	tcutx1A = as.double(tcutx1A),
+    	hx1A = as.double(hx1A),
+    	tcutx1B = as.double(tcutx1B),
+    	hx1B = as.double(hx1B),
+        wttyp = as.integer(wttyp),
+        V.end = as.double(V.end),
+        pinffrac = double(nstat*nlook),
+        pinffrac.ii= double(nstat*nlook),
+    	pbounds = as.double(c(rep(b.e, nstat), rep(b.f, nstat))),  
+    	mufu = double(nstat*nlook),
+    	mu = double(nstat*nlook),
+    	palpha0vec = double(2*nstat*nlook),
+    	palpha1vec = double(2*nstat*nlook),
+    	RR = double(5*nsum),
+        pnnjmp = integer(1),
+        E.NT = double(nstat*nsum),
+        Var = double(nstat*nsum),
+        Eta = double(nstat*nsum),
+        tidx = integer(nlook),
+        betabdry = double(2*nstat*nlook),
+        bstar = double(2*nstat),
+    	PACKAGE = "PwrGSD")
+    detail <- ans
+    detail$ntrial <- ntrial
+    Pwr <- t(matrix(detail$palpha1vec,nlook,2*nstat))
+    dErrII <- Pwr[nstat + (1:nstat),,drop=FALSE]
+    Pwr <- Pwr[1:nstat,,drop=FALSE]
+    dimnames(dErrII) <- dimnames(Pwr) <- list(stat.nms,tlook)
+    njmp <- detail$pnnjmp
+    detail$pinffrac <- matrix(detail$pinffrac, nlook, nstat)
+    detail$pinffrac.ii <- matrix(detail$pinffrac.ii, nlook, nstat)
+    detail$pbounds <- matrix(detail$pbounds,nlook,2*nstat)
+    detail$betabdry <- matrix(detail$betabdry, nlook, 2*nstat)
+    detail$mu <- matrix(detail$mu, nlook, nstat)
+    detail$mufu <- matrix(detail$mufu, nlook, nstat)
+    detail$Var <- matrix(detail$Var[1:(njmp*nstat)], njmp, nstat)
+    detail$Eta <- matrix(detail$Eta[1:(njmp*nstat)], njmp, nstat)
+    detail$palpha0vec <- matrix(detail$palpha0vec, nlook, 2*nstat)
+    detail$palpha1vec <- matrix(detail$palpha1vec, nlook, 2*nstat)
+    detail$RR <- matrix(detail$RR[1:(5*njmp)],njmp,5)
+    detail$E.NT <- 4*matrix(detail$E.NT[1:(njmp*nstat)], njmp, nstat)
+    detail$tidx <- detail$tidx + 1
+    detail$bstar <- matrix(detail$bstar[1:(2*nstat)], nstat, 2)
+    dimnames(detail$pinffrac) <-
+    dimnames(detail$pinffrac.ii) <-
+    dimnames(detail$mu) <- list(tlook, stat.nms)
+    dimnames(detail$mufu) <- list(tlook, stat.nms)
+    dimnames(detail$Var) <-
+    dimnames(detail$Eta) <-
+    dimnames(detail$E.NT) <- list(round(detail$RR[,1],7), stat.nms)
+    dimnames(detail$pbounds) <- 
+    dimnames(detail$betabdry) <- 
+    dimnames(detail$palpha0vec) <- 
+    dimnames(detail$palpha1vec) <- list(tlook, c(outer(stat.nms,c("-e","-f"),
+    				    FUN="%,%")))
+    dimnames(detail$RR) <- list(rep("",njmp), c("t","htlde0","RRtlde","h0","RR"))
+    dimnames(detail$bstar) <- list(stat.nms, c("bstartlde","bstar"))
+    names(detail$ints) <- ints.nms
+    names(detail$dbls) <- dbls.nms
+
+    detail$Var.nlook <- with(detail, Var[tidx,])
+    detail$Eta.nlook <- with(detail, Eta[tidx,])
+    detail$RR.nlook <- with(detail, RR[tidx,])
+    detail$E.NT.nlook <- with(detail, E.NT[tidx,])
+    
+    out <- list(dPower = Pwr, dErrorII = dErrII, detail = detail,call=.call.)
+    class(out) <- "PwrGSD"
+    out
 }
 
 "print.PwrGSD" <- function (x, ...)
@@ -755,7 +665,7 @@ function(accru,accrat,tlook, tcut0=NULL,h0=NULL,s0=NULL,tcut1=NULL,
 		     y <- a
         	     if(!do.futility) y <- c(a[-n], 1 - sum(a[-n]))
         	     sum(y * b)
-    		}, b = eval(x$call$tlook), do.futility=do.futility))
+    		}, b = eval(x$detail$pttlook), do.futility=do.futility))
     eII <- c(dErrII %*% rep(1, nlook))
     stat.nms <- dimnames(x$dPower)[[1]]
     ans <- cbind(pwr, eII, ed)
@@ -771,7 +681,7 @@ function(object, ...)
     nstat <- object$detail$ints[2]
     pwr <- c(object$dPower %*% rep(1,nlook))
     dErrII <- 0*object$dPower
-    do.futility <- (x$detail$ints["do.futility"]==1)
+    do.futility <- (object$detail$ints["do.futility"]==1)
     if(do.futility) dErrII <- object$dErrorII
     ed <- c(apply(object$dPower + dErrII, 1, 
 	  FUN=function(x, v, do.futility)
@@ -885,33 +795,64 @@ function(x, row.names, optional, ...)
     ans
 }
 
-"Power" <-
-function(object, subset){
-  m <- .call. <- match.call()
-  
-  m1 <- .call.
-  m1[[1]] <- as.name("Elements")
-  m1 <- eval(m1, sys.parent())
-  descr <- m1$descr
-  n <- length(m1$Elements)
-  nlook <- object$Elements[[1]]$detail$ints["nlook"]
-  Pow <- matrix(0, n, 2)
-  m1 <- as.data.frame(m1)
-  for(k in 1:n)
-    Pow[k,] <- rep(1,nlook)%*%as.matrix(m1[nlook*(k-1) + 1:nlook,c("dP", "dE")])
+"Power" <- 
+function (object, subset, nlook.ind=NULL) 
+{
+    object.df <- as.data.frame(object)
+    
+    m <- .call. <- match.call()
+    m1 <- .call.
+    m1[[1]] <- as.name("model.frame")
+    m1$object <- m1$nlook.ind <- NULL
+    m1$data <- as.name("object.df")
+    m1$formula <- ~.
+    m1 <- eval(m1)
+    nc.m1 <- ncol(m1)
+    nr.m1 <- nrow(m1)
+    descr <- with(m1, m1[nlook==1,1:(nc.m1-6)])    
+    n.look <- length(unique(m1$nlook))
+    n.stat <- length(unique(m1$stat))
+    n.scen <- nr.m1/(n.look*n.stat)
+    Pow <- NULL
+    if(missing(nlook.ind)) nlook.ind <- 1:n.look
+    n.ind <- length(nlook.ind)
+    for (k in 1:n.scen)
+      for (j in 1:n.stat)
+      {
+        Pow <- rbind(Pow, rep(1, n.ind) %*% as.matrix(m1[n.look*n.stat*
+          (k - 1) + n.look*(j-1) + nlook.ind, c("dP", "dE")]))
+      }
+    dimnames(Pow)[[2]] <- c("Power", "Type II error")
+    ans <- list(table = cbind(descr, Pow), call = .call.)
+    ans
+}
 
-  dimnames(Pow)[[2]] <- c("Power","Type II error")
-  
-  ans <- list(table=cbind(descr, Pow), call=.call.)
-  ans
+"PwrGSDcall" <- 
+function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
+         FutilityBoundary = LanDemets(alpha=0.10,spending=ObrienFleming),
+         sided =c("2>", "2<", "1>", "1<"),method=c("S","A"),accru,accrat,tlook,
+         tcut0 = NULL,h0 = NULL,s0 = NULL,tcut1 = NULL,rhaz = NULL,
+         h1 = NULL,s1 = NULL,tcutc0 = NULL,hc0 = NULL,sc0 = NULL,tcutc1 = NULL,hc1 = NULL,
+         sc1 = NULL,tcutd0A = NULL,hd0A = NULL,sd0A = NULL,tcutd0B = NULL,hd0B = NULL,sd0B = NULL,
+         tcutd1A = NULL,hd1A = NULL,sd1A = NULL,tcutd1B = NULL,hd1B = NULL,sd1B = NULL,
+         tcutx0A = NULL,hx0A = NULL,sx0A = NULL,tcutx0B = NULL,hx0B = NULL,sx0B = NULL,
+         tcutx1A = NULL,hx1A = NULL,sx1A = NULL,tcutx1B = NULL,hx1B = NULL,sx1B = NULL,
+         noncompliance = c("none","crossover","mixed","user"),gradual = FALSE,
+         WtFun = c("FH","SFH","Ramp"),ppar = cbind(c(0,0)),
+         Spend.Info=c("Variance","Events","Hybrid(k)","Calendar"),
+         RR.Futility = NULL,qProp.one.or.Q = c("one","Q"),Nsim=NULL,
+         detail = FALSE,StatType = c("WLR","ISD"))
+{
+  match.call()
 }
 
 "GrpSeqBnds"<-
 function (EfficacyBoundary = LanDemets(alpha=0.05, spending=ObrienFleming),
           FutilityBoundary = LanDemets(alpha=0.10, spending=ObrienFleming),
-          frac, frac.ii = NULL, drift = rep(0, length(frac)))
+          NonBindingFutility=TRUE, frac, frac.ii = NULL, drift = NULL)
 {
     .call. <- match.call()
+    
     is.frac.ii <- TRUE
     if (missing(frac.ii)) {
         frac.ii <- frac
@@ -922,97 +863,45 @@ function (EfficacyBoundary = LanDemets(alpha=0.05, spending=ObrienFleming),
     normut <- 8.20953615160139
     psimin <- 1e-15
     nlooks <- length(frac)
-    
-# determine type of Efficacy Boundary Specification
-    mode.E <- "WRONG"
-    BE.missing <- missing(EfficacyBoundary)
-    if(BE.missing) mode.E <- "NULL"
-    if(!BE.missing){
-      try.BE <- try(EfficacyBoundary, silent=TRUE)
-      if(is.null(attr(try.BE, "class"))) mode.E <- mode(EfficacyBoundary)
-      else if(attr(try.BE, "class")=="try-error") mode.E <- "call"
-    }
-    if (!(mode.E %in% c("call", "numeric", "NULL"))) 
-      stop("Argument 'EfficacyBoundary' must be of mode 'call', 'numeric' or 'NULL'")
-    is.myE <- FALSE
-    n.myE <- 0
-    if (mode.E == "numeric") {
-      n.myE <- length(EfficacyBoundary)
-      is.myE <- TRUE
-      my.Efficacy <- EfficacyBoundary
-      .call.$EfficacyBoundary <- as.call(expression(LanDemets, alpha=0.05, spending=ObrienFleming))
-    }
-    do.efficacy <- !BE.missing || is.myE
-    if (mode.E == "NULL" && do.efficacy) 
-      .call.$EfficacyBoundary <- as.call(expression(LanDemets, alpha=0.05, spending=ObrienFleming))
-    
- # determine type of Futility Boundary Specification
-    mode.F <- "WRONG"
-    BF.missing <- missing(FutilityBoundary)
-    if(BF.missing) mode.F <- "NULL"
-    if(!BF.missing){
-      try.BF <- try(FutilityBoundary, silent=TRUE)
-      if(is.null(attr(try.BF, "class"))) mode.F <- mode(FutilityBoundary)
-      else if(attr(try.BF, "class")=="try-error") mode.F <- "call"
-    }
-    if (!(mode.F %in% c("call", "numeric", "NULL"))) 
-      stop("Argument 'FutilityBoundary' must be of mode 'call', 'numeric' or 'NULL'")
-    is.myF <- FALSE
-    n.myF <- 0
-    if (mode.F == "numeric") {
-      n.myF <- length(FutilityBoundary)
-      is.myF <- TRUE
-      my.Futility <- FutilityBoundary
-      .call.$FutilityBoundary <- as.call(expression(LanDemets, alpha=0.10, spending=ObrienFleming))
-    }
-    do.futility <- !BF.missing || is.myF
-    if(!do.futility) Alpha.Futility <- psimin
-    if (mode.F == "NULL")
-      .call.$FutilityBoundary <- as.call(expression(LanDemets, alpha=0.10, spending=ObrienFleming))
-    
-# Parse Boundary Methods:
-    ..call. <- .call.
-    ..call.[[1]] <- as.name("ParseBoundaryMethods")
-    nms.call <- names(..call.)[-1]
-    ind.del <- which(!(nms.call %in% c("EfficacyBoundary", "FutilityBoundary")))
-    for(k in -sort(-ind.del))
-      ..call.[[1+k]] <- NULL
-    ..call.$nlooks <- nlooks
-    eval(..call.)
 
-# Result:  Now the following are defined within this scope:
-#
-#   Alpha.Efficacy, Alpha.Futility, nbnd.e, nbnd.f, nsf.e, nsf.f, rho.Efficacy, rho.Futility,
-#   b.Haybittle, drift.end, crit.e, crit.f
-#
+    call.PBS <- .call.
+    call.PBS[[1]] <- as.name("ParseBoundarySelection")
+    call.PBS$frac <- call.PBS$frac.ii <- NULL
+    call.PBS$check.drift <- TRUE
+    call.PBS$n.looks <- nlooks
+    eval.PBS <- eval(call.PBS)
+    do.efficacy <- TRUE
+    do.futility <- !is.null(eval.PBS$frontend$FutilityBoundary)
+    is.drift <- !missing(drift)
+    nbf <- do.futility && NonBindingFutility
+    if(!do.futility)
+      drift <- rep(0, nlooks)
 
-    # for the time being
-#   nbnd.e <- nbnd.e[1]
-#   nbnd.f <- nbnd.f[1]
-#   nsf.e <- nsf.e[1]
-#   nsf.f <- nsf.f[1]
-#   rho.Efficacy <- rho.Efficacy[1]
-#   rho.Futility <- rho.Futility[1]
-#   b.Haybittle <- b.Haybittle[1]
-#   drift.end <- drift.end[1]
-#   crit.e <- crit.e[1]
-#   crit.f <- crit.f[1]
-    # until I implement changing boundary types
-    
-    if (!do.efficacy && !do.futility) 
-        stop("You must specify one or both of the arguments 'EfficacyBoundary' and 'FutilityBoundary', " %,% 
-             "see the documentation")
-    
-    if (is.myE && (n.myE != nlooks)) 
-        stop("User supplied efficacy boundary in 'EfficacyBoundary' must be of the same length as 'frac'")
-    if (is.myF && (n.myF != nlooks)) 
-        stop("User supplied futility boundary in 'FutilityBoundary' must be of the same length as 'frac'")
+    Alpha.Efficacy <- eval.PBS$backend$Alpha.Efficacy
+    Alpha.Futility <- eval.PBS$backend$Alpha.Futility
+    if(is.null(Alpha.Futility)) Alpha.Futility <- 0
+    nbnd.e <- eval.PBS$backend$nbnd.e
+    nbnd.f <- eval.PBS$backend$nbnd.f
+    nsf.e <- eval.PBS$backend$nsf.e
+    nsf.f <- eval.PBS$backend$nsf.f
+    rho.Efficacy <- eval.PBS$backend$rho.Efficacy
+    rho.Futility <- eval.PBS$backend$rho.Futility
+    b.Haybittle.e <- eval.PBS$backend$b.Haybittle.e
+    b.Haybittle.f <- eval.PBS$backend$b.Haybittle.f
+    drift.end <- eval.PBS$backend$drift.end
+    be.end <- eval.PBS$backend$be.end
+    prob.e <- eval.PBS$backend$prob.e
+    prob.f <- eval.PBS$backend$prob.f
+    my.Efficacy <- eval.PBS$backend$my.Efficacy
+    my.Futility <- eval.PBS$backend$my.Futility
+    is.myE <- !all(my.Efficacy==0)
+    is.myF <- !all(my.Futility==0)
+
     nunq <- nlooks
     glegx <- glegx24
     glegw <- glegw24
     ngqnodes <- length(glegx)
-    nbnd.e.sv <- nbnd.e
-    nbnd.f.sv <- nbnd.f
+
     b.e <- alpha.e <- rep(0, nlooks)
     b.f <- alpha.f <- rep(0, nlooks)
     l <- 1
@@ -1022,66 +911,64 @@ function (EfficacyBoundary = LanDemets(alpha=0.05, spending=ObrienFleming),
     fracold.ii <- rep(0, 2)
     fracnew <- frac[1]
     fracnew.ii <- frac.ii[1]
-#    sc.drift.factor <- max(frac.ii)^0.5
+
     sc.drift.factor <- 1
-    mu <- drift[1]
-    mu.end <- drift.end[1]
-    if (nbnd.e[1] == 1 || nbnd.e.sv[1] == 3)
+    mu.end <- drift.end
+  
+    if (nbnd.e[1] != 2)
         bold.e <- normut
     if (nbnd.e[1] == 2)
-        bold.e <- b.Haybittle[l]
-    if (nbnd.f[1] == 1 || nbnd.f.sv[1] == 3)
+        bold.e <- b.Haybittle.e[1]
+    if (nbnd.f[1] != 2)
         bold.f <- -normut
     if (nbnd.f[1] == 2) 
-        bold.f <- b.Haybittle[l]
+        bold.f <- b.Haybittle.f[1]
     y.e <- tmp.e <- rep(0, ngqnodes)
     y.f <- tmp.f <- rep(0, ngqnodes)
     x.e <- intgrndx.e <- rep(0, ngqnodes)
     x.f <- intgrndx.f <- rep(0, ngqnodes)
-    if (nbnd.e.sv[1] == 3) 
+    if (nbnd.e[1] == 3)
         my.Efficacy <- rep(0, nlooks)
-    if (nbnd.f.sv[1] == 3) 
+    if (nbnd.f[1] == 3) 
         my.Futility <- rep(0, nlooks)
     while (l <= nlooks) {
-        if (nbnd.e.sv[l] == 3) {
+      mu <- drift[l]
+        if (nbnd.e[l] == 3) {
             my.Efficacy[l] <-
               .C("StCu2Bnds",
                  pmu = double(2),
                  pfrac = as.double(fracnew.ii),
-                 palpha = as.double(c(Alpha.Efficacy,Alpha.Futility)),
-                 psided = as.integer(1),
-                 prho = as.double(crit.e[l]),
+                 pzcrit = as.double(be.end),
+                 prho = as.double(prob.e[l]),
                  pef = as.integer(0),
                  b = double(1),
                  PACKAGE = "PwrGSD")$b
             is.myE <- TRUE
-            nbnd.e[l] <- 1
             nsf.e[l] <- 1
         }
-        if (nbnd.f.sv[l] == 3) {
+        if (nbnd.f[l] == 3) {
             my.Futility[l] <-
               .C("StCu2Bnds",
                  pmu = as.double(c(mu,mu.end)*sc.drift.factor),
                  pfrac = as.double(fracnew.ii),
-                 palpha = as.double(c(Alpha.Efficacy, Alpha.Futility)),
-                 psided = as.integer(1),
-                 prho = as.double(crit.f[l]), 
+                 pzcrit = as.double(be.end),
+                 prho = as.double(prob.f[l]), 
                  pef = as.integer(1),
                  b = double(1),
                  PACKAGE = "PwrGSD")$b
             is.myF <- TRUE
-            nbnd.f[l] <- 1
             nsf.f[l] <- 1
         }
         bnew <- c(normut, -normut)
-        if (is.myE || nbnd.e.sv[l] == 3) 
+        if (nbnd.e[l] == 3 || nbnd.e[l] == 4) 
             bnew[1] <- my.Efficacy[l]
-        if ((is.myF || nbnd.f.sv[l] == 3) && (1 - fracnew.ii >= 
+        if ((nbnd.f[l] == 3 || nbnd.f[l] == 4) && (1 - fracnew.ii >= 
             1e-06)) 
             bnew[2] <- my.Futility[l]
 
         ans <- .C("grpseqbnds",
-                  do.futility = as.integer(do.futility), 
+                  do.futility = as.integer(do.futility),
+                  nbf = as.integer(nbf),
                   nbnd = as.integer(c(nbnd.e[l], nbnd.f[l])),
                   nsf = as.integer(c(nsf.e[l],nsf.f[l])),
                   rho = as.double(c(rho.Efficacy[l], rho.Futility[l])), 
@@ -1106,15 +993,17 @@ function (EfficacyBoundary = LanDemets(alpha=0.05, spending=ObrienFleming),
                   mybounds = as.integer(c(is.myE, is.myF)),
                   PACKAGE = "PwrGSD")
         dlact <- ans$dlact
-        if (dlact[1] == 1) {
-            if (nbnd.e[l] == 1) 
+        if (dlact[1] == 1)
+        {
+            if (nbnd.e[l] == 1 || nbnd.e[l] == 3 || nbnd.e[l] == 4) 
                 b.e[l] <- bold.e <- ifelse(is.myE, bnew[1], ans$bnew[1])
-            if (nbnd.e[l] == 2) {
+            if (nbnd.e[l] == 2)
+            {
                 if (1 - fracnew.ii >= 1e-06) {
-                  b.e[l] <- bold.e <- b.Haybittle[l]
+                  b.e[l] <- bold.e <- b.Haybittle.e[l]
                   Alpha.Efficacy <- Alpha.Efficacy - ans$palpha[1]
                 }
-                else b.e[l] <- ans$bnew[1]
+              else b.e[l] <- ans$bnew[1]
             }
             alpha.e[l] <- ans$palpha[1]
             x.e <- ans$x[1:ngqnodes]
@@ -1123,18 +1012,19 @@ function (EfficacyBoundary = LanDemets(alpha=0.05, spending=ObrienFleming),
             fracold.ii[1] <- ans$pfracnew.ii
             l.act.e <- l.act.e + 1
         }
-        else {
+        else
+        {
             b.e[l] <- bold.e <- ifelse(is.myE, bnew[1], normut)
             alpha.e[l] <- ifelse(is.myE, ans$palpha[1], psimin)
             fracold.ii[1] <- ans$pfracnew.ii
         }
         if (do.futility && dlact[2] == 1) {
-            if (nbnd.f[l] == 1) 
-                b.f[l] <- bold.f <- ifelse(is.myF && (1 - fracnew.ii >= 1e-06),
+            if (nbnd.f[l] == 1 || nbnd.f[l] == 3 || nbnd.f[l] == 4) 
+                b.f[l] <- bold.f <- ifelse((nbnd.f[l] == 3|| nbnd.f[l] == 4) && (1 - fracnew.ii >= 1e-06),
                                            bnew[2], ans$bnew[2])
             if (nbnd.f[l] == 2) {
                 if (l < nlooks) {
-                  b.f[l] <- bold.f <- b.Haybittle[l]
+                  b.f[l] <- bold.f <- b.Haybittle.f[l]
                   Alpha.Futility <- Alpha.Futility - ans$palpha[2]
                 }
                 else b.f[l] <- ans$bnew[2]
@@ -1171,414 +1061,382 @@ function (EfficacyBoundary = LanDemets(alpha=0.05, spending=ObrienFleming),
     ans
 }
 
-"ParseBoundaryMethods" <- 
-function(EfficacyBoundary, FutilityBoundary, nlooks)
+"ParseBoundarySelection" <- 
+function(EfficacyBoundary,  n.looks, check.drift=FALSE, NonBindingFutility=NULL,
+         FutilityBoundary=NULL, drift=NULL)
 {
-  .call. <- match.call()
-  nbnd.e <- nbnd.f <- nsf.e <- nsf.f <- rho.Efficacy <- rho.Futility <-
-  b.Haybittle <- drift.end <- crit.e <- crit.f <- from.e <- to.e <- 
-  from.f <- to.f <- -9999
-
-  do.efficacy <- TRUE
-  do.futility <- TRUE
-  if(missing(EfficacyBoundary)){
-    do.efficacy <- FALSE
-    .call.$EfficacyBoundary <- as.call(expression(LanDemets,alpha=0.05, spending=ObrienFleming))
+  m <- m.sv <- match.call()
+  if(missing(NonBindingFutility)) NonBindingFutility <- TRUE
+  do.efficacy <- !missing(EfficacyBoundary)
+  if(!do.efficacy)
+    stop("The argument 'EfficacyBoundary' which specifies the Efficacy Boundary construction " %,%
+         "method, must be specified")
+  do.futility <- !missing(FutilityBoundary)
+  is.drift <- !missing(drift)
+  n.drift <- 0
+  if(is.drift) n.drift <- length(eval(drift))
+  if(do.futility && check.drift)
+  {
+    if(!is.drift)
+      stop("In order to construct a futility boundary, you must specify the 'drift' argument. " %,%
+           "This is the expected value under the design alternative of the statistic, normalized " %,%
+           "to have variance equal to information fraction")
+    if(is.drift && n.drift != n.looks)
+      stop("The argument 'drift' must be equal in length to that of the argument 'frac'")        
   }
-  if(missing(FutilityBoundary)){
-    do.futility <- FALSE
-    .call.$FutilityBoundary <- as.call(expression(LanDemets,alpha=0.10, spending=ObrienFleming))
-  }
 
-  if(as.character(.call.$EfficacyBoundary)[1]=="c"){
-    n.BE.types <- length(.call.$EfficacyBoundary) - 1
-    nbnd.e <- nsf.e <- rho.Efficacy <- b.Haybittle <- crit.e <- from.e <- 
-    to.e <- rep(-9999, n.BE.types)
-    for(k in 1:n.BE.types){
-      .call.k <- .call.$EfficacyBoundary[[k+1]]
-      BE.type.nm <- as.character(.call.k)[1]
-      if(!(BE.type.nm %in% c("LanDemets", "Haybittle", "SC")))
-        stop("Boundary type must be one of the following: 'LanDemets()', 'Haybittle()' or 'SC()'")
-      nbnd.e[k] <- grep(as.character(.call.k)[1], c("LanDemets", "Haybittle", "SC"))
-      if(nbnd.e[k]==1){
-        BE.type.class <- class(.call.k)
-        if(k==1 && BE.type.class!="call")
-          stop("You must set a value for 'alpha' total probability of type I error in the " %,%
-	       "call to the 'LanDemets()' method")
-        if(BE.type.class=="name") nsf.e[k] <- 1
-        if(BE.type.class=="call"){
-          BEarg.nms <- names(.call.k)
-          if(is.null(BEarg.nms))
-            stop("Arguments to 'LanDemets()' must be named")
-          if(!("spending" %in% BEarg.nms))
-            stop("The 'LanDemets()' method requires you to set the argument 'spending' within " %,%
-                 "the call to that method")
-          SE.type.nm <- as.character(.call.k$spending)[1]
-          if(!(SE.type.nm %in% c("ObrienFleming", "Pocock", "Power")))
-            stop("Argument 'spending' must be one of the following: ObrienFleming, Pocock, or Power(rho)")
-          nsf.e[k] <- grep(SE.type.nm, c("ObrienFleming", "Pocock", "Power"))
-          if(nsf.e[k]==3){
-            PE.type.class <- class(.call.k$spending)
-            if(PE.type.class!="call")
-              stop("The Power spending function requires you to set the argument 'rho' within " %,%
-                   "the call")
-            rho.Efficacy[k] <- eval(.call.k$spending[[2]])
+  EB <- eval(m$EfficacyBoundary)
+  n.types <- 1
+  mode.EB <- mode(EB)
+  if(mode.EB=="numeric")
+  {
+    m <- eval(parse(text="as.call(expression(c," %,% paste(EB, collapse=", ") %,% "))"))
+    .eb. <- list(type="numeric", value=EB, len=length(EB), call=m)
+    class(.eb.) <- "boundary.construction.method"
+  }
+  if(mode.EB!="numeric")
+  {
+    if(length(EB[[1]])>1)
+    {
+      n.types <- length(EB)
+      .eb. <- list()
+      for(k in 1:n.types)
+      {
+        mode.k <- mode(EB[[k]])
+        if(mode.k=="numeric")
+        {
+          m <- eval(parse(text="as.call(expression(c," %,% paste(EB[[k]], collapse=", ") %,% "))"))
+          .eb.[[k]] <- list(type="numeric", value=EB[[k]], len=length(EB[[k]]), call=m)
+          class(.eb.[[k]]) <- "boundary.construction.method"
+        }
+        if(mode.k!="numeric")
+        {
+          type.EB.k <- as.character(EB[[k]][[1]])
+          if(!(type.EB.k %in% c("LanDemets", "Haybittle", "SC")))
+          stop("Boundary type must be one of the following: 'LanDemets()'," %,%
+               "'Haybittle()' or 'SC()'")
+          .eb.[[k]] <- EB[[k]]
+          .eb.[[k]]$type <- type.EB.k
+        }
+      }
+      if((is.null(.eb.[[k]]$from) || is.null(.eb.[[k]]$to)) && is.null(.eb.[[k]]$len))
+          stop("Split boundary definition require the specifification of either" %,% 
+               "the pair of arguments 'from' and 'to' or the 'len' argument")
+    }
+    else
+    {
+      type.EB <- as.character(m$EfficacyBoundary[[1]])
+      if(!(type.EB %in% c("LanDemets", "Haybittle", "SC")))
+        stop("Boundary type must be one of the following: 'LanDemets()'," %,%
+             "'Haybittle()' or 'SC()'")
+      .eb. <- EB
+      .eb.$type <- type.EB
+    }
+  }
+  if(n.types==1) .eb. <- list(.eb.)
+  EB <- .eb.
+
+  m <- m.sv
+  
+  if(do.futility)
+  {
+    FB <- eval(m$FutilityBoundary)
+    n.types <- 1
+    mode.FB <- mode(FB)
+    if(mode.FB=="numeric")
+    {
+      m <- eval(parse(text="as.call(expression(c," %,% paste(FB, collapse=", ") %,% "))"))
+      .fb. <- list(type="numeric", value=FB, len=length(FB), call=m)
+      class(.fb.) <- "boundary.construction.method"
+    }
+    if(mode.FB!="numeric")
+    {
+      if(length(FB[[1]])>1)
+      {
+        n.types <- length(FB)
+        .fb. <- list()
+        for(k in 1:n.types)
+        {
+          mode.k <- mode(FB[[k]])
+          if(mode.k=="numeric")
+          {
+            m <- eval(parse(text="as.call(expression(c," %,% paste(FB[[k]], collapse=", ") %,% "))"))
+            .fb.[[k]] <- list(type="numeric", value=FB[[k]], len=length(FB[[k]]), call=m)
+            class(.fb.[[k]]) <- "boundary.construction.method"
           }
-          if(k==1 && !("alpha" %in% BEarg.nms))
-            stop("You must set a value for 'alpha' total probability of type I error in the " %,%
-	         "first call to the 'LanDemets()' method")
-          if(k==1) Alpha.Efficacy <- eval(.call.k$alpha)
-        }
-      }
-      if(nbnd.e[k]==2){
-        BE.type.class <- class(.call.k)
-        if(BE.type.class!="call")
-          stop("The 'Haybittle()' method requires you to set the argument(s) 'b.Haybittle' and " %,%
-               " 'alpha' if it is the first listed method, within the call")
-        else{
-          BEarg.nms <- names(.call.k)
-          if(is.null(BEarg.nms))
-            stop("Arguments to 'Haybittle()' must be named")
-          if(!("b.Haybittle" %in% BEarg.nms))
-            stop("The 'Haybittle()' method requires you to set the argument 'b.Haybittle' within " %,%
-	         "the call to that method")
-          b.Haybittle[k] <- eval(.call.k$b.Haybittle)
-          if(k==1 && !("alpha" %in% BEarg.nms))
-            stop("You must set a value for 'alpha' total probability of type I error in the " %,%
-	         "first call to the 'Haybittle()' method")
-          if(k==1) Alpha.Efficacy <- eval(.call.k$alpha)
-        }
-      }
-      if(nbnd.e[k]==3){
-        BE.type.class <- class(.call.k)
-        if(BE.type.class!="call")
-          stop("The 'SC()' method requires you to set the argument 'crit' within the call to " %,%
-               "that method")
-        else{
-          BEarg.nms <- names(.call.k)
-          if(is.null(BEarg.nms))
-            stop("Argument to 'SC()' must be named")
-          if(!("crit" %in% BEarg.nms))
-	    stop("The 'SC()' method requires you to set the argument 'crit' within the call to " %,%
-                 "that method")
-          crit.e[k] <- eval(.call.k$crit)
-          if(k==1 && !("alpha" %in% BEarg.nms))
-            stop("You must set a value for 'alpha' total probability of type I error in the " %,%
-	         "first call to the 'SC()' method")
-          if(k==1) Alpha.Efficacy <- eval(.call.k$alpha)
-        }
-      }
-      if(BE.type.class=="call"){
-        is.from <- ("from" %in% BEarg.nms)
-        is.to <- ("to" %in% BEarg.nms)
-        if(!is.from || !is.to) 
-          stop("You must specify both 'from' and 'to' within each efficacy boundary specification")
-        from.e[k] <- eval(.call.k$from)
-	to.e[k] <- eval(.call.k$to)
-      }
-    }
-    covered <- apply(t(matrix(c(from.e,to.e),n.BE.types,2)), 2, FUN=function(x)x[1]:x[2])
-    unl.covered <- unlist(covered)
-    covered.all <- all(diff(unl.covered)==1) 
-    first.is.1 <- from.e[1]==1
-    right.length <- length(unl.covered)==nlooks
-    covered.all <- covered.all && first.is.1 && right.length
-    if(!covered.all) 
-      stop("Your efficacy boundary specification does not cover the full schedule of analyses thus far")
-    tmp <- matrix(NA, 5, nlooks)
-    for(k in 1:n.BE.types){
-      tmp[1,covered[[k]]] <- nbnd.e[k]
-      tmp[2,covered[[k]]] <- nsf.e[k]
-      tmp[3,covered[[k]]] <- rho.Efficacy[k]
-      tmp[4,covered[[k]]] <- b.Haybittle[k]
-      tmp[5,covered[[k]]] <- crit.e[k]
-    }
-    nbnd.e <- tmp[1,]
-    nsf.e <- tmp[2,]
-    rho.Efficacy <- tmp[3,]
-    b.Haybittle <- tmp[4,]
-    crit.e <- tmp[5,]
-  }
-  else{
-    BE.type.nm <- as.character(.call.$EfficacyBoundary)[1]
-    if(!(BE.type.nm %in% c("LanDemets", "Haybittle", "SC")))
-      stop("Boundary type must be one of the following: 'LanDemets()', 'Haybittle()' or 'SC()'")
-    nbnd.e <- grep(as.character(.call.$EfficacyBoundary)[1], c("LanDemets", "Haybittle", "SC"))
-    if(nbnd.e==1){
-      BE.type.class <- class(.call.$EfficacyBoundary)
-      if(BE.type.class!="call")
-        stop("You must set the argument 'alpha', total probability of type I error, and the " %,%
-             "argument 'spending' in the call to the 'LanDemets()' method")
-      BEarg.nms <- names(.call.$EfficacyBoundary)
-      if(is.null(BEarg.nms))
-        stop("Arguments to 'LanDemets()' must be named")
-      if(!("spending" %in% BEarg.nms))
-        stop("The 'LanDemets()' method requires you to set the argument 'spending' argument within " %,%
-             "the call")
-      SE.type.nm <- as.character(.call.$EfficacyBoundary$spending)[1]
-      if(!(SE.type.nm %in% c("ObrienFleming", "Pocock", "Power")))
-        stop("Argument 'spending' must be one of the following: ObrienFleming, Pocock, or Power(rho)")
-      nsf.e <- grep(SE.type.nm, c("ObrienFleming", "Pocock", "Power"))
-      if(nsf.e==3){
-        PE.type.class <- class(.call.$EfficacyBoundary$spending)
-        if(PE.type.class!="call")
-          stop("The Power spending function requires the argument rho be set to a power")
-        rho.Efficacy <- eval(.call.$EfficacyBoundary$spending[[2]])
-      }
-      if(!("alpha" %in% BEarg.nms))
-        stop("You must set a value for 'alpha' total probability of type I error in the " %,%
-             "call to the 'LanDemets()' method")
-      Alpha.Efficacy <- eval(.call.$EfficacyBoundary$alpha)
-    }
-    if(nbnd.e==2){
-      BE.type.class <- class(.call.$EfficacyBoundary)
-      if(BE.type.class!="call")
-        stop("The 'Haybittle()' method requires you to set the arguments 'b.Haybittle' and " %,%
-               "'alpha' within the call")
-      else{
-        BEarg.nms <- names(.call.$EfficacyBoundary)
-        if(is.null(BEarg.nms))
-          stop("Arguments to 'Haybittle()' must be named")
-        if(!("b.Haybittle" %in% BEarg.nms))
-          stop("The 'Haybittle()' method requires you to set the argument 'b.Haybittle' within " %,%
-	       "the call to that method")
-	b.Haybittle <- eval(.call.$EfficacyBoundary$b.Haybittle)
-        if(!("alpha" %in% BEarg.nms))
-          stop("You must set a value for 'alpha' total probability of type I error in the " %,%
-               "call to the 'Haybittle()' method")
-        Alpha.Efficacy <- eval(.call.$EfficacyBoundary$alpha)
-      }
-    }
-    if(nbnd.e==3){
-      BE.type.class <- class(.call.$EfficacyBoundary)
-      if(BE.type.class!="call")
-        stop("The 'SC()' method requires you to set the argument 'crit' within the call")
-      else{
-        BEarg.nms <- names(.call.$EfficacyBoundary)
-        if(is.null(BEarg.nms))
-          stop("Argument to 'SC()' must be named")
-        if(!("crit" %in% BEarg.nms))
-	  stop("The 'SC()' method requires you to set the argument 'crit' within the call")
-        crit.e <- eval(.call.$EfficacyBoundary$crit)
-        if(!("alpha" %in% BEarg.nms))
-          stop("You must set a value for 'alpha' total probability of type I error in the " %,%
-	       "call to the 'SC()' method")
-        Alpha.Efficacy <- eval(.call.$EfficacyBoundary$alpha)
-      }
-    }
-    from.e <- 1
-    to.e <- nlooks
-    nbnd.e <- rep(nbnd.e, nlooks)
-    nsf.e <- rep(nsf.e, nlooks)
-    rho.Efficacy <- rep(rho.Efficacy, nlooks)
-    b.Haybittle <- rep(b.Haybittle, nlooks)
-    crit.e <- rep(crit.e, nlooks)
-  }
-
-  if(as.character(.call.$FutilityBoundary)[1]=="c"){
-    n.BF.types <- length(.call.$FutilityBoundary) - 1
-    nbnd.f <- nsf.f <- rho.Futility <- b.Haybittle <- drift.end <- crit.f <- 
-    from.f <- to.f <- rep(-9999, n.BF.types)
-    for(k in 1:n.BF.types){
-      .call.k <- .call.$FutilityBoundary[[k+1]]
-      BF.type.nm <- as.character(.call.k)[1]
-      if(!(BF.type.nm %in% c("LanDemets", "Haybittle", "SC")))
-        stop("Boundary type must be LanDemets, Haybittle or SC")
-      nbnd.f[k] <- grep(as.character(.call.k)[1], c("LanDemets", "Haybittle", "SC"))
-      if(nbnd.f[k]==1){
-        BF.type.class <- class(.call.k)
-        if(k==1 && BF.type.class!="call")
-          stop("You must set a value for 'alpha' total probability of type II error in the " %,%
-	       "specification of the first futility boundary method")
-        if(BF.type.class=="name") nsf.f[k] <- 1
-        if(BF.type.class=="call"){
-          BFarg.nms <- names(.call.k)
-          if(is.null(BFarg.nms))
-            stop("Arguments to 'LanDemets()' must be named")
-          if(!("spending" %in% BFarg.nms))
-            stop("The 'LanDemets()' method requires you to set the argument 'spending' within " %,%
-                 "the call to that method")
-          SF.type.nm <- as.character(.call.k$spending)[1]
-          if(!(SF.type.nm %in% c("ObrienFleming", "Pocock", "Power")))
-            stop("Argument 'spending' must be one of the following: ObrienFleming, Pocock, or Power(rho)")
-          nsf.f[k] <- grep(SF.type.nm, c("ObrienFleming", "Pocock", "Power"))
-          if(nsf.f[k]==3){
-            PF.type.class <- class(.call.k$spending)
-            if(PF.type.class!="call")
-              stop("The Power spending function requires you to set the argument 'rho' within " %,%
-                   "the call")
-            rho.Futility[k] <- eval(.call.k$spending[[2]])
+          if(mode.k!="numeric")
+          {
+            type.FB.k <- as.character(FB[[k]][[1]])
+            if(!(type.FB.k %in% c("LanDemets", "Haybittle", "SC")))
+            stop("Boundary type must be one of the following: 'LanDemets()'," %,%
+                 "'Haybittle()' or 'SC()'")
+            .fb.[[k]] <- FB[[k]]
+            .fb.[[k]]$type <- type.FB.k
           }
-          if(k==1 && !("alpha" %in% BFarg.nms))
-            stop("You must set a value for 'alpha' total probability of type II error in the " %,%
-	         "specification of the first futility boundary method")
-          if(k==1) Alpha.Futility <- eval(.call.k$alpha)
+          if((is.null(.fb.[[k]]$from) || is.null(.fb.[[k]]$to)) && is.null(.fb.[[k]]$len))
+            stop("Split boundary definition require the specifification of either" %,% 
+                 "the pair of arguments 'from' and 'to' or the 'len' argument")
         }
       }
-      if(nbnd.f[k]==2){
-        BF.type.class <- class(.call.k)
-        if(BF.type.class!="call")
-          stop("The 'Haybittle()' method requires you to set the argument(s) 'b.Haybittle' and " %,%
-               " 'alpha' if it is the first listed method, within the call")          
-        else{
-          BFarg.nms <- names(.call.k)
-          rename <- is.null(BFarg.nms)
-          if(rename) names(.call.k)[2] <- "b.Haybittle"
-          if(is.null(.call.k$b.Haybittle))
-            stop("Method 'Haybittle()' requires the argument 'b.Haybittle'")
-          b.Haybittle[k] <- eval(.call.k$b.Haybittle)
-          if(k==1 && !("alpha" %in% BFarg.nms))
-            stop("You must set a value for 'alpha' total probability of type II error in the " %,%
-	         "specification of the first futility boundary method")
-          if(k==1) Alpha.Futility <- eval(.call.k$alpha)
-        }
-      }
-      if(nbnd.f[k]==3){
-        BF.type.class <- class(.call.k)
-        if(BF.type.class!="call")
-          stop("Stochastic Curtailment efficacy boundary requires specification of " %,% 
-               "the argument 'crit'")
-        else{
-          BFarg.nms <- names(.call.k)
-          if(is.null(BFarg.nms)) 
-            stop("Argument to 'SC()' must be named")
-          if(is.null(.call.k$crit)||is.null(.call.k$drift.end))
-            stop("'SC()' requires the arguments 'crit' and 'drift.end'")
-          crit.f[k] <- eval(.call.k$crit)
-          drift.end[k] <- eval(.call.k$drift.end)
-          if(k==1 && !("alpha" %in% BFarg.nms))
-            stop("You must set a value for 'alpha' total probability of type II error in the " %,%
-	         "specification of the first futility boundary method")
-          if(k==1) Alpha.Futility <- eval(.call.k$alpha)
-        }
-      }
-      if(BF.type.class=="call"){
-        is.from <- ("from" %in% BFarg.nms)
-        is.to <- ("to" %in% BFarg.nms)
-        if(!is.from || !is.to) 
-	  stop("You must specify both 'from' and 'to' in each futility boundary specification")
-        from.f[k] <- eval(.call.k$from)
-        to.f[k] <- eval(.call.k$to)
+      else
+      {
+        type.FB <- as.character(m$FutilityBoundary[[1]])
+        if(!(type.FB %in% c("LanDemets", "Haybittle", "SC")))
+          stop("Boundary type must be one of the following: 'LanDemets()'," %,%
+               "'Haybittle()' or 'SC()'")
+        .fb. <- FB
+        .fb.$type <- type.FB
       }
     }
-    covered <- apply(t(matrix(c(from.f,to.f),n.BF.types,2)), 2, FUN=function(x)x[1]:x[2])
-    unl.covered <- unlist(covered)
-    covered.all <- all(diff(unl.covered)==1) 
-    first.is.1 <- from.f[1]==1
-    right.length <- length(unl.covered)==nlooks
-    covered.all <- covered.all && first.is.1 && right.length
-    if(!covered.all) 
-      stop("Your futility boundary specification does not cover the full schedule of analyses thus far")
+    if(n.types==1) .fb. <- list(.fb.)
+    FB <- .fb.
+  }
+  ans <- list(frontend=list(EfficacyBoundary=EB), backend=list())
+  if(do.futility) ans$frontend$FutilityBoundary <- FB
 
-    tmp <- matrix(NA, 5, nlooks)
-    for(k in 1:n.BF.types){
-      tmp[1,covered[[k]]] <- nbnd.f[k]
-      tmp[2,covered[[k]]] <- nsf.f[k]
-      tmp[3,covered[[k]]] <- rho.Futility[k]
-      tmp[4,covered[[k]]] <- b.Haybittle[k]
-      tmp[5,covered[[k]]] <- crit.f[k]
-    }
-    nbnd.f <- tmp[1,]
-    nsf.f <- tmp[2,]
-    rho.Futility <- tmp[3,]
-    b.Haybittle <- tmp[4,]
-    crit.f <- tmp[5,]
+  ans$backend$Alpha.Efficacy <- 0
+  ae <- ans$frontend$EfficacyBoundary[[1]]$alpha
+  if(!is.null(ae)) ans$backend$Alpha.Efficacy <- ae
+  n.EBtypes <- length(ans$frontend$EfficacyBoundary)
+  if(n.EBtypes==1)
+  {
+    ans$frontend$EfficacyBoundary[[1]]$from <- 1
+    ans$frontend$EfficacyBoundary[[1]]$to <- n.looks
   }
-  else{
-    BF.type.nm <- as.character(.call.$FutilityBoundary)[1]
-    if(!(BF.type.nm %in% c("LanDemets", "Haybittle", "SC")))
-      stop("Boundary type must be LanDemets, Haybittle or SC")
-    nbnd.f <- grep(as.character(.call.$FutilityBoundary)[1], c("LanDemets", "Haybittle", "SC"))
-    if(nbnd.f==1){
-      BF.type.class <- class(.call.$FutilityBoundary)
-      if(BF.type.class!="call")
-        stop("You must set the argument 'alpha', total probability of type II error, and the " %,%
-             "argument 'spending' in the call to the 'LanDemets()' method")
-      BFarg.nms <- names(.call.$FutilityBoundary)
-      if(is.null(BFarg.nms))
-        stop("Arguments to 'LanDemets()' must be named")
-      if(!("spending" %in% BFarg.nms))
-        stop("The 'LanDemets()' method requires you to set the argument 'spending' argument within " %,%
-             "the call")
-      SF.type.nm <- as.character(.call.$FutilityBoundary$spending)[1]
-      if(!(SF.type.nm %in% c("ObrienFleming", "Pocock", "Power")))
-        stop("Argument 'spending' must be one of the following: ObrienFleming, Pocock, or Power(rho)")
-      nsf.f <- grep(SF.type.nm, c("ObrienFleming", "Pocock", "Power"))
-      if(nsf.f==3){
-        PF.type.class <- class(.call.$FutilityBoundary$spending)
-        if(PF.type.class!="call")
-          stop("The Power spending function requires the argument rho be set to a power")
-        rho.Futility <- eval(.call.$FutilityBoundary$spending[[2]])
-      }
-      if(!("alpha" %in% BFarg.nms))
-        stop("You must set a value for 'alpha' total probability of type II error in the " %,%
-             "call to the 'LanDemets()' method")
-      Alpha.Futility <- eval(.call.$FutilityBoundary$alpha)
+  nbnd.e <- nsf.e <- rho.Efficacy <- prob.e <- my.Efficacy <- b.Haybittle.e <- rep(0, n.looks)
+  be.end <- 0
+
+  coveredEB <- NULL
+  to.k <- 0
+  for (k in 1:n.EBtypes)
+  {
+    EB.k <- ans$frontend$EfficacyBoundary[[k]]
+    len.k <- EB.k$len
+    if(EB.k$type=="numeric")
+    {
+      from.k <- to.k + 1
+      to.k <- to.k + len.k
+      nsf.e[from.k:to.k] <- 1
+      my.Efficacy[from.k:to.k] <- EB.k$value
     }
-    if(nbnd.f==2){
-      BF.type.class <- class(.call.$FutilityBoundary)
-      if(BF.type.class!="call")
-        stop("The 'Haybittle()' method requires you to set the arguments 'b.Haybittle' and " %,%
-               "'alpha' within the call")
-      else{
-        BFarg.nms <- names(.call.$FutilityBoundary)
-        if(is.null(BFarg.nms))
-          stop("Arguments to 'Haybittle()' must be named")
-        if(!("b.Haybittle" %in% BFarg.nms))
-          stop("The 'Haybittle()' method requires you to set the argument 'b.Haybittle' within " %,%
-	       "the call to that method")
-	b.Haybittle <- eval(.call.$FutilityBoundary$b.Haybittle)
-        if(!("alpha" %in% BFarg.nms))
-          stop("You must set a value for 'alpha' total probability of type II error in the " %,%
-               "call to the 'Haybittle()' method")
-        Alpha.Futility <- eval(.call.$FutilityBoundary$alpha)
-      }
+    if(EB.k$type!="numeric")
+    {
+      from.k <- EB.k$from
+      to.k <- EB.k$to
     }
-    if(nbnd.f==3){
-      BF.type.class <- class(.call.$FutilityBoundary)
-      if(BF.type.class!="call")
-        stop("The 'SC()' method requires you to set the arguments 'crit' and 'drift.end' within " %,%
-             "the call") 
-      else{
-        BFarg.nms <- names(.call.$FutilityBoundary)
-        if(is.null(BFarg.nms))
-          stop("Argument to 'SC()' must be named")
-        if(!("crit" %in% BFarg.nms))
-	  stop("The 'SC()' method requires you to set the argument 'crit' within the call")
-        crit.f <- eval(.call.$FutilityBoundary$crit)
-        if(!("drift.end" %in% BFarg.nms))
-	  stop("The 'SC()' method requires you to set the argument 'drift.end' within the call")
-	drift.end <- eval(.call.$FutilityBoundary$drift.end)
-        if(!("alpha" %in% BFarg.nms))
-          stop("You must set a value for 'alpha' total probability of type II error in the " %,%
-	       "call to the 'SC()' method")
-        Alpha.Futility <- eval(.call.$FutilityBoundary$alpha)
-      }
+    disjoint <- length(intersect(coveredEB, from.k:to.k))==0
+    if(!disjoint) stop("There is overlap in your specification of split boundaries")
+    coveredEB <- c(coveredEB, from.k:to.k)
+    nbnd.e[from.k:to.k] <- grep(EB.k$type, c("LanDemets", "Haybittle", "SC", "numeric"))
+    if(EB.k$type=="LanDemets")
+    {
+      nsf.e[from.k:to.k] <- grep(EB.k$spending$type, c("ObrienFleming", "Pocock", "Pow"))
+      if(EB.k$spending$type=="Pow")
+        rho.Efficacy[from.k:to.k] <- EB.k$spending$rho
     }
-    from.f <- 1
-    to.f <- nlooks
-    nbnd.f <- rep(nbnd.f, nlooks)
-    nsf.f <- rep(nsf.f, nlooks)
-    rho.Futility <- rep(rho.Futility, nlooks)
-    b.Haybittle <- rep(b.Haybittle, nlooks)
-    crit.f <- rep(crit.f, nlooks)
+    if(EB.k$type=="Haybittle")
+    {
+      b.Haybittle.e[from.k:to.k] <- EB.k$b.Haybittle
+    }
+    if(EB.k$type=="SC")
+    {
+       nsf.e[from.k:to.k] <- 1
+       prob.e[from.k:to.k] <- EB.k$prob
+       be.end <- EB.k$be.end
+    }
   }
-  ans <- 
-  list(Alpha.Efficacy=Alpha.Efficacy, Alpha.Futility=Alpha.Futility, nbnd.e=nbnd.e, nbnd.f=nbnd.f,
-    nsf.e=nsf.e, nsf.f=nsf.f, rho.Efficacy=rho.Efficacy, rho.Futility=rho.Futility,
-    b.Haybittle=b.Haybittle, drift.end=drift.end, crit.e=crit.e, crit.f=crit.f, from.e=from.e,
-    to.e=to.e, from.f=from.f, to.f=to.f) 
-  nms.ans <- names(ans)
-  n.ans <- length(nms.ans)
-  for(k in 1:n.ans)  assign(nms.ans[k], ans[[k]], parent.frame())
-  #
-  # note that the intended result of a call to this function is to define and set values 
-  # into the objects named above (in the list 'ans'), and to conduct this evaluation within
-  # the function that called this one.  Hence, since no arguments need to be returned, we 
-  # return zero invisibly, to signify that we have 'finished successfully' just for S&G 
-  # if for nothing else.
-  #
-  invisible(0) 
+  coveredEB <- sort(coveredEB)
+  if(sum(abs(coveredEB - (1:n.looks)))>0)
+    stop("Your split Efficacy Boundary definition does not specifiy all " %,% n.looks %,% " analyses")
+  ans$backend$nbnd.e <- nbnd.e
+  ans$backend$nsf.e <- nsf.e
+  ans$backend$rho.Efficacy <- rho.Efficacy
+  ans$backend$b.Haybittle.e <- b.Haybittle.e
+  ans$backend$be.end <- be.end
+  ans$backend$prob.e <- prob.e
+  ans$backend$my.Efficacy <- my.Efficacy
+
+  nbnd.f <- nsf.f <- rho.Futility <- prob.f <- my.Futility <- b.Haybittle.f <- rep(0, n.looks)
+  be.end <- drift.end <- 0
+  
+  ans$backend$Alpha.Futility <- 0
+  if(do.futility)
+  {
+    ans$backend$Alpha.Futility <- ans$frontend$FutilityBoundary[[1]]$alpha
+    n.FBtypes <- length(ans$frontend$FutilityBoundary)
+    if(n.FBtypes==1)
+    {
+      ans$frontend$FutilityBoundary[[1]]$from <- 1
+      ans$frontend$FutilityBoundary[[1]]$to <- n.looks
+    }
+
+    coveredFB <- NULL
+    to.k <- 0
+    for (k in 1:n.FBtypes)
+    {
+      FB.k <- ans$frontend$FutilityBoundary[[k]]
+      len.k <- FB.k$len
+      if(FB.k$type=="numeric")
+      {
+        from.k <- to.k + 1
+        to.k <- to.k + len.k
+        nsf.f[from.k:to.k] <- 1
+        my.Futility[from.k:to.k] <- FB.k$value
+      }
+      if(FB.k$type!="numeric")
+      {
+        from.k <- FB.k$from
+        to.k <- FB.k$to
+      }
+
+      disjoint <- length(intersect(coveredFB, from.k:to.k))==0
+      if(!disjoint) stop("There is overlap in your specification of split boundaries")
+      coveredFB <- c(coveredFB, from.k:to.k)
+      nbnd.f[from.k:to.k] <- grep(FB.k$type, c("LanDemets", "Haybittle", "SC", "numeric"))
+      if(FB.k$type=="LanDemets")
+      {
+        nsf.f[from.k:to.k] <- grep(FB.k$spending$type, c("ObrienFleming", "Pocock", "Pow"))
+        if(FB.k$spending$type=="Pow")
+          rho.Futility[from.k:to.k] <- FB.k$spending$rho
+      }
+      if(FB.k$type=="Haybittle")
+      {
+        b.Haybittle.f[from.k:to.k] <- FB.k$b.Haybittle
+      }
+      if(FB.k$type=="SC")
+      {
+         nsf.f[from.k:to.k] <- 1
+         prob.f[from.k:to.k] <- FB.k$prob
+         if(be.end==0) be.end <- FB.k$be.end
+         if(drift.end==0) drift.end <- FB.k$drift.end
+      }      
+    }
+    coveredFB <- sort(coveredFB)
+    if(sum(abs(coveredFB - (1:n.looks)))>0)
+      stop("Your split Futility Boundary definition does not specifiy all " %,% n.looks %,% " analyses")
+  }
+  ans$backend$nbnd.f <- nbnd.f
+  ans$backend$nsf.f <- nsf.f
+  ans$backend$rho.Futility <- rho.Futility
+  ans$backend$b.Haybittle.f <- b.Haybittle.f
+  ans$backend$drift.end <- drift.end
+  if(ans$backend$be.end==0) ans$backend$be.end <- be.end
+  ans$backend$prob.f <- prob.f
+  ans$backend$my.Futility <- my.Futility
+  #-------------------------------#
+  # check for valid combinations: #
+  #-------------------------------#
+  #  0=none                       #
+  #  1=LD                         #
+  #  2=H                          #
+  #  3=SC                         #
+  #  4=U                          #
+  #-------------------------------#
+  nbnd <- 25*NonBindingFutility + 5*nbnd.e + nbnd.f
+  ans$backend$nbnd.pair <- nbnd
+  
+  # No Efficacy specified--already checked above, but just for completenes
+  if(any(nbnd %in% c(0:4, 25:29)))
+  {
+    indx <- which(nbnd %in% c(0:4, 25:29))
+    indx.str <- paste(indx, collapse=",")
+    stop("The argument 'EfficacyBoundary' which specifies the Efficacy Boundary construction " %,%
+         "method, must be specified (" %,% indx.str %,% ")")
+  }
+  # We don't do Haybittle Futility
+  if(any((nbnd-2) %% 5 ==0))
+  {
+    indx <- which((nbnd-2) %% 5 ==0)
+    indx.str <- paste(indx, collapse=",")
+    stop("Haybittle futility boundary not currently supported--and its doubtful whether or not it " %,%
+         "makes sense (" %,% indx.str %,% ")")
+  }
+  ans
+}
+
+"LanDemets" <-
+function(alpha, spending, from=NULL, to=NULL)
+{
+  if(missing(alpha)||missing(spending))
+    stop("'alpha' and 'spending' are required arguments")
+  m <- match.call()
+  sf <- as.call(expression(fff))
+  n.sf <- length(m$spending)
+  if(n.sf==1) sf[[1]] <- m$spending
+  if(n.sf>1)
+    for(k in 1:n.sf)
+      sf[[k]] <- m$spending[[k]]
+  sf.name <- as.character(sf[[1]])
+  if(!(sf.name %in% c("ObrienFleming", "Pow", "Pocock")))
+    stop("Argument 'spending' must be 'ObrienFleming', 'Pow' or 'Pocock'")
+  sf <- eval(sf)
+  ans <- list(type="LanDemets", alpha=alpha, spending=sf, from=from, to=to, call=m)
+  class(ans) <- "boundary.construction.method"
+  ans
+}
+  
+"Haybittle" <-
+function(alpha, b.Haybittle, from=NULL, to=NULL)
+{
+  m <- match.call()
+  if(missing(alpha)||missing(b.Haybittle))
+    stop("'alpha' and 'b.Haybittle' are required arguments")
+  ans <- list(type="Haybittle",alpha=alpha, b.Haybittle=b.Haybittle, from=from, to=to, call=m)
+  class(ans) <- "boundary.construction.method"
+  ans
+}
+
+"SC" <-
+function(be.end, prob, drift.end=NULL, from=NULL, to=NULL)
+{
+  m <- match.call()
+  if(missing(be.end)||missing(prob))
+    stop("'be.end' and 'prob' are required arguments")
+  ans <- list(type="SC", be.end=be.end, prob=prob, from=from, to=to, call=m)
+  if(!missing(drift.end)) ans$drift.end <- drift.end
+  class(ans) <- "boundary.construction.method"
+  ans
+}
+
+"ObrienFleming" <-
+function()
+{
+  m <- match.call()
+  ans <- list(type="ObrienFleming", call=m)
+  class(ans) <- "spending.function"
+  ans
+}
+
+"Pow" <-
+function(rho)
+{
+  m <- match.call()
+  if(missing(rho))
+    stop("'rho' is a required argument")
+  ans <- list(type="Pow", rho=rho, call=m)
+  class(ans) <- "spending.function"
+  ans
+}
+
+"Pocock" <-
+function()
+{
+  m <- match.call()
+  ans <- list(type="Pocock", call=m)
+  class(ans) <- "spending.function"
+  ans
+}
+
+"print.boundary.construction.method" <-
+function(x, ...)
+{
+  print(x$call)
+}
+
+"print.spending.function" <-
+function(x, ...)
+{
+  print(x$call)
 }
 
 "print.boundaries" <- function(x, ...)
@@ -1598,7 +1456,7 @@ function(EfficacyBoundary, FutilityBoundary, nlooks)
 }
 
 "plot.boundaries" <- 
-function (x, ...) 
+function (x, yrng=NULL, ...) 
 {
     .call. <- match.call(expand=TRUE)
     m <- length(.call.) - 2
@@ -1614,22 +1472,58 @@ function (x, ...)
     fut <- NULL
     if (is.fut) 
         fut <- tbl[, "b.f"]
-    yrng <- c(min(c(eff, fut)), max(c(eff, fut)))
+    is.yrng <- TRUE
+    if(missing(yrng))
+    {
+      yrng <- c(min(c(eff, fut)), max(c(eff, fut)))
+      is.yrng <- FALSE
+    }
     plot.cmd <- as.call(expression(plot))
     plot.cmd$x <- c(0, 1)
     plot.cmd$y <- yrng
     plot.cmd$type <- "n"
     plot.cmd$xlab <- "Information Fraction"
-    plot.cmd$ylab <- "z-score"
+    plot.cmd$ylab <- "Normalized Statistic"
+    lines.cmd.e <- lines.cmd.f <- as.call(expression(lines))
+    lines.cmd.e$x <- lines.cmd.f$x <- as.name("x")
+    lines.cmd.e$y <- as.name("eff")
+    lines.cmd.f$y <- as.name("fut")
     if(m>0){
-      for(k in 1:m) plot.cmd[[6+k]] <- xtra[[k]]
-      names(plot.cmd)[6+(1:m)] <- nms
+      l.pl <- l.li <- 1
+      for(k in 1:m)
+      {
+        if(nms[k] %in% c("type", "main", "sub", "xlab", "ylab", "asp"))
+        {
+          plot.cmd[[6+l.pl]] <- xtra[[k]]
+          names(plot.cmd)[6+l.pl] <- nms[k]
+          l.pl <- l.pl + 1
+        }
+        if(nms[k] %in% c("type", "lty", "lwd", "pch", "lend", "ljoin", "lmitre"))
+        {
+          lines.cmd.e[[3+l.li]] <- lines.cmd.f[[3+l.li]] <- xtra[[k]]
+          names(lines.cmd.e)[3+l.li] <- names(lines.cmd.f)[3+l.li] <- nms[k]
+          l.li <- l.li + 1
+        }
+        if(nms[k] == "col")
+        {
+          if(!is.character(xtra[[k]]))
+            stop("Specify color as a character string, please")
+          col.e <- xtra[[k]]
+          col.f <- c(c(16^4,16^2,1)%*%(cbind(c(255,255,255)) -col2rgb(col.e)))
+          class(col.f) <- "hexmode"
+          col.f <- "#" %,% col.f
+          lines.cmd.e[[3+l.li]] <- col.e
+          names(lines.cmd.e)[3+l.li] <- "col"
+          lines.cmd.f[[3+l.li]] <- col.f
+          names(lines.cmd.f)[3+l.li] <- "col"
+        }
+      }
     }
     eval(plot.cmd)
-    lines(x, eff)
+    eval(lines.cmd.e)
     points(x, eff)
     if (is.fut) {
-        lines(x, fut)
+        eval(lines.cmd.f)
         points(x, fut)
     }
     invisible(x)
@@ -1794,6 +1688,7 @@ function(object, ...)
 "SimPwrGSD" <-
 function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
          FutilityBoundary = LanDemets(alpha=0.10,spending=ObrienFleming),
+         NonBindingFutility=TRUE,
          sided =c("2>","2<","1>","1<"),accru,accrat,tlook,
          tcut0 = NULL,h0 = NULL,s0 = NULL,tcut1 = NULL,rhaz = NULL,
          h1 = NULL,s1 = NULL,tcutc0 = NULL,hc0 = NULL,sc0 = NULL,tcutc1 = NULL,hc1 = NULL,
@@ -1845,159 +1740,56 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
              "containing elements \"2>\", \"2<\", \"1>\" or \"1<\"")
     sided <- c(2, -2, 1, -1)[sapply(sided, c("2>", "2<", "1>", "1<"), FUN=grep)]
     
-    # determine type of Efficacy Boundary Specification
-    mode.E <- "WRONG"
-    BE.missing <- missing(EfficacyBoundary)
-    if(BE.missing) mode.E <- "NULL"
-    if(!BE.missing){
-      try.BE <- try(EfficacyBoundary, silent=TRUE)
-      if(is.null(attr(try.BE, "class"))) mode.E <- mode(EfficacyBoundary)
-      else if(attr(try.BE, "class")=="try-error") mode.E <- "call"
-    }
-    if (!(mode.E %in% c("call", "numeric", "NULL"))) 
-      stop("Argument 'EfficacyBoundary' must be of mode 'call', 'numeric' or 'NULL'")
-    is.myE <- FALSE
-    n.myE <- 0
-    if (mode.E == "numeric") {
-      n.myE <- length(EfficacyBoundary)
-      is.myE <- TRUE
-      my.Efficacy <- EfficacyBoundary
-      .call.$EfficacyBoundary <- as.call(expression(LanDemets, alpha=0.05, spending=ObrienFleming))
-    }
-    do.efficacy <- !BE.missing || is.myE
-    if (mode.E == "NULL" && do.efficacy) 
-      .call.$EfficacyBoundary <- as.call(expression(LanDemets, alpha=0.05, spending=ObrienFleming))
-    
-    # determine type of Futility Boundary Specification
-    mode.F <- "WRONG"
-    BF.missing <- missing(FutilityBoundary)
-    if(BF.missing) mode.F <- "NULL"
-    if(!BF.missing){
-      try.BF <- try(FutilityBoundary, silent=TRUE)
-      if(is.null(attr(try.BF, "class"))) mode.F <- mode(FutilityBoundary)
-      else if(attr(try.BF, "class")=="try-error") mode.F <- "call"
-    }
-    if (!(mode.F %in% c("call", "numeric", "NULL"))) 
-      stop("Argument 'FutilityBoundary' must be of mode 'call', 'numeric' or 'NULL'")
-    is.myF <- FALSE
-    n.myF <- 0
-    if (mode.F == "numeric") {
-      n.myF <- length(FutilityBoundary)
-      is.myF <- TRUE
-      my.Futility <- FutilityBoundary
-      .call.$FutilityBoundary <- as.call(expression(LanDemets, alpha=0.10, spending=ObrienFleming))
-    }
-    do.futility <- !BF.missing || is.myF
-    if(!do.futility) Alpha.Futility <- psimin
-    if (mode.F == "NULL" && do.futility)
-      .call.$FutilityBoundary <- as.call(expression(LanDemets, alpha=0.10, spending=ObrienFleming))
-    
-    
-    # Parse Boundary Methods:
-    ..call. <- .call.
-    ..call.[[1]] <- as.name("ParseBoundaryMethods")
-    nms.call <- names(..call.)[-1]
-    ind.del <- which(!(nms.call %in% c("EfficacyBoundary", "FutilityBoundary")))
-    for(k in -sort(-ind.del))
-      ..call.[[1+k]] <- NULL
-    ..call.$nlooks <- nlook
-    eval(..call.)
-    
-    # Result:  Now the following are defined within this scope:
-    #
-    #   Alpha.Efficacy, Alpha.Futility, nbnd.e, nbnd.f, nsf.e, nsf.f, rho.Efficacy, rho.Futility,
-    #   b.Haybittle, drift.end, crit.e, crit.f
-    #
+    call.PBS <- .call.
+    call.PBS[[1]] <- as.name("ParseBoundarySelection")
+
+    call.PBS$sided <- call.PBS$accru <- call.PBS$accrat <- call.PBS$tlook <- 
+    call.PBS$tcut0 <- call.PBS$h0 <- call.PBS$s0 <- call.PBS$tcut1 <- 
+    call.PBS$rhaz <- call.PBS$h1 <- call.PBS$s1 <- call.PBS$tcutc0 <-
+    call.PBS$hc0  <- call.PBS$sc0 <- call.PBS$tcutc1 <- call.PBS$hc1 <-
+    call.PBS$sc1 <- call.PBS$tcutd0A <- call.PBS$hd0A <- call.PBS$sd0A <-
+    call.PBS$tcutd0B <- call.PBS$hd0B <- call.PBS$sd0B <- call.PBS$tcutd1A <-
+    call.PBS$hd1A <- call.PBS$sd1A <- call.PBS$tcutd1B <- call.PBS$hd1B <- 
+    call.PBS$sd1B<- call.PBS$tcutx0A<- call.PBS$hx0A<- call.PBS$sx0A <-
+    call.PBS$tcutx0B <- call.PBS$hx0B<- call.PBS$sx0B<- call.PBS$tcutx1A <-
+    call.PBS$hx1A <- call.PBS$sx1A <- call.PBS$tcutx1B <- call.PBS$hx1B <-
+    call.PBS$sx1B <- call.PBS$noncompliance <- call.PBS$gradual <-
+    call.PBS$WtFun <- call.PBS$ppar <- call.PBS$Spend.Info <-
+    call.PBS$RR.Futility <- call.PBS$V.end <- call.PBS$qProp.one.or.Q <- NULL
+    call.PBS$n.looks <- nlook
+    call.PBS$check.drift <- FALSE
         
-    if (!do.efficacy && !do.futility) 
-      stop("You must specify one or both of the arguments 'EfficacyBoundary' and 'FutilityBoundary', " %,% 
-           "see the documentation")
-    
+    eval.PBS <- eval(call.PBS)
+
+    do.efficacy <- TRUE
+    do.futility <- !is.null(eval.PBS$frontend$FutilityBoundary)
+       
+    Alpha.Efficacy <- eval.PBS$backend$Alpha.Efficacy
+    Alpha.Futility <- eval.PBS$backend$Alpha.Futility
+    if(is.null(Alpha.Futility)) Alpha.Futility <- 0
+    nbnd.e <- eval.PBS$backend$nbnd.e
+    nbnd.f <- eval.PBS$backend$nbnd.f
+    nsf.e <- eval.PBS$backend$nsf.e
+    nsf.f <- eval.PBS$backend$nsf.f
+    rho.Efficacy <- eval.PBS$backend$rho.Efficacy
+    rho.Futility <- eval.PBS$backend$rho.Futility
+    b.Haybittle.e <- eval.PBS$backend$b.Haybittle.e
+    b.Haybittle.f <- eval.PBS$backend$b.Haybittle.f
+    drift.end <- eval.PBS$backend$drift.end
+    prob.e <- eval.PBS$backend$prob.e
+    prob.f <- eval.PBS$backend$prob.f
+    my.Efficacy <- eval.PBS$backend$my.Efficacy
+    my.Futility <- eval.PBS$backend$my.Futility
+    is.myE <- !all(my.Efficacy==0)
+    is.myF <- !all(my.Futility==0)
+   
     b.e <- rep(0, nlook)
-    if (is.myE){
-      if(n.myE != nlook)
-        stop("User supplied efficacy boundary in 'EfficacyBoundary' must be of the same length as 'frac'")
-      b.e <- my.Efficacy
-    }
+    if (is.myE) b.e <- my.Efficacy
 
     b.f <- rep(0, nlook)
-    if (is.myF){
-      if(n.myF != nlook) 
-        stop("User supplied futility boundary in 'FutilityBoundary' must be of the same length as 'frac'")
-      b.f <- my.Futility
-    }
+    if (is.myF) b.f <- my.Futility
+
     Alpha.Efficacy <- Alpha.Efficacy/2^(abs(sided) == 2)
-    
-#    if(missing(Alpha.Efficacy)) stop("Missing argument 'Alpha.Efficacy', the total type I error")
-#    Alpha.Efficacy <- Alpha.Efficacy/2^(sided == 2)
-
-#    if (missing(Boundary.Efficacy))
-#       Boundary.Efficacy <- NULL
-#    mode.E <- mode(Boundary.Efficacy)
-#    if(!(mode.E %in% c("character", "numeric", "NULL")))
-#      stop("Argument 'Boundary.Efficacy' must be of character, numeric or NULL mode")
-#    b.e <- rep(0,nlook)
-#    is.myE <- FALSE
-#    if(mode.E=="numeric"){
-#      n.myE <- length(Boundary.Efficacy)
-#      if(n.myE != nlook)
-#        stop("User supplied efficacy boundary in 'Boundary.Efficacy' must be of the same length as 'frac'")
-#      is.myE <- TRUE
-#      b.e <- Boundary.Efficacy
-#      Boundary.Efficacy <- "Lan-Demets"
-#    }
-#    if(mode.E=="NULL") Boundary.Efficacy <- "Lan-Demets"    
-#    nbnd.e <- grep(Boundary.Efficacy, c("Lan-Demets", "Haybittle", "SC"))
-#    if(nbnd.e==3 && missing(rho.Eff.SC))
-#      stop("Argument 'rho.Eff.SC' (total type I error for Stochastic Curtailment criterion) must be specified")
-#    
-#    if (missing(Spending.Efficacy))
-#        Spending.Efficacy <- "Obrien-Fleming"
-#    if(Spending.Efficacy=="Power" && missing(rho.Efficacy))
-#      stop("Argument 'rho.Efficacy' must be supplied")
-#    nsf.e <- grep(Spending.Efficacy, c("Obrien-Fleming", "Pocock", "Power"))
-
-    
-#    if(missing(Boundary.Futility))
-#      Boundary.Futility <- NULL
-#    mode.F <- mode(Boundary.Futility)
-#    if(!(mode.F %in% c("character", "numeric", "NULL")))
-#      stop("Argument 'Boundary.Futility' must be of character, numeric or NULL mode")
-#    b.f <- rep(0,nlook)
-#    is.myF <- FALSE
-#    if(mode.F=="numeric"){
-#      n.myF <- length(Boundary.Futility)
-#      if(n.myF != nlook)
-#        stop("User supplied futility boundary in 'Boundary.Futility' must be of the same length as 'frac'")
-#      is.myF <- TRUE
-#      b.f <- Boundary.Futility
-#      Boundary.Futility <- "Lan-Demets"
-#    }
-
-#    dofu <- 1
-#    if(missing(Alpha.Futility) && mode.F != "NULL" && mode.F!="numeric")
-#      stop("You specified a futility boundary construction method in the argument 'Boundary.Futility' that requires" %,%
-#           " a probability of total type II error, 'Alpha.Futility'")
-#    if (missing(Alpha.Futility) && mode.F == "NULL" && (is.myF==0)){
-#        dofu <- 0
-#        Alpha.Futility <- psimin
-#    }
-    
-#    if(dofu==1 && any(stattype==1))
-#      stop("Futility Boundaries for Integrated Survival Statistic Not Currently Supported")
-
-#    if(mode.F=="NULL") Boundary.Futility <- "Lan-Demets"
-#    nbnd.f <- grep(Boundary.Futility, c("Lan-Demets", "Haybittle", "SC"))
-#    if(nbnd.f==3 && missing(rho.Fut.SC))
-#      stop("Argument 'rho.Fut.SC' (total type II error for Stochastic Curtailment criterion) must be specified")
-
-#    if(nbnd.f == 2) stop("Haybittle futility boundary makes no sense so that " %,%
-#                         "understandibly, it is not supported")
-#        
-#    if (missing(Spending.Futility)) Spending.Futility <- "Obrien-Fleming"
-#    if(Spending.Futility=="Power" && missing(rho.Futility))
-#      stop("Argument 'rho.Futility' must be supplied")
-#     nsf.f <- grep(Spending.Futility, c("Obrien-Fleming", "Pocock", "Power"))
 
     no.SpndInfo <- missing(Spend.Info)
     if(no.SpndInfo) Spend.Info <- "Variance"
@@ -2022,6 +1814,13 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
         ncut <- length(tcut)
         Sold <- c(1, s[-(ncut - 1)])
         dt <- diff(tcut)
+        log.0 <-
+        function(x)
+        {
+          y <- 0*x
+          y[x>0] <- log(x[x>0])
+          y
+        }
         h <- log.0(s/Sold)/dt
         h
     }
@@ -2313,19 +2112,19 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
     ints <- c(nlook,nstat,NGaussQ,ncut0,ncut1,ncutc0,ncutc1,ncutd0A,ncutd0B,ncutd1A,
               ncutd1B,ncutx0A,ncutx0B,ncutx1A,ncutx1B,gradual,nbnd.e,nbnd.f,
               nsf.e,nsf.f,do.futility,use.rhaz.fu,spend.info,Nsim,is.myE,is.myF,spend.info.k,
-              qProp.one.or.Q,sided)
+              qProp.one.or.Q,sided,NonBindingFutility)
 
     ints.nms <- c("nlook","nstat","NGaussQ","ncut0","ncut1","ncutc0","ncutc1",
                   "ncutd0A","ncutd0B","ncutd1A","ncutd1B","ncutx0A","ncutx0B","ncutx1A",
                   "ncutx1B","gradual","nbnd.e."%,%(1:nlook),"nbnd.f."%,%(1:nlook),
                   "nsf.e."%,%(1:nlook),"nsf.f."%,%(1:nlook),"do.futility",
                   "use.rhaz.fu","spend.info","Nsim","is.myE","is.myF","spend.info.k",
-                  "qis1orQ", "sided-" %,% stat.nms)
+                  "qis1orQ", "sided-" %,% stat.nms,NonBindingFutility)
     
-    dbls <- c(accru,accrat, rho.Efficacy, rho.Futility, crit.e, crit.f)
+    dbls <- c(accru,accrat, rho.Efficacy, rho.Futility, prob.e, prob.f)
     
     dbls.nms <- c("accru","accrat", "rho.Efficacy."%,%(1:nlook), "rho.Futility."%,%(1:nlook),
-                  "crit.e."%,%(1:nlook), "crit.f."%,%(1:nlook))
+                  "prob.e."%,%(1:nlook), "prob.f."%,%(1:nlook))
     
     logRR.F <- log(RR.Futility)
     
@@ -2335,7 +2134,7 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
         pttlook = as.double(tlook), 
 	palphatot = as.double(c(Alpha.Efficacy,Alpha.Futility)), 
 	lrrf = as.double(logRR.F),
-	bHay = as.double(b.Haybittle),
+	bHay = as.double(c(b.Haybittle.e, b.Haybittle.f)),
         stattype = as.integer(stattype),
         wttyp = as.integer(wttyp),
 	ppar = as.double(ppar), 
@@ -2486,7 +2285,8 @@ function(object, ...)
 	out <- object
 	stat.nms <- object$stat.nms
 	nstat <- object$detail$ints["nstat"]
-        ans <- cbind(object$dPower %*% rep(1,nlook), (object$se.dPower^2) %*% rep(1, nlook), object$Exp.Dur, se.Exp.Dur)
+        nlook <- object$detail$ints["nlook"]
+        ans <- cbind(object$dPower %*% rep(1,nlook), (object$se.dPower^2) %*% rep(1, nlook), object$Exp.Dur, object$se.Exp.Dur)
         dimnames(ans) <- list(stat.nms, c("Power","se(Power)", "Exp.Dur", "se(Exp.Dur)"))
 	out$Tbl <- ans
         out
@@ -2511,7 +2311,7 @@ function (Nsim, accru, accrat, tlook,
     RR.Futility = NULL,                          
     Spending.Efficacy = c("Obrien-Fleming", "Pocock", "Power"),
     Spending.Futility = c("Obrien-Fleming", "Pocock", "Power"), 
-    rho.Efficacy=0, rho.Futility=0, b.Haybittle = 3)  
+    rho.Efficacy=0, rho.Futility=0, b.Haybittle.e = 3, b.Haybittle.f)  
 {
 	match.call()
 }
@@ -2896,7 +2696,7 @@ function (tlook, tcut, h, hOth, accru)
 
 "thtilde.const" <- function(x,h,hA,hB,lA,lB)
 {
-
+        nx <- length(x)
 	ans <- .C("htildeConst",
 	x = as.double(x),
 	nx = as.integer(nx),
@@ -2942,8 +2742,6 @@ function(x,xh,h,xhA,hA,xhB,hB,xlA,lA,xlB,lB,gradual=FALSE)
 	}
 	if(bad) stop("Check that lengths of time and hazard agree in "%,% glue.2.string(msg[bads], sep=" "))
 
-        nunq <- length(unique(sort(c(tcut0, tcut1, tcutc0, tcutc1, tcutd0A, tcutd0B, tcutd1A, tcutd1B, tcutx0A,
-                                     tcutx0B, tcutx1A, tcutx1B))))    
         glegx <- glegx24
         glegw <- glegw24
 
@@ -3298,19 +3096,62 @@ function(Z, frac, drift, drift.end, err.I, sided=1)
 }
 
 "stpplt" <-
-function (x, y, ...) 
+function (x, y, bw, stars, ...) 
 {
+    .call. <- match.call(expand=FALSE)
+    nms.dots <- names(.call.$...)   
     d.y <- dim(y)
     n <- d.y[1]
     d <- d.y[2]
-    cls <- c("aquamarine", "magenta")
-    polygon(c(0, x, 1), c(0, y[, 1], 0), border = NA, col = cls[1])
+    if(!bw)
+    {
+      cls <- list("magenta", "aquamarine")
+      density <- NULL
+      angle <- list(NULL, NULL)
+    }
+    if(bw==1)
+    {
+      cls <- list("grey90", NULL)
+      density <- NULL
+      angle <- list(NULL, NULL)
+    }
+    if(bw==2)
+    {
+      cls <- list(NULL, NULL)
+      density <- diff(range(x))*10
+      angle <- list(45, 135)
+    }
+    
+    polygon(c(0, x, 1), c(0, y[, 1], 0), border = NA, col = cls[[1]],
+            density=density, angle=angle[[1]])
     for (j in 2:d) polygon(c(x[n:1], x), c(y[n:1, j - 1], y[, 
-        j]), border = NA, col = cls[2 - (j%%2)])
-    polygon(c(x, 0), c(y[, d], 1), border = NA, col = cls[2 - 
-        ((d + 1)%%2)])
+        j]), border = NA, col = cls[[2 - (j%%2)]],
+            density=density, angle=angle[[2 - (j%%2)]])
+    polygon(c(x, 0), c(y[, d], 1), border = NA, col = cls[[2 - 
+        ((d + 1)%%2)]], density=density, angle=angle[[2 - ((d + 1)%%2)]])
+    lines.cmd <- as.call(expression(lines,x=x))
+    ln.dots <- .call.$...
+
+    if(!is.null(stars))
+      ln.dots <- ln.dots[-which(nms.dots=="pch")]
+
+    if(is.null(stars))
+      stars <- FALSE
+
+    lines.cmd$... <- ln.dots
     for(j in 1:d)
-      lines(x,y[,j], ...)
+    {
+      lines.cmd$type <- NULL
+      lines.cmd$pch <- NULL
+      if(stars && j==(2*stars+1))
+      {
+        lines.cmd$type <- "b"
+        lines.cmd$pch <- 8
+      }
+    
+      lines.cmd$y <- y[,j]
+      eval(lines.cmd)
+    }
 }
 
 "plot.cpd.PwrGSD" <-
@@ -3323,23 +3164,115 @@ function(x, formula, subset, na.action, ...)
   nms.dots <- names(dots)
   given.values <- rows <- columns <- show.given <- col <-
              pch <- bar.bg <- fac <- xlab <- ylab <- subscripts <- axlabels <-
-             number <- overlap <- xlim <- ylim <- NULL  
-  if("given.values" %in% nms.dots) given.values <- dots[["given.values"]]
-  if("rows" %in% nms.dots) rows <- dots[["rows"]]
-  if("columns" %in% nms.dots) columns <- dots[["columns"]]
-  if("show.given" %in% nms.dots) show.given <- dots[["show.given"]]
-  if("col" %in% nms.dots) col <- dots[["col"]]
-  if("pch" %in% nms.dots) pch <- dots[["pch"]]
-  if("bar.bg" %in% nms.dots) bar.bg <- dots[["bar.bg"]]
-  if("fac" %in% nms.dots) fac <- dots[["fac"]]
-  if("xlab" %in% nms.dots) xlab <- dots[["xlab"]]
-  if("ylab" %in% nms.dots) ylab <- dots[["ylab"]]
-  if("subscripts" %in% nms.dots) subscripts <- dots[["subscripts"]]
-  if("axlabels" %in% nms.dots) axlabels <- dots[["axlabels"]]
-  if("number" %in% nms.dots) number <- dots[["number"]]
-  if("overlap" %in% nms.dots) overlap <- dots[["overlap"]]
-  if("xlim" %in% nms.dots) xlim <- dots[["xlim"]]
-  if("ylim" %in% nms.dots) ylim <- dots[["ylim"]]
+             number <- overlap <- xlim <- ylim <- stars <- margin <- marFUN <- NULL
+  bw <- FALSE
+  ind.dots.dr <- NULL
+  if("given.values" %in% nms.dots)
+  {
+    given.values <- dots[["given.values"]]
+    ind.dots.dr <- c(ind.dots.dr, which(nms.dots=="given.values"))
+  }
+  if("rows" %in% nms.dots)
+  {
+    rows <- dots[["rows"]]
+    ind.dots.dr <- c(ind.dots.dr, which(nms.dots=="rows"))
+  }
+  if("columns" %in% nms.dots)
+  {
+    columns <- dots[["columns"]]
+    ind.dots.dr <- c(ind.dots.dr, which(nms.dots=="columns"))
+  }
+  if("show.given" %in% nms.dots)
+  {
+    show.given <- dots[["show.given"]]
+    ind.dots.dr <- c(ind.dots.dr, which(nms.dots=="show.given"))
+  }
+  if("col" %in% nms.dots)
+  {
+    col <- dots[["col"]]
+    ind.dots.dr <- c(ind.dots.dr, which(nms.dots=="col"))
+  }
+  if("pch" %in% nms.dots)
+  {
+    pch <- dots[["pch"]]
+    ind.dots.dr <- c(ind.dots.dr, which(nms.dots=="pch"))
+  }
+  if("bar.bg" %in% nms.dots)
+  {
+    bar.bg <- dots[["bar.bg"]]
+    ind.dots.dr <- c(ind.dots.dr, which(nms.dots=="bar.bg"))
+  }
+  if("fac" %in% nms.dots)
+  {
+    fac <- dots[["fac"]]
+    ind.dots.dr <- c(ind.dots.dr, which(nms.dots=="fac"))
+  }
+  if("xlab" %in% nms.dots)
+  {
+    xlab <- dots[["xlab"]]
+    ind.dots.dr <- c(ind.dots.dr, which(nms.dots=="xlab"))
+  }
+  if("ylab" %in% nms.dots)
+  {
+    ylab <- dots[["ylab"]]
+    ind.dots.dr <- c(ind.dots.dr, which(nms.dots=="ylab"))
+  }
+  if("subscripts" %in% nms.dots)
+  {
+    subscripts <- dots[["subscripts"]]
+    ind.dots.dr <- c(ind.dots.dr, which(nms.dots=="subscripts"))
+  }
+  if("axlabels" %in% nms.dots)
+  {
+    axlabels <- dots[["axlabels"]]
+    ind.dots.dr <- c(ind.dots.dr, which(nms.dots=="axlabels"))
+  }
+  if("number" %in% nms.dots)
+  {
+    number <- dots[["number"]]
+    ind.dots.dr <- c(ind.dots.dr, which(nms.dots=="number"))
+  }
+  if("overlap" %in% nms.dots)
+  {
+    overlap <- dots[["overlap"]]
+    ind.dots.dr <- c(ind.dots.dr, which(nms.dots=="overlap"))
+  }
+  if("xlim" %in% nms.dots)
+  {
+    xlim <- dots[["xlim"]]
+    ind.dots.dr <- c(ind.dots.dr, which(nms.dots=="xlim"))
+  }
+  if("ylim" %in% nms.dots)
+  {
+    ylim <- dots[["ylim"]]
+    ind.dots.dr <- c(ind.dots.dr, which(nms.dots=="ylim"))
+  }
+  if("bw" %in% nms.dots)
+  {
+    bw <- dots[["bw"]]
+    ind.dots.dr <- c(ind.dots.dr, which(nms.dots=="bw"))
+  }
+  if("stars" %in% nms.dots)
+  {
+    stars <- dots[["stars"]]
+    ind.dots.dr <- c(ind.dots.dr, which(nms.dots=="stars"))
+  }
+  if("margin" %in% nms.dots)
+  {
+    margin <- dots[["margin"]]
+    ind.dots.dr <- c(ind.dots.dr, which(nms.dots=="margin"))
+    if("marFUN" %in% nms.dots)
+    {
+      marFUN <- dots[["marFUN"]]
+      ind.dots.dr <- c(ind.dots.dr, which(nms.dots=="marFUN"))
+    }
+    if(!("marFUN" %in% nms.dots))
+    {
+      marFUN <- mean
+    }
+  }
+   
+  if(!is.null(ind.dots.dr)) dots <- dots[-ind.dots.dr]
   .call.[[1]] <- as.name("costopplot")
   .call.$data <- as.call(expression(as.data.frame.cpd.PwrGSD))
   .call.$data$x <- .call.$x
@@ -3360,18 +3293,48 @@ function(x, formula, subset, na.action, ...)
   .call.$overlap <- overlap
   .call.$xlim <- xlim 
   .call.$ylim <- ylim
+  .call.$bw <- bw
+  .call.$stars <- stars
+  .call.$margin <- margin
+  .call.$marFUN <- marFUN
+  .call.$... <- dots
   eval(.call.)
   options(ow)
 }
 
 "costopplot" <- 
 function (formula, data, given.values, rows, columns, show.given = TRUE, 
-    col = par("fg"), pch = par("pch"), bar.bg = c(num = gray(0.8), 
-        fac = gray(0.95)), xlab = c(x.name, paste("Given :", 
-        a.name)), ylab = c("Type II Error Prob (Aqua) & Power (Magenta)", paste("Given :", b.name)),
-    subscripts = FALSE, axlabels = function(f) abbreviate(levels(f)), 
-    number = 6, overlap = c(0,0), xlim, ylim, subset, na.action, ...) 
+          col = par("fg"), pch = par("pch"), bar.bg = c(num = gray(0.8), fac = gray(0.95)),
+          xlab = c(x.name, paste("Given :", a.name)),
+          ylab = c("Type II Error Prob "%,%eIIlab%,%" & Power "%,%powlab, "Given : "%,% b.name),
+          subscripts = FALSE, axlabels = function(f) abbreviate(levels(f)),
+          number = 6, overlap = c(0,0), xlim, ylim, subset, na.action, bw=FALSE,
+          stars=NULL, margin=NULL, marFUN=NULL,...) 
 {
+    .call. <- match.call(expand=FALSE)
+    if(missing(bw)) bw <- FALSE
+    if(missing(stars)) stars <- NULL
+    is.margin <- !missing(margin)
+    if(!is.margin)
+    {
+      margin <- NULL
+      marFUN <- NULL
+    }
+    if(!bw)
+    {
+      eIIlab <- "(Magenta)"
+      powlab <- "(Aqua)"
+    }
+    if(bw==1)
+    {
+      eIIlab <- "(Grey)"
+      powlab <- "(White)"
+    }
+    if(bw==2)
+    {
+      eIIlab <- "[//]"
+      powlab <- "[\\\\]"
+    }
     formula.new <- (y ~ x)
     formula.new[[3]] <- formula[[2]]
     formula.new[[2]] <- (I(cbind(dE, dP)) ~ x)[[2]]
@@ -3406,7 +3369,7 @@ function (formula, data, given.values, rows, columns, show.given = TRUE,
         have.b <- FALSE
         a <- rhs
     }
-    if (missing(data)) 
+    if (missing(data))
         data <- parent.frame()
     form <- (yv ~ xv + av)
     form[[2]] <- y
@@ -3421,12 +3384,74 @@ function (formula, data, given.values, rows, columns, show.given = TRUE,
     }
     mdl <- as.call(expression(model.frame))
     mdl$formula <- form
+    mdl$nlook <- as.name("nlook")
     mdl$data <- data
     if (is.subset) 
         mdl$subset <- .call.$subset
     if (is.na.action) 
         mdl$na.action <- .call.$na.action
     mdl <- eval(mdl, parent.frame())
+    if(is.margin)
+    {
+      nms <- names(mdl)
+      n.mdl <- nrow(mdl)
+      margin.vars <- eval(.call.$margin)
+      n.mv <- length(margin.vars)
+      idx.vars <- setdiff(nms[-1], margin.vars)
+      n.iv <- length(idx.vars)
+
+      IND.vars <- list()
+      cls <- NULL
+      for(i in 1:n.iv)
+      {
+        iv.i <- idx.vars[i]
+        X <- with(mdl, get(iv.i))
+        cls <- c(cls, class(X))
+        IND.vars[[iv.i]] <- as.factor(X)
+      }
+      names(cls) <- idx.vars
+      
+      tmp <- IND.vars[[1]]
+      IND.vars[[1]] <- IND.vars[[n.iv]]
+      IND.vars[[n.iv]] <- tmp
+
+      tmp <- idx.vars[1]
+      idx.vars[1] <- idx.vars[n.iv]
+      idx.vars[n.iv] <- tmp
+
+      tmp <- cls[1]
+      cls[1] <- cls[n.iv]
+      cls[n.iv] <- tmp
+      names(cls) <- idx.vars
+      
+      tmp <- by(mdl[[1]], INDICES=IND.vars, FUN=function(x)apply(x, 2, FUN=marFUN))
+      n.resp <- 2
+      n.mgn <- n.mv
+      d.tmp <- dim(tmp)
+      dn.tmp <- dimnames(tmp)
+      tmp <- unlist(tmp)
+      n.tmp <- length(tmp)
+      nr <- n.tmp/n.resp
+      tmp <- t(matrix(tmp, n.resp, nr))
+      idx <- 1:nr
+      mdl <- data.frame(idx)
+      nreps <- 1
+      for(i in 1:n.iv)
+      {
+        lbls <- dn.tmp[[i]]
+        if(cls[i]=="numeric") lbls <- as.numeric(lbls)
+        mdl[[idx.vars[i]]]  <- lbls[gl(d.tmp[i], nreps, prod(d.tmp))]
+        nreps <- nreps*d.tmp[i]
+      }
+      mdl <- cbind(mdl, tmp)
+      nc <- ncol(mdl)
+      names(mdl)[1] <- "index"
+      names(mdl)[(nc-1):nc] <- c("dE","dP")
+      mdl <- model.frame(I(cbind(dE,dP))~., data=mdl)
+      mdl.nms <- names(mdl)
+      mdl.nms[which(mdl.nms=="(nlook)")] <- "nlook"
+      names(mdl) <- mdl.nms
+    }
     y.name <- deparse(y)
     y <- model.extract(mdl, "response")
     nlook <- attr(data, "detail")["nlook"]
@@ -3620,8 +3645,8 @@ function (formula, data, given.values, rows, columns, show.given = TRUE,
             n.id <- sum(id)
             grid(lty = "solid")
             if (subscripts) 
-                stpplt(x[id], y[id, ], subscripts = id, ...)
-            else stpplt(x[id], y[id, ], ...)
+                stpplt(x[id], y[id, ], subscripts = id, bw=bw, stars=stars, ...)
+            else stpplt(x[id], y[id, ], bw=bw, stars=stars, ...)
         }
         if ((i == total.rows) && (j%%2 == 0)) 
             Paxis(1, x)
@@ -3818,4 +3843,8 @@ function (object, fu.vars, create.idvar = FALSE)
 .onAttach <- function(libname, pkgname)
 {
     require(survival)
+    options(stringsAsFactors=FALSE)
+    ver <- read.dcf(file=system.file("DESCRIPTION", package=pkgname),
+                    fields="Version")
+    message(paste(pkgname, ver))
 }

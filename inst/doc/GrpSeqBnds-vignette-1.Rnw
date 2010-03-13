@@ -201,15 +201,11 @@ scale is always the same as the main (first) information scale.
   \end{figure}
   
   \item[4.]{{\bf Explore different boundary construction methods}\\
-    Another boundary construction method is the one based upon the stochastic curtailment
-    procedure. This results in boundaries which are typically more conservative at the
-    begining but less so at the end as compared with the Lan-Demets boundaries based upon the
-    O'Brien-Fleming spending function.
+    The Pow(p) spending function is $alpha f^p$.  Using $p=1$ results in linear spending of alpha
+    so that the resulting futility boundary is less conservative.
     
 <<example-4>>=
-    example.4 <- example.3
-    example.4$call$EfficacyBoundary <- as.call(expression(SC, alpha=0.05, crit=0.90)) # $
-    example.4 <- update(example.4)
+    example.4 <- update(example.3, FutilityBoundary=LanDemets(alpha=0.05, spending=Pow(1)))
     SimGSB(example.4)
 @ 
 
@@ -223,8 +219,8 @@ scale is always the same as the main (first) information scale.
 <<ex4-plot>>
 @
   \end{center}
-  \caption{One-sided efficacy and futility boundaries constructed as in example 4, but this time 
-    with efficacy boundary constructed according to the stochastic curtailment procedure.}
+  \caption{One-sided Lan-Demets efficacy and futility boundaries--efficacy
+    boundary using Obrien-Fleming spending and futility boundary using linear spending.}
   \label{fig:ex4}
   \end{figure}
   

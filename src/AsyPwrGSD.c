@@ -26,7 +26,7 @@
 void printmat(double *pA, int nr, int nc, char *name);
 void printmati(int *pA, int nr, int nc, char *name);
 
-void grpseqbnds(int *dofu, int *nbnd, int *nsf, double *rho, int *pnthslook,
+void grpseqbnds(int *dofu, int *nbf, int *nbnd, int *nsf, double *rho, int *pnthslook,
                 double *palphatot, double *palpha, double *psimin, int *dlact, 
 		double *pInfTold, double *pInfTnew, double *pInfTold_ii, double *pInfTnew_ii, 
 		double *px, double *py, double *ptmp, double *pintgrndx, double *pgqxw, 
@@ -65,19 +65,19 @@ void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *
 	       double *tcutx1B,double *hx1B,int *wttyp,double *Vend,double *pinffrac,
 	       double *pinffrac_ii,double *pbounds,double *mufu,double *mu,
 	       double *palpha0vec,double *palpha1vec,double *RR,int *pnjmp,double *Var_uw,
-	       double *Var,double *Eta,double *betabdry)
+	       double *Var, double *Eta, int *t_idx, double *betabdry, double *bstar)
 {
   int *pn,*pntot,*pnthslook,*nbnd,*nsf,*gradual,*pnlook,*pnstat,*pngqnodes,*dofu,*dlact,*pncut0;
   int *pncut1,*pncutc0,*pncutc1,*sided,*pncutd0A,*pncutd0B,*pncutd1A,*pncutd1B,*pef,*pncutx0A;
-  int *pncutx0B,*pncutx1A,*pncutx1B,*t_idx,*puserVend,*mybounds,*spend_info_k,*qis1orQ,*prev;
+  int *pncutx0B,*pncutx1A,*pncutx1B,*puserVend,*mybounds,*spend_info_k,*qis1orQ,*prev,*nbf;
   int nlook,ncut0,ncut1,ncut,ii,j,k,kacte,kactf,l,ngqnodes,nstat,istat,ef,ixxx,flag,idx;
   int ijmp,njmp,userhazfu,spend_info,krchd_flag,nbnd_e_sv,nbnd_f_sv;
 
   double *ptlook,*val,*pInfTold,*pInfTnew,*pInfTold_ii,*pInfTnew_ii,*psimin,*palpha,*pbold,*pbnew;
   double *px,*py,*ptmp,*pintgrndx,*mu_o,*mu_n,*Psiab_o,*Psiab_n,*Psiminfa_o,*Psiminfa_n,*Psibinf_o;
   double *Psibinf_n,*palpha10,*palpha11,*q,*tjmp,*rr,*CS_q_dEta,*rho,*rho_sc,*accru,*accrat,*mufuforSC;
-  double atotsv_e,atotsv_f,fmin,sqrf,bstar,s,b,Eta_old,CS_,xntrial,xntrialhlf,V_,f1,dt;
-  double told,fp,f_k,a_tmp,b_tmp,f_krchd,f_krchd_ii,f_k_ii;
+  double atotsv_e,atotsv_f,fmin,sqrf,s,stlde,b,Eta_old,CS_,xntrial,xntrialhlf,V_,f1,dt;
+  double dEta,fp,f_k,a_tmp,b_tmp,f_krchd,f_krchd_ii,f_k_ii,vend;
 
 /* dbls <- c(rho.Efficacy,rho.Futility,accru,accrat,spend.info.p) */
 /* void AsyPwrGSD(int *ints,double *rho,double *spend_info_p,double *accrual,*/
@@ -109,6 +109,7 @@ void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *
   spend_info_k = ints + 16+4*nlook+6;
   qis1orQ      = ints + 16+4*nlook+7; 
   sided        = ints + 16+4*nlook+8;
+  nbf          = ints + 16+4*nlook+9;
 
   accru  = dbls;
   accrat = dbls + 1;
@@ -132,7 +133,6 @@ void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *
   pef        = (int *)Calloc(1,int);
   pnthslook  = (int *)Calloc(2,int);
   dlact      = (int *)Calloc(2,int);
-  t_idx      = (int *)Calloc(nlook,int);
   prev       = (int *)Calloc(1,    int);
 
   px         = (double *)Calloc(2*ngqnodes,double);
@@ -214,7 +214,7 @@ void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *
    
   rr = (double *)Calloc(njmp,double);
   CS_q_dEta = (double *)Calloc(nstat*njmp,double);
-  q = (double *)Calloc(njmp,double);
+  q = (double *)Calloc(nstat*njmp,double);
 
   if(*sided==-1 || *sided==-2)    
     for(l=0;l<nlook*nstat;l++) {
@@ -299,7 +299,7 @@ void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *
 
       flag = 0;
 
-      grpseqbnds(dofu,nbnd,nsf,rho, pnthslook,palphatot,palpha,psimin,
+      grpseqbnds(dofu,nbf,nbnd,nsf,rho, pnthslook,palphatot,palpha,psimin,
                  dlact,pInfTold,pInfTnew,pInfTold_ii,pInfTnew_ii,px,py,ptmp,
 		 pintgrndx,pgqxw,pngqnodes,mufu + nlook*j + k,pbold,pbnew,mybounds,prev);
 
@@ -420,41 +420,48 @@ void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *
     }//end while loop
   } //different stats loop end
 
-  s = 0.0;
-  told = 0.0;
-  for(ijmp=0;ijmp<njmp;ijmp++) {
-    *(tjmp + ijmp) = *(RR + ijmp);
-    dt = *(tjmp + ijmp) - told;
-    told = *(tjmp + ijmp);
-    *(rr + ijmp) = *(RR + njmp + ijmp);
-    s += log(*(rr + ijmp)) * dt;
+  for(istat=0;istat<nstat;istat++)
+  {
+    s = 0.0;
+    stlde = 0.0;
+    Eta_old = 0.0;
+    for(ijmp=0;ijmp<njmp;ijmp++) {
+      *(tjmp + ijmp) = *(RR + ijmp);
+      dEta = *(Eta + njmp*istat + ijmp) - Eta_old;
+      Eta_old = *(Eta + njmp*istat + ijmp);
+      *(rr + ijmp) = *(RR + 2*njmp + ijmp);
+      stlde += log(*(rr + ijmp)) * dEta;
+      s += log(*(RR + 4*njmp + ijmp)) * dEta;
+    }
+    *(bstar + istat)= stlde/Eta_old;
+    *(bstar + nstat + istat) = s/Eta_old;
+    for(ijmp=0;ijmp<njmp;ijmp++) 
+      *(q + njmp*istat + ijmp) = log(*(rr + ijmp))/(*(bstar+istat));
   }
-  bstar = s/told;
-  for(ijmp=0;ijmp<njmp;ijmp++) 
-    *(q + ijmp) = log(*(rr + ijmp))/bstar;
 
   for(k=0;k<nlook;k++){
     wchidx(*(pttlook+k),tjmp,njmp,l);
     *(t_idx + k) = l-1;
   }
-
   for(istat=0;istat<nstat;istat++){  
     Eta_old = 0.0;
     CS_ = 0.0;
     for(ijmp=0;ijmp<njmp;ijmp++){
-      CS_ += *(q + ijmp) * (*(Eta + njmp*istat + ijmp) - Eta_old);
+      CS_ += *(q + njmp*istat + ijmp) * (*(Eta + njmp*istat + ijmp) - Eta_old);
       *(CS_q_dEta + njmp*istat + ijmp) = CS_; 
       Eta_old = *(Eta + njmp*istat + ijmp);
     }
   }
-
+  
   for(ef=0;ef<2;ef++)
-    for(istat=0;istat<nstat;istat++){
-      for(k=0;k<nlook;k++){
-        V_ = *(Var + njmp*istat + *(t_idx + k));
+    for(istat=0;istat<nstat;istat++)
+    {
+      vend = *(Var + njmp*istat + *(t_idx + nlook - 1));
+      for(k=0;k<nlook;k++)
+      {
         b = *(pbounds + nstat*nlook*ef + nlook*istat + k) * (1.0 - 2 * (*sided==-1||*sided==-2));
         *(betabdry + nstat*nlook*ef + nlook*istat + k) = 
-          pow(V_,0.5) * b/(xntrialhlf* *(CS_q_dEta + njmp*istat + *(t_idx + k)));
+          pow(vend,0.5) * b/(xntrialhlf* *(CS_q_dEta + njmp*istat + *(t_idx + k)));
       }
     }
 
@@ -486,7 +493,6 @@ void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *
   Free(mu_n);
   Free(tjmp);
   Free(rr);
-  Free(t_idx);
   Free(CS_q_dEta);
   Free(q);
   Free(mufuforSC);

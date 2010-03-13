@@ -27,10 +27,13 @@
 /p1  { stroke } def
 /p2  { gsave bg fill grestore newpath } def
 /p3  { gsave bg fill grestore stroke } def
-/t   { 6 -2 roll moveto gsave rotate
-       ps mul neg 0 2 1 roll rmoveto
+/p6  { gsave bg eofill grestore newpath } def
+/p7  { gsave bg eofill grestore stroke } def
+/t   { 5 -2 roll moveto gsave rotate
        1 index stringwidth pop
        mul neg 0 rmoveto show grestore } def
+/ta  { 4 -2 roll moveto gsave rotate show } def
+/tb  { 2 -1 roll 0 rmoveto show } def
 /cl  { grestore gsave newpath 3 index 3 index moveto 1 index
        4 -1 roll lineto  exch 1 index lineto lineto
        closepath clip newpath } def
@@ -114,13 +117,13 @@ np
 389.07 73.44 m
 0 -7.20 l
 o
-/ps 12 def /Font1 findfont 12 s
-71.73 47.52 (0.0) .5 0 0 t
-135.20 47.52 (0.2) .5 0 0 t
-198.67 47.52 (0.4) .5 0 0 t
-262.13 47.52 (0.6) .5 0 0 t
-325.60 47.52 (0.8) .5 0 0 t
-389.07 47.52 (1.0) .5 0 0 t
+/Font1 findfont 12 s
+71.73 47.52 (0.0) .5 0 t
+135.20 47.52 (0.2) .5 0 t
+198.67 47.52 (0.4) .5 0 t
+262.13 47.52 (0.6) .5 0 t
+325.60 47.52 (0.8) .5 0 t
+389.07 47.52 (1.0) .5 0 t
 np
 59.04 95.14 m
 0 257.73 l
@@ -153,13 +156,13 @@ np
 59.04 352.87 m
 -7.20 0 l
 o
-41.76 95.14 (2) .5 0 90 t
-41.76 138.10 (3) .5 0 90 t
-41.76 181.05 (4) .5 0 90 t
-41.76 224.00 (5) .5 0 90 t
-41.76 266.96 (6) .5 0 90 t
-41.76 309.91 (7) .5 0 90 t
-41.76 352.87 (8) .5 0 90 t
+41.76 95.14 (2) .5 90 t
+41.76 138.10 (3) .5 90 t
+41.76 181.05 (4) .5 90 t
+41.76 224.00 (5) .5 90 t
+41.76 266.96 (6) .5 90 t
+41.76 309.91 (7) .5 90 t
+41.76 352.87 (8) .5 90 t
 np
 59.04 73.44 m
 342.72 0 l
@@ -168,10 +171,15 @@ np
 0 -299.52 l
 o
 0.00 0.00 432.00 432.00 cl
-/ps 12 def /Font1 findfont 12 s
+/Font1 findfont 12 s
 0 setgray
-230.40 18.72 (Information Fraction) .5 0 0 t
-12.96 223.20 (z-score) .5 0 90 t
+177.05 18.72 (Inf) 0 ta
+-0.360 (or) tb
+0.300 (mation Fr) tb
+-0.120 (action) tb gr
+12.96 170.19 (Nor) 90 ta
+0.300 (maliz) tb
+-0.180 (ed Statistic) tb gr
 59.04 73.44 401.76 372.96 cl
 0 setgray
 0.75 setlinewidth

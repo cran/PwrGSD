@@ -75,7 +75,7 @@ void       ISDstat(double *time, int *nrisk, int *nevent, int *pntimes, double *
 -------------------------------------------------------------------------------------------------------------*/
 WtFun *wtfun, flemhar, sflemhar, ramp;
 
-void   grpseqbnds(int *dofu, int *nbnd, int *nsf, double *rho, int *pnthslook, 
+void   grpseqbnds(int *dofu, int *nbf, int *nbnd, int *nsf, double *rho, int *pnthslook, 
                   double *palphatot, double *palpha, double *psimin, int *dlact, 
 		  double *pInfTold, double *pInfTnew, double *pInfTold_ii, double *pInfTnew_ii, 
 		  double *px, double *py, double *ptmp, double *pintgrndx, double *pgqxw, 
@@ -105,7 +105,7 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
   int *pntimesk,*pn,*pntot,*pnthslook,*nbnd,*nsf,*pnsim,*pnlook,*pnstat,*pngqnodes,*pncut0;
   int *pncut1,*pncutc0,*pncutc1,*pncutd0A,*pncutd0B,*pncutd1A,*pncutd1B,*pncutx0A,*pncutx0B;
   int *pncutx1A,*pncutx1B,*sided,*gradual,*dofu,*dlact,*pnblocks,*nrisk_,*nevent_,*puserVend;
-  int *spend_info_k,*mybounds,*qis1orQ,*prev,*pef;
+  int *spend_info_k,*mybounds,*qis1orQ,*prev,*pef,*nbf;
   int ngq2,nstlk,nstlk2,ndbl,n,nlook,ncut0,ncut1,ncut,sided_,ii,i,j,k,kacte,kactf,l,ntimes;
   int ntimesk,ngqnodes,nsim,nstat,RejNull,AccNull,totev,totev_k,ixxx,flag,idx,nppar,csumnppar;
   int userhazfu,spend_info,krchd_flag,evnts_krchd,nbnd_e_sv,nbnd_f_sv;
@@ -122,6 +122,7 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
   pnlook       = ints;
   nlook        = *pnlook;
   pnstat       = ints +  1;
+  nstat        = *pnstat;
   pngqnodes    = ints +  2;
   pncut0       = ints +  3;
   pncut1       = ints +  4;
@@ -143,10 +144,12 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
   userhazfu    = *(ints+16+4*nlook+1);
   spend_info   = *(ints+16+4*nlook+2);
   pnsim        = ints + 16+4*nlook+3;
-  mybounds     = ints + 16+4*nlook+4; /* mybounds 24 and 25  */
+  mybounds     = ints + 16+4*nlook+4; /* 16+4*nlook+4 through 16+4*nlook+5  */
   spend_info_k = ints + 16+4*nlook+6;
   qis1orQ      = ints + 16+4*nlook+7;
-  sided        = ints + 16+4*nlook+8; /* 28, ..., 28+nstat-1 */
+  sided        = ints + 16+4*nlook+8; /* 16+4*nlook+8 through 16+4*nlook+8+nstat-1 */
+  nbf          = ints + 16+4*nlook+8+nstat;
+
 /* 
     ints <- c(nlook,nstat,NGaussQ,ncut0,ncut1,ncutc0,ncutc1,ncutd0A,ncutd0B,ncutd1A,
               ncutd1B,ncutx0A,ncutx0B,ncutx1A,ncutx1B,gradual,nbnd.e,nbnd.f,nsf.e,nsf.f,
@@ -165,7 +168,6 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
   pgqx = pgqxw;
   pgqw = pgqxw + ngqnodes;
   nsim = *pnsim;
-  nstat = *pnstat;
 
   nstlk = nstat*nlook;
   nstlk2 = 2*nstat*nlook;
@@ -472,7 +474,7 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
 	if(spend_info==3)
 	  *pInfTnew_ii = *ptlook/(*(pttlook + nlook -1));
 
-	grpseqbnds(dofu,nbnd,nsf,rho,pnthslook,palphatot,palpha,psimin,dlact,
+	grpseqbnds(dofu,nbf,nbnd,nsf,rho,pnthslook,palphatot,palpha,psimin,dlact,
 		   pInfTold,pInfTnew,pInfTold_ii,pInfTnew_ii,px,py,ptmp,pintgrndx,
 		   pgqxw,pngqnodes,mufu + nlook*j + k,pbold,pbnew, mybounds,prev);
 

@@ -1,9 +1,16 @@
 Package: PwrGSD
 Title: Power in a Group Sequential Design
-Version: 1.15
+Version: 1.16
 Author: Grant Izmirlian
 Depends: survival
-Description: Tools to compute power in a group sequential design.  SimPwrGSD C-kernel is a simulation routine that is similar in spirit to dssp2.f by Gu and Lai, but with major improvements.  AsyPwrGSD has exactly the same range of application as SimPwrGSD but uses asymptotic methods and runs _much_ faster.
+Description: Tools the evaluation of interim analysis plans for
+        sequentially monitored trials on a survival endpoint; tools to
+        construct efficacy and futility boundaries, for deriving power
+        of a sequential design at a specified alternative, template for
+        evaluating the performance of candidate plans at a set of time
+        varying alternatives.
 Maintainer: Grant Izmirlian <izmirlig@mail.nih.gov>
 License: GPL (>= 2)
-Packaged: Fri Jul 11 11:24:46 2008; izmirlig
+Packaged: 2010-03-13 18:01:03 UTC; izmirlig
+Repository: CRAN
+Date/Publication: 2010-03-13 20:58:21

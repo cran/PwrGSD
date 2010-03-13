@@ -17,12 +17,12 @@
     the following line.}
   \item{param}{Weight function parameters. Length and interpretation depends upon
     the selected value of \code{WtFun}:
-    If \code{WtFun==\dQuote{FH}} then \code{param} is a length 2 vector specifying the power
+    If \code{WtFun==FH} then \code{param} is a length 2 vector specifying the power
     of the pooled (across arms) kaplan meier estimate and its complement.
-    If \code{WtFun==\dQuote{SFH}} then \code{param} is a length 3 vector with first two components
+    If \code{WtFun==SFH} then \code{param} is a length 3 vector with first two components
     as in the \dQuote{FH} case, and third component the time (in the same units as the time
     to event) at which the \dQuote{FH} weight function is capped off at its current value.
-    If \code{WtFun==\dQuote{SFH}} then \code{param} is of length 1 specifying the time (same units
+    If \code{WtFun==SFH} then \code{param} is of length 1 specifying the time (same units
     as time to event) at which events begin to get equal weight. The \dQuote{Ramp} weight
     function is a linearly increasing deterministic weight function which is capped off at 1
     at the user specified time.

@@ -15,43 +15,57 @@
 \usage{
 GrpSeqBnds(EfficacyBoundary = LanDemets(alpha = 0.05, spending = ObrienFleming),
            FutilityBoundary = LanDemets(alpha = 0.1, spending = ObrienFleming),
-           frac, frac.ii = NULL, drift = rep(0, length(frac)))
+           NonBindingFutility = TRUE, frac, frac.ii = NULL, drift = NULL)
 }
 
 \arguments{
-  \item{EfficacyBoundary}{This specifies the method used to construct the efficacy boundary. The available choices are
-    \item{(i)}{\code{Lan-Demets(alpha=<total type I error>, spending=<spending function>)}. The Lan-Demets method is based upon
+  \item{EfficacyBoundary}{This specifies the method used to construct the efficacy boundary. The available choices are:
+    
+    \samp{(i)  }\code{Lan-Demets(alpha=<total type I error>, spending=<spending function>)}. The Lan-Demets method is based upon
     a error probability spending approach. The spending function can be set to \code{ObrienFleming}, \code{Pocock}, or
     \code{Power(rho)}, where \code{rho} is the the power argument for the power spending function: rho=3 is roughly equivalent
-    to the O'Brien-Fleming spending function and smaller powers result in a less conservative spending function.}
-    \item{(ii)}{\code{Haybittle(alpha=<total type I error>, b.Haybittle=<user specified boundary point>)}. The Haybittle
+    to the O'Brien-Fleming spending function and smaller powers result in a less conservative spending function.
+    
+    \samp{(ii)  }\code{Haybittle(alpha=<total type I error>, b.Haybittle=<user specified boundary point>)}. The Haybittle
     approach is the simplest, which sets the boundary points equal to \code{b.Haybittle}, a user specified value (try 3) for
     all analyses except the last, which is calculated so as to result in the total type I error, set with the argument
-    \code{alpha}.} 
-    \item{(iii)}{\code{SC(alpha=<total type I error>, crit=<threshold for conditional type I error for efficacy stopping>)}. The
-    stochastic curtailment method is based upon the conditional probability of type I error given the current value of the
-    statistic. Under this method, a sequence of boundary points on the standard normal scale (as are boundary points under all
-    other methods) is calculated so that the total probability of type I error, \code{alpha}, is maintained. This is done by
-    considering the joint probabilities of continuing to the current analysis and then exceeding the threshold at the current
-    analysis. A good value for the threshold value for the conditional type I error, \code{crit} is 0.90 or greater.} 
-    \item{(iv)}{User supplied boundary points in the form \code{c(b1, b2, b3, ..., b_m)}, where \code{m} is the number of looks.}}
-  \item{FutilityBoundary}{This specifies the method used to construct the futility boundary. The available choices are
-    \item{(i)}{\code{Lan-Demets(alpha=<total type II error>, spending=<spending function>)}. The Lan-Demets method is based upon
+    \code{alpha}.
+    
+    \samp{(iii)  }\code{SC(be.end=<efficacy boundary point at trial end>, prob=<threshold for conditional type I error for
+    efficacy stopping>)}. The stochastic curtailment method is based upon the conditional probability of type I error given the
+    current value of the statistic. Under this method, a sequence of boundary points on the standard normal scale (as are
+    boundary points under all other methods) is calculated so that the total probability of type I error is  maintained. This is
+    done by considering the joint probabilities of continuing to the current analysis and then exceeding the threshold at the
+    current analysis. A good value for the threshold value for the conditional type I error, \code{prob} is 0.90 or greater.
+    
+    \samp{(iv)  }User supplied boundary points in the form \code{c(b1, b2, b3, ..., b_m)}, where \code{m} is the number of looks.}
+  \item{FutilityBoundary}{This specifies the method used to construct the futility boundary. The available choices are:
+    
+    \samp{(i)  }\code{Lan-Demets(alpha=<total type II error>, spending=<spending function>)}. The Lan-Demets method is based upon
     a error probability spending approach. The spending function can be set to \code{ObrienFleming}, \code{Pocock}, or
     \code{Power(rho)}, where \code{rho} is the the power argument for the power spending function: rho=3 is roughly equivalent
-    to the O'Brien-Fleming spending function and smaller powers result in a less conservative spending function.}
-    \item{(ii)}{\code{Haybittle(alpha=<total type I error>, b.Haybittle=<user specified boundary point>)}. The Haybittle
+    to the O'Brien-Fleming spending function and smaller powers result in a less conservative spending function.
+    
+    \samp{(ii)  }\code{Haybittle(alpha=<total type I error>, b.Haybittle=<user specified boundary point>)}. The Haybittle
     approach is the simplest, which sets the boundary points equal to \code{b.Haybittle}, a user specified value (try 3) for
     all analyses except the last, which is calculated so as to result in the total type II error, set with the argument
-    \code{alpha}.} 
-    \item{(iii)}{\code{SC(alpha=<total type II error>, crit=<threshold for conditional type II error for futility stopping>,
-    drift.end=<projected drift at end of trial>)}. The stochastic curtailment method is based upon the conditional probability
-    of type II error given the current value of the statistic. Under this method, a sequence of boundary points on the standard
-    normal scale (as are boundary points under all other methods) is calculated so that the total probability of type II error,
-    \code{alpha}, is maintained. This is done by considering the joint probabilities of continuing to the current analysis and
-    then exceeding the threshold at the current analysis. A good value for the threshold value for the conditional type I error,
-    \code{crit} is 0.90 or greater.} 
-    \item{(iv)}{User supplied boundary points in the form \code{c(b1, b2, b3,..., b_m)}, where \code{m} is the number of looks.}}
+    \code{alpha}.
+    
+    \samp{(iii)  }\code{SC(be.end=<efficacy boundary point at trial end>, prob=<threshold for conditional type II error for
+    futility stopping>, drift.end=<projected drift at end of trial>)}. The stochastic curtailment method is based upon the
+    conditional probability of type II error given the current value of the statistic. Under this method, a sequence of boundary
+    points on the standard normal scale (as are boundary points under all other methods) is calculated so that the total
+    probability of type II error, is maintained. This is done by considering the joint probabilities of continuing to the
+    current analysis and then exceeding the threshold at the current analysis. A good value for the threshold value for the
+    conditional type I error, \code{prob} is 0.90 or greater.
+    
+    \samp{(iv)  }User supplied boundary points in the form \code{c(b1, b2, b3, ..., b_m)}, where \code{m} is the number of looks.}
+  \item{NonBindingFutility}{When using a futility boundary and this is set to 'TRUE', the efficacy boundary will be constructed   
+    in the absence of the futility boundary, and then the futility boundary will be constructed given the resulting efficacy      
+    boundary. This results in a more conservative efficacy boundary with true type I error less than the nominal level. This is   
+    recommended due to the fact that futility crossings are viewed by DSMB's with much less gravity than an efficacy crossing     
+    and as such, the consensus is that efficacy bounds should not be discounted towards the null hypothesis because of paths      
+    which cross a futility boundary. Default value is 'TRUE'.}
   \item{frac}{The variance ratio. If the end of trial variance is unknown then normalize all previous variances by the current
     variance. In this case you must specify a second scale that is monotone increasing from 0 to 1 at the end of the
     trial. Required.}
@@ -71,13 +85,20 @@ GrpSeqBnds(EfficacyBoundary = LanDemets(alpha = 0.05, spending = ObrienFleming),
     above if the user sets the argument \code{frac.ii} to a second scale as mentioned above.}
   \item{drift}{The drift vector that is required as an argument when futility boundaries are calculated.}
   \item{table}{A matrix with components
-    \item{frac}{The information ratio for type I and type II error probability spending.}
-    \item{b.f}{The calculated futility boundary (if requested).}
-    \item{alpha.f}{The type II error probability spent at that analysis (if doing futility bounds).}
-    \item{cum-alpha.f}{Cumulative sum of \code{alpha.f} (if doing futility bounds).}
-    \item{b.e}{The calculated efficacy boundary.}
-    \item{alpha.e}{The type I error probability spent at that analysis.}
-    \item{cum-alpha.e}{Cumulative sum of \code{alpha.e}.}
+    
+    \samp{frac         }The information ratio for type I and type II error probability spending.
+    
+    \samp{b.f          }The calculated futility boundary (if requested).
+
+    \samp{alpha.f      }The type II error probability spent at that analysis (if doing futility bounds).
+
+    \samp{cum-alpha.f  }Cumulative sum of \code{alpha.f} (if doing futility bounds).
+    
+    \samp{b.e          }The calculated efficacy boundary.
+    
+    \samp{alpha.e      }The type I error probability spent at that analysis.
+
+    \samp{cum-alpha.e  }Cumulative sum of \code{alpha.e}.
   }
 }
 \references{
