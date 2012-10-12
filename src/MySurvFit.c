@@ -9,10 +9,10 @@ typedef struct{
   int arm;
 } itea;
 
-void cpblocked(itea *Yord, int *pn, double *time, int *nrisk, int *nevent, int *pntimes, int *pnblocks);
+void cpblocked(itea *Yord, int *pn, double *time, int *nrisk, int *nevent, int *pntimes, int *pnevtypes, int *pnblocks);
 
 void mysurvfit(double *TOS, int *Event, int *Arm, int *pn, double *time, int *nrisk, int *nevent, 
-               int *pntimes, int *pnblocks)
+               int *pntimes, int *pnevtypes, int *pnblocks)
 {
   int i,j,n;
   itea *YY;
@@ -28,7 +28,7 @@ void mysurvfit(double *TOS, int *Event, int *Arm, int *pn, double *time, int *nr
     (YY+i)->arm = *(Arm+i);
   }
 
-  cpblocked(YY, pn, time, nrisk, nevent, pntimes, pnblocks);
+  cpblocked(YY, pn, time, nrisk, nevent, pntimes, pnevtypes, pnblocks);
 
   Free(YY);
 }

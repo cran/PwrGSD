@@ -12,21 +12,22 @@ typedef struct{
 typedef int CmprFun(const void *x, const void *y);
 CmprFun compitea, *f;
 
-void cpblocked(itea *Yord, int *pn, double *time, int *nrisk, int *nevent, int *pntimes, int *pnblocks)
+void cpblocked(itea *Yord, int *pn, double *time, int *nrisk, int *nevent, int *pntimes, int *pnevtypes, int *pnblocks)
 {
-  int n,i,j,l,nb,isev,ntimes,cont;
+  int n,i,j,k,l,nevty,nb,isev,ntimes,cont;
   int *dr,*dnev,*nr;
   double yhold,yn,yo;
 
   n = *pn;
   ntimes = *pntimes;
+  nevty = *pnevtypes;
   nb = *pnblocks;
   f = &compitea;
   qsort(Yord, n, sizeof(itea), f);
 
   dr = (int *)Calloc(nb, int);
-  dnev = (int *)Calloc(nb, int);
   nr = (int *)Calloc(nb, int);
+  dnev = (int *)Calloc(nb*nevty, int);
 
   i=n-1;
   l=0;
@@ -34,15 +35,17 @@ void cpblocked(itea *Yord, int *pn, double *time, int *nrisk, int *nevent, int *
   while(i>=0 && l < ntimes){
     isev = 0;
     for(j=0;j<nb;j++) *(dr + j) = 0;
-    for(j=0;j<nb;j++) *(dnev +j) = 0;
+    for(j=0;j<nb;j++) for(k=0;k<nevty;k++) *(dnev + nb*k + j) = 0;
     yn = (Yord+i)->time;
     yhold = yn;
     cont=1;
     while(yn == yhold && cont){
       yo = yn;
       isev = isev || 1*((Yord+i)->event > 0);
-      for(j=0;j<nb;j++){
-        *(dnev + j) = *(dnev + j) + ((Yord+i)->arm==j) * (Yord+i)->event;
+      for(j=0;j<nb;j++)
+      {
+        for(k=0;k<nevty;k++)
+          *(dnev + nb*k + j) = *(dnev + nb*k + j) + ((Yord+i)->arm==j) * ((Yord+i)->event==(k+1));
         *(dr + j) = *(dr + j) + ((Yord+i)->arm==j);
       }
       i--;
@@ -54,7 +57,8 @@ void cpblocked(itea *Yord, int *pn, double *time, int *nrisk, int *nevent, int *
       for(j=0;j<nb;j++){
         *(nrisk + nb*(ntimes - 1 - l) + j) = *(nr + j);
         *(time + ntimes - 1 - l) = yo;
-        *(nevent + nb*(ntimes - 1 - l) + j) = *(dnev + j);
+        for(k=0;k<nevty;k++)
+          *(nevent + nevty*nb*(ntimes - 1 - l) + nevty*j + k) = *(dnev + k*nb + j);
       }
       l++;
     }

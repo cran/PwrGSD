@@ -1,4 +1,4 @@
- #include<R.h>
+#include<R.h>
 #include<Rmath.h>
 
 #define MIN(x,y) (x <= y ? x : y);
@@ -107,7 +107,7 @@ void grpseqbndsL(int *pef, double (*spfu)(double frac, double alphatot, double r
 		 int *mybound)
 {
   double vsmall=1.0e-6, vvsmall=1.0e-15, ltone=7.0, utzero=18.66, sw, x_, dx_;
-  double psimin, aold, anew, sqrf, sqrdf, b, Phib,bl,bu,berr,aerr,aerrsgn,intgrl,yy;
+  double psimin, aold, anew, sqrf, sqrdf, b, Phib,bl,bu,berr,aerr,aerrsgn,intgrl,yy,bold_;
   double *gqx, *gqw;
   int nlook,nlkm1,ifault,i,j,ef,ngqnodes,hangs,zero=0, one=1;
 

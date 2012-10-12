@@ -1,9 +1,8 @@
 useDynLib(PwrGSD)
 export("%,%",agghaz,as.boundaries,CDFOR2LRR,CondPower,CY2TOShaz,PwrGSD,cpd.PwrGSD,
-       CRRtoRR,DX,Elements,GrpSeqBnds,Haybittle,IntSurvDiff,LanDemets,lookup,mystack,
-       mysurvfit,ObrienFleming,Pocock,Pow,RR2RCM,RCM2RR,SC,SimGSB,Power,wtdlogrank)
-
-
+       CRRtoRR,Dnsty,DX,Elements,GrpSeqBnds,Haybittle,IntSurvDiff,LanDemets,lookup,
+       mystack,mysurvfit,ObrienFleming,Pocock,Pow,RR2RCM,RCM2RR,SC,SCtoBdry,SimGSB,
+       Power,wtdlogrank)
 
 S3method(print, PwrGSD)
 S3method(summary, PwrGSD)
@@ -20,6 +19,7 @@ S3method(summary, SimPwrGSD)
 
 S3method(print, boundaries)
 S3method(plot, boundaries)
+S3method(as.data.frame, boundaries)
 S3method(as.boundaries, boundaries)
 S3method(SimGSB, boundaries)
 
@@ -28,6 +28,7 @@ S3method(summary, survtest)
 
 S3method(plot, blkdcp)
 S3method(print, blkdcp)
+S3method(summary, blkdcp)
 
 S3method(print, boundary.construction.method)
 

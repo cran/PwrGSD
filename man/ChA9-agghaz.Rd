@@ -34,10 +34,10 @@ agghaz(t.agg, time, nrisk, nevent)
   fit.msf <- mysurvfit(Surv(time, I(status==2)) ~ sex, data=lung)
 
   ## A single stratum:
-  with(fit.msf$Table, agghaz(30, time, cbind(nrisk1), cbind(nevent1)))
+  with(fit.msf$Table, agghaz(30, time, cbind(nrisk.sex1), cbind(nevent.sex1)))
 
   ## Multiple strata--pooled and group 1:
-  with(fit.msf$Table, agghaz(30, time, cbind(nrisk1+nrisk2,nrisk1), cbind(nevent1+nevent2,nevent1)))
+  with(fit.msf$Table, agghaz(30, time, cbind(nrisk.sex1+nrisk.sex2,nrisk.sex1), cbind(nevent.sex1+nevent.sex2,nevent.sex1)))
 }
 \keyword{survival}
 \keyword{manip}

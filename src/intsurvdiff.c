@@ -10,7 +10,7 @@ typedef struct{
   int arm;
 } itea;
 
-void cpblocked(itea *Yord, int *pn, double *time, int *nrisk, int *nevent, int *pntimes, int *pnblocks);
+void cpblocked(itea *Yord, int *pn, double *time, int *nrisk, int *nevent, int *pntimes, int *pnevtypes, int *pnblocks);
 
 typedef void WtFun(double *time, int *nrisk, int *nevent, int *pntimes, double *par, double *wt);
 WtFun flemhar, sflemhar, ramp, *wtfun;
@@ -23,8 +23,10 @@ void IntSurvDiff(double *TOS, int *Event, int *Arm, int *pn, int *wttyp, double 
 		double *var, double *wt)
 {
   int i,n,ntimes;
-  int *pnblocks;
+  int *pnevtypes, *pnblocks;
+  pnevtypes = (int *)Calloc(1, int);
   pnblocks = (int *)Calloc(1, int);
+  *pnevtypes = 1;
   *pnblocks = 2;
 
   itea *YY;
@@ -40,14 +42,16 @@ void IntSurvDiff(double *TOS, int *Event, int *Arm, int *pn, int *wttyp, double 
     (YY+i)->arm = *(Arm+i);
   }
 
-  cpblocked(YY, pn, time, nrisk, nevent, pntimes, pnblocks);
+  cpblocked(YY, pn, time, nrisk, nevent, pntimes, pnevtypes, pnblocks);
 
   if(*wttyp==0) wtfun = *flemhar;
   if(*wttyp==1) wtfun = *sflemhar;
   if(*wttyp==2) wtfun = *ramp;
   (*wtfun)(time, nrisk, nevent, pntimes, par, wt);
+
   ISDstat(time, nrisk, nevent, pntimes, wt, stat, var);
 
+  Free(pnevtypes);
   Free(pnblocks);
   Free(YY);  
 }

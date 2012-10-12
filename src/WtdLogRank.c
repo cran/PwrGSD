@@ -9,7 +9,7 @@ typedef struct{
   int arm;
 } itea;
 
-void cpblocked(itea *Yord, int *pn, double *time, int *nrisk, int *nevent, int *pntimes, int *pnblocks);
+void cpblocked(itea *Yord, int *pn, double *time, int *nrisk, int *nevent, int *pntimes, int *pnevtypes, int *pnblocks);
 
 typedef void WtFun(double *time, int *nrisk, int *nevent, int *pntimes, double *par, double *wt);
 WtFun flemhar, sflemhar, ramp, *wtfun;
@@ -21,7 +21,7 @@ void WtdLogRank(double *TOS, int *Event, int *Arm, int *pn, int *wttyp, double *
 		double *time, int *nrisk, int *nevent, double *wt, int *pntimes, double *UQ, double *varQ, 
                 double *UQt, double *varQt, double *var1t)
 {
-  int i,n,ntimes;
+  int i,n,ntimes,one=1;
   int *pnblocks;
   pnblocks = (int *)Calloc(1, int);
   *pnblocks = 2;
@@ -39,7 +39,7 @@ void WtdLogRank(double *TOS, int *Event, int *Arm, int *pn, int *wttyp, double *
     (YY+i)->arm = *(Arm+i);
   }
 
-  cpblocked(YY, pn, time, nrisk, nevent, pntimes, pnblocks);
+  cpblocked(YY, pn, time, nrisk, nevent, pntimes, &one, pnblocks);
 
   if(*wttyp==0) wtfun = &flemhar;
   if(*wttyp==1) wtfun = &sflemhar;
