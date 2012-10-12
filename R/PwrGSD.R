@@ -209,8 +209,8 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
     	h1 <- stoh(tcut1, s1)
     if(!no.rhaz){
     	tcut.01 <- support(c(tcut0, tcut1))
-    	h0.01 <- approx(tcut0, h0, tcut.01, meth="constant", f=0, yleft=0, yright=h0[ncut0])$y
-    	rhaz.01 <- approx(tcut1, rhaz, tcut.01, meth="constant", f=0, yleft=0, yright=rhaz[length(rhaz)])$y
+    	h0.01 <- approx(tcut0, h0, tcut.01, method="constant", f=0, yleft=0, yright=h0[ncut0])$y
+    	rhaz.01 <- approx(tcut1, rhaz, tcut.01, method="constant", f=0, yleft=0, yright=rhaz[length(rhaz)])$y
     	tcut1 <- tcut.01
     	h1 <- rhaz.01 * h0.01
     }
@@ -219,7 +219,7 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
     tlook.not <- tlook[sapply(tlook, FUN=function(x,Y){all(abs(x - Y)>1e-8)}, Y=tcut0)]
     tcut0.new <- sort(unique(c(tcut0, tlook.not)))
     ncut0.new <- length(tcut0.new)
-    h0.new <- approx(tcut0, h0, tcut0.new, meth="const", f=0, yleft=0, yright=h0[ncut0])$y
+    h0.new <- approx(tcut0, h0, tcut0.new, method="const", f=0, yleft=0, yright=h0[ncut0])$y
     tcut0 <- tcut0.new
     h0 <- h0.new
     ncut0 <- ncut0.new
@@ -227,7 +227,7 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
     tlook.not <- tlook[sapply(tlook, FUN=function(x,Y){all(abs(x - Y)>1e-8)}, Y=tcut1)]    
     tcut1.new <- sort(unique(c(tcut1, tlook.not)))
     ncut1.new <- length(tcut1.new)
-    h1.new <- approx(tcut1, h1, tcut1.new, meth="const", f=0, yleft=0, yright=h1[ncut1])$y
+    h1.new <- approx(tcut1, h1, tcut1.new, method="const", f=0, yleft=0, yright=h1[ncut1])$y
     tcut1 <- tcut1.new
     h1 <- h1.new
     ncut1 <- ncut1.new
@@ -550,7 +550,7 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
                   "prob.e." %,%(1:nlook), "prob.f." %,%(1:nlook))
     
     names(ints) <- ints.nms
-    ans <- .C(name = "AsyPwrGSD",
+    ans <- .C("AsyPwrGSD",
     	ints = as.integer(ints),
         dbls = as.double(dbls),
         pttlook = as.double(tlook),
@@ -1458,7 +1458,7 @@ function(x, ...)
 "plot.boundaries" <- 
 function (x, yrng=NULL, ...) 
 {
-    .call. <- match.call(expand=TRUE)
+    .call. <- match.call(expand.dots=TRUE)
     m <- length(.call.) - 2
     nms <- names(.call.)[-(1:2)]
     xtra <- list()
@@ -2128,7 +2128,7 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
     
     logRR.F <- log(RR.Futility)
     
-    ans <- .C(name = "SimPwrGSD", 
+    ans <- .C("SimPwrGSD", 
 	ints = as.integer(ints),
         dbls = as.double(dbls),
         pttlook = as.double(tlook), 
@@ -3098,7 +3098,7 @@ function(Z, frac, drift, drift.end, err.I, sided=1)
 "stpplt" <-
 function (x, y, bw, stars, ...) 
 {
-    .call. <- match.call(expand=FALSE)
+    .call. <- match.call(expand.dots=FALSE)
     nms.dots <- names(.call.$...)   
     d.y <- dim(y)
     n <- d.y[1]
@@ -3159,7 +3159,7 @@ function(x, formula, subset, na.action, ...)
 {
   ow <- options("warn")
   options(warn = -1)
-  .call. <- match.call(expand=FALSE)
+  .call. <- match.call(expand.dots=FALSE)
   dots <- .call.$...
   nms.dots <- names(dots)
   given.values <- rows <- columns <- show.given <- col <-
@@ -3311,7 +3311,7 @@ function (formula, data, given.values, rows, columns, show.given = TRUE,
           number = 6, overlap = c(0,0), xlim, ylim, subset, na.action, bw=FALSE,
           stars=NULL, margin=NULL, marFUN=NULL,...) 
 {
-    .call. <- match.call(expand=FALSE)
+    .call. <- match.call(expand.dots=FALSE)
     if(missing(bw)) bw <- FALSE
     if(missing(stars)) stars <- NULL
     is.margin <- !missing(margin)
@@ -3842,9 +3842,8 @@ function (object, fu.vars, create.idvar = FALSE)
 
 .onAttach <- function(libname, pkgname)
 {
-    require(survival)
     options(stringsAsFactors=FALSE)
-    ver <- read.dcf(file=system.file("DESCRIPTION", package=pkgname),
+    ver <- read.dcf(file=system.file("DESCRIPTION", package=pkgname, lib.loc=libname),
                     fields="Version")
-    message(paste(pkgname, ver))
+    packageStartupMessage(paste(pkgname, ver))
 }
