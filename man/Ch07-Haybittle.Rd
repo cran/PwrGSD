@@ -3,17 +3,12 @@
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{The Haybittle method of Boundary Construction}
 \description{
-  The function \code{Haybittle} is used in calls to the functions
-  \code{GrpSeqBnds} and \code{PwrGSD} as a possible setting for the
-  argument \code{EfficacyBoundary}. NOTE: the Haybittle method is not
-  used for construction a futility boundary (does this even make
-  sense?). The Haybittle method is one of four currently availiable
-  choices, the others being \code{LanDemets}, \code{SC} (stochastic
-  curtailment), and user specified.
-}
-\usage{
-Haybittle(alpha, b.Haybittle, from = NULL, to = NULL)
-}
+  The function \code{Haybittle} is used in calls to the functions \code{GrpSeqBnds} and
+  \code{PwrGSD} as a possible setting for the argument \code{EfficacyBoundary}. NOTE: the
+  Haybittle method is not implemented as a futility boundary method The Haybittle method
+  is one of four currently availiable choices (efficacy only), the others being
+  \code{LanDemets}, \code{SC} (stochastic curtailment), and user specified.  } \usage{
+  Haybittle(alpha, b.Haybittle, from = NULL, to = NULL) }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{alpha}{The total probability of type I error.}
@@ -25,12 +20,12 @@ Haybittle(alpha, b.Haybittle, from = NULL, to = NULL)
   \item{to}{See above.}
 }
 \details{
-  The Haybittle method is the simplest of all methods for efficacy
-  boundary construction. You just specify a value such as 3 which is
-  so large that multiple testing with standard normal criterion 3
-  (upper quantile is 0.00135) means that after 20 analyses you've
-  spent only 0.027.  The value of the criterion for the final analysis
-  is determined so that the total type I error is obtained.
+  The Haybittle approach is conceptually the simplest of all methods for efficacy boundary
+  construction. However, as it spends nearly no alpha until the end, is for all practical
+  purposes equivalent to a single analysis design and to be considered overly
+  conservative. This method sets all the boundary points equal to \code{b.Haybittle}, a
+  user specified value (try 3) for all analyses except the last, which is calculated so as
+  to result in the total type I error, set with the argument \code{alpha}.
 }
 \value{
   An object of class \code{boundary.construction.method} which is really a list
@@ -50,7 +45,8 @@ Haybittle(alpha, b.Haybittle, from = NULL, to = NULL)
 \references{see references under \code{\link{PwrGSD}}}
 \author{Grant Izmirlian}
 \note{The print method returns the call by default} 
-\seealso{\code{\link{LanDemets}}, \code{\link{SC}}, \code{\link{GrpSeqBnds}}, and \code{\link{PwrGSD}}}
+\seealso{\code{\link{LanDemets}}, \code{\link{SC}}, \code{\link{GrpSeqBnds}}, and 
+  \code{\link{PwrGSD}}}
 \examples{
 ## example 1: what is the result of calling a Boundary Construction Method function
     ## A call to 'Haybittle' just returns the call
@@ -71,8 +67,8 @@ Haybittle(alpha, b.Haybittle, from = NULL, to = NULL)
     Haybittle(alpha=0.05, b.Haybittle=3)$b.Haybittle
     Haybittle(alpha=0.05, b.Haybittle=3)$call
 
-## example 2: ...But the intended purpose of the spending functions its
-    ## intended purpose is in constructing calls to 'GrpSeqBnds' and to 'PwrGSD':
+## example 2: ...But the intended purpose of the spending functions 
+## is in constructing calls to 'GrpSeqBnds' and to 'PwrGSD':
      
 
     frac <- c(0.07614902,0.1135391,0.168252,0.2336901,0.3186155,

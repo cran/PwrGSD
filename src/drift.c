@@ -44,8 +44,9 @@ void drift(int *ints,double *accru,double *accrat,double *tlook,double *ppar,dou
 	   double *thc1,double *hc1,double *tlA0,double *lA0,double *tlB0,double *lB0,
 	   double *tlA1,double *lA1,double *tlB1,double *lB1,double *thA0,double *hA0,
 	   double *thB0,double *hB0,double *thA1,double *hA1,double *thB1,double *hB1,
-	   int *wttyp, double *RR,int *pnnjmp,double *InfFrac,double *InfFrac_ii,
-	   double *mu,double *Var_uw, double *Var, double *Eta,int *puserVend,double *Vend)
+	   int *wttyp,double *RR,int *pnnjmp,double *InfFrac,double *InfFrac_ii,
+	   double *mu,double *betastar, double *Var_uw, double *Var, double *Eta,
+           int *puserVend,double *Vend)
 {
   int nnstat,nngq,l,j,j0,j1,istat,nnh0,nnh1,nnsm,nnjmp,nnhc0,nnhc1,nnlA0,nnlB0,nnlA1,nmx,flaguserVE;
   int nnlB1,nnhA0,nnhB0,nnhA1,nnhB1,nhmax,nnlook,ilook,ijmp,ntrial,isumppar,istop, nppar;
@@ -292,6 +293,7 @@ void drift(int *ints,double *accru,double *accrat,double *tlook,double *ppar,dou
       *(Var + nnjmp*istat + ijmp) = V;
       *(Eta + nnjmp*istat + ijmp) = et;
     }
+    *(betastar + istat) = ans_MU/et;
     isumppar += nppar;
   }
 

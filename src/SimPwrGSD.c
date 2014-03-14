@@ -55,7 +55,7 @@ void      driftfu(int *ints,double *accru,double *accrat,double *tlook,double *p
                   double *th0,double *h0,double *lrrf,double *thc0,double *hc0,double *thc1,
                   double *hc1,int *wttyp,double *mufu,int *puserVend,double *Vend);
 
-void    cpblocked(itea *Yord, int *pn, double *time, int *nrisk, int *nevent, int *pntimes, int *pnblocks);
+void    cpblocked(itea *Yord, int *pn, double *time, int *nrisk, int *nevent, int *pntimes, int *pnevtypes, int *pnblocks);
 
 void      commonx(double *x1,double *h1,int *pn1,double *x2,double *h2,int *pn2,
 	          double *x,double *hh1,double *hh2,int *pn);
@@ -63,8 +63,7 @@ void      commonx(double *x1,double *h1,int *pn1,double *x2,double *h2,int *pn2,
 typedef void WtFun(double *time, int *nrisk, int *nevent, int *pntimes, double *par, double *wt);
 
 void       wlrstat(double *time, int *nrisk, int *nevent, double *wt, int *pntimes, double *UQ,
-                   double *varQ, double *UQt, double *varQt, double *var1t);
-
+                   double *varQ, double *m1, double *UQt, double *varQt, double *var1t);
 void       ISDstat(double *time, int *nrisk, int *nevent, int *pntimes, double *wt, double *stat,
                    double *var);
 /*------------------------------------------------------------------------------------------------------------
@@ -79,45 +78,48 @@ void   grpseqbnds(int *dofu, int *nbf, int *nbnd, int *nsf, double *rho, int *pn
                   double *palphatot, double *palpha, double *psimin, int *dlact, 
 		  double *pInfTold, double *pInfTnew, double *pInfTold_ii, double *pInfTnew_ii, 
 		  double *px, double *py, double *ptmp, double *pintgrndx, double *pgqxw, 
-		  int *pngqnodes, double *mu, double *pbold, double *pbnew, int *mybounds, int *prev);
+		  int *pngqnodes, double *mu, double *pbold, double *pbnew, int *mybounds);
 
 void StCu2Bnds(double *pmu,double *pfrac,double *palpha,int *psided,double *prho,int *pef,double *b);
+void project_end(double *u, double *t0, double *t1, double *tc0, double *tc1, int *pn, double *t_proj, 
+                 double *v_Tend_proj, double *m_Tend_proj);
 
 void     printmat(double *pA, int nr, int nc, char *name);
 void     printmati(double *pA, int nr, int nc, char *name);
 void     printbtre(double *time, int *nrisk, int *nevent, int nt, int fromi, int toi, int nb);
+int R_isnancpp(double x);
 
 /* BEGIN MAIN */
 void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,double *lrrf,
-		  double *bHay,int *stattype,int *wttyp,double *ppar,double *pgqxw,
-		  double *tcut0,double *h0,double *tcut1,double *h1,double *tcutc0,double *hc0,
-		  double *tcutc1,double *hc1,double *tcutd0A,double *hd0A,double *tcutd0B,
-		  double *hd0B,double *tcutd1A,double *hd1A,double *tcutd1B,double *hd1B,
-		  double *tcutx0A,double *hx0A,double *tcutx0B,double *hx0B,double *tcutx1A,
-		  double *hx1A,double *tcutx1B,double *hx1B,double *t0,double *t1,double *tc0,
-		  double *tc1,double *td0A,double *td0B,double *td1A,double *td1B,int *code,
-		  double *u,double *TOS,int *Event,int *Arm,double *time,int *nrisk,int *nevent,
-		  double *pstat,double *pvar,int *pntimes,double *avginffrac,double *avginffrac_ii,
+                  double *bHay,double *ppar,double *pgqxw,double *tcut0,double *h0,double *tcut1,
+		  double *h1,double *tcutc0,double *hc0,double *tcutc1,double *hc1,double *tcutd0A,
+		  double *hd0A,double *tcutd0B,double *hd0B,double *tcutd1A,double *hd1A,
+		  double *tcutd1B,double *hd1B,double *tcutx0A,double *hx0A,double *tcutx0B,
+		  double *hx0B,double *tcutx1A,double *hx1A,double *tcutx1B,double *hx1B,double *t0,
+		  double *t1,double *tc0,double *tc1,double *td0A,double *td0B,double *td1A,
+		  double *td1B,int *code,double *u,double *TOS,int *Event,int *Arm,double *time,
+		  int *nrisk,int *nevent,int *pntimes,double *avginffrac,double *avginffrac_ii,
 		  double *avgbounds,double *mufu, double *palphavec,int *pRejAcc,int *kstop,
-		  double *duration,double *pstatall,double *pvarall)
+		  double *duration,double *pStatTend,double *pVarTend,double *pmTend1,
+		  double *pstatK,double *pvarK,double *v_Tend_proj, double *m_Tend_proj)
 {
   GetRNGstate();
   int *pntimesk,*pn,*pntot,*pnthslook,*nbnd,*nsf,*pnsim,*pnlook,*pnstat,*pngqnodes,*pncut0;
   int *pncut1,*pncutc0,*pncutc1,*pncutd0A,*pncutd0B,*pncutd1A,*pncutd1B,*pncutx0A,*pncutx0B;
-  int *pncutx1A,*pncutx1B,*sided,*gradual,*dofu,*dlact,*pnblocks,*nrisk_,*nevent_,*puserVend;
-  int *spend_info_k,*mybounds,*qis1orQ,*prev,*pef,*nbf;
-  int ngq2,nstlk,nstlk2,ndbl,n,nlook,ncut0,ncut1,ncut,sided_,ii,i,j,k,kacte,kactf,l,ntimes;
+  int *pncutx1A,*pncutx1B,*psided,*gradual,*dofu,*dlact,*pnblocks,*nrisk_,*nevent_,*puserVend;
+  int *spend_info_k,*mybounds,*qis1orQ,*pef,*nbf,*stattype,*wttyp,*do_proj;
+  int ngq2,nstlk,nstlk2,ntrial,n,nlook,ncut0,ncut1,ncut,sided_,ii,i,j,k,kacte,kactf,l,ntimes;
   int ntimesk,ngqnodes,nsim,nstat,RejNull,AccNull,totev,totev_k,ixxx,flag,idx,nppar,csumnppar;
-  int userhazfu,spend_info,krchd_flag,evnts_krchd,nbnd_e_sv,nbnd_f_sv;
+  int userhazfu,spend_info,krchd_flag,evnts_krchd,nbnd_e_sv,nbnd_f_sv,pnevty,isbad,do_proj_;
 
   itea *Yord;
 
   double *pstatk,*pvark,*pinffrac,*pinffrac_ii,*pbounds,*ptlook,*wt,*pInfTold,*pInfTnew,*pInfTold_ii;
-  double *pInfTnew_ii,*par,*palpha,*pbold,*pbnew,*px,*py,*ptmp,*pintgrndx,*statk,*vark,*stat,*var;
+  double *pInfTnew_ii,*par,*palpha,*pbold,*pbnew,*px,*py,*ptmp,*pintgrndx,*statk,*vark,*m1k,*stat,*var,*m1;
   double *etaold,*etanew,*psimin,*rho,*accru,*accrat,*pgqx,*pgqw,*time_,*Vend,*rho_sc,*mufuforSC; 
-  double *UQt,*varQt,*var1t;
+  double *UQt,*varQt,*var1t,*t_proj;
   double atotsv_e,atotsv_f,wlrsgn,wlrZ,f_k,f_k_ii,tlook_,a_tmp,b_tmp,var_krchd,f_krchd;
-  double f_krchd_ii;
+  double f_krchd_ii, t_end;
 
   pnlook       = ints;
   nlook        = *pnlook;
@@ -147,9 +149,13 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
   mybounds     = ints + 16+4*nlook+4; /* 16+4*nlook+4 through 16+4*nlook+5  */
   spend_info_k = ints + 16+4*nlook+6;
   qis1orQ      = ints + 16+4*nlook+7;
-  sided        = ints + 16+4*nlook+8; /* 16+4*nlook+8 through 16+4*nlook+8+nstat-1 */
-  nbf          = ints + 16+4*nlook+8+nstat;
+  psided       = ints + 16+4*nlook+8; 
+  nbf          = ints + 16+4*nlook+9;
+  stattype     = ints + 16+4*nlook+10;
+  wttyp        = ints + 16+4*nlook+10+nstat;
+  do_proj      = ints + 16+4*nlook+10+2*nstat;
 
+  do_proj_ = *do_proj;
 /* 
     ints <- c(nlook,nstat,NGaussQ,ncut0,ncut1,ncutc0,ncutc1,ncutd0A,ncutd0B,ncutd1A,
               ncutd1B,ncutx0A,ncutx0B,ncutx1A,ncutx1B,gradual,nbnd.e,nbnd.f,nsf.e,nsf.f,
@@ -162,6 +168,7 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
   accrat  = dbls+1;
   rho     = dbls+2;          /* 2         through 2+2*nlook-1 */
   rho_sc  = dbls+2+2*nlook;  /* 2+2*nlook through 2+4*nlook-1 */
+  t_end   = *(pttlook + nlook - 1);
 
   ngqnodes = *pngqnodes;
   ngq2 = 2*ngqnodes;
@@ -171,29 +178,31 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
 
   nstlk = nstat*nlook;
   nstlk2 = 2*nstat*nlook;
-  ndbl = (int)((*accru)*(*accrat));
-  ndbl = ndbl + (ndbl%2);
-  n = ndbl/2;
+  ntrial = (int)((*accru)*(*accrat));
+  ntrial = ntrial + (ntrial%2);
+  n = ntrial/2;
   ncut0 = *pncut0;
   ncut1 = *pncut1;
   ncut = MAX(ncut0, ncut1);
 
-  Yord        = (itea   *)Calloc(ndbl,  itea);
+  Yord        = (itea   *)Calloc(ntrial,  itea);
   pinffrac    = (double *)Calloc(nstlk, double);
   pinffrac_ii = (double *)Calloc(nstlk, double);
   pbounds     = (double *)Calloc(nstlk2,double);
   pstatk      = (double *)Calloc(nstat, double);
   pvark       = (double *)Calloc(nstat, double);
   par         = (double *)Calloc(3,     double);
-  wt          = (double *)Calloc(ndbl,  double);
+  wt          = (double *)Calloc(ntrial,  double);
   px          = (double *)Calloc(ngq2,  double);
   py          = (double *)Calloc(ngq2,  double);
   ptmp        = (double *)Calloc(ngq2,  double);
   pintgrndx   = (double *)Calloc(ngq2,  double);
   statk       = (double *)Calloc(1,     double);
   vark        = (double *)Calloc(1,     double);
+  m1k         = (double *)Calloc(1,     double);
   stat        = (double *)Calloc(1,     double);
   var         = (double *)Calloc(1,     double);
+  m1          = (double *)Calloc(1,     double);
   etaold      = (double *)Calloc(1,     double);
   etanew      = (double *)Calloc(1,     double);
   ptlook      = (double *)Calloc(1,     double);
@@ -207,6 +216,7 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
   psimin      = (double *)Calloc(1,     double);
   Vend        = (double *)Calloc(nstat, double);
   mufuforSC   = (double *)Calloc(2,     double);
+  t_proj      = (double *)Calloc(3,     double);
 
   pntimesk    = (int    *)Calloc(1,     int);
   pnblocks    = (int    *)Calloc(1,     int);
@@ -215,14 +225,14 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
   pntot       = (int    *)Calloc(1,     int);
   dlact       = (int    *)Calloc(2,     int);
   puserVend   = (int    *)Calloc(1,     int);
-  prev        = (int    *)Calloc(1,     int);
   pef         = (int    *)Calloc(1,     int);
 
   *pn = n;
   *pnblocks = 2;
-  *prev = 0;
 
   *psimin = 6.416208e-17;
+
+  sided_ = *psided;
 
   for(l=0;l<2*ngqnodes;l++) {
     *(px+l) = 0.0;
@@ -232,8 +242,10 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
   }
   *stat = 0.0;
   *var = 0.0;
+  *m1 = 0.0;
   *statk = 0.0;
   *vark = 0.0;
+  *m1k = 0.0;
   *palpha = 0.0;
   *(palpha+1) = 0.0;
 
@@ -249,12 +261,14 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
               wttyp,mufu,puserVend,Vend);
 
   for(j=0;j<nstat;j++) 
-    if(*(sided + j)==-1)
+    if(sided_ < 0)
       for(l=0;l<nlook;l++) *(mufu + nlook*j + l) = *(mufu + nlook*j + l) * (-1.0);
 
   /* BEGIN simulation loop */
-  for(ii=0;ii<nsim;ii++){
+  ii=0;
+  while(ii<nsim){
     R_CheckUserInterrupt();
+
     /* times of death due to lung cancer in arm 0  */
     /* generated conditional upon td0Ai and td0Bi. */
     randhcdtl(pn, tcut0, h0, pncut0, pttlook+nlook-1, tcutd0A, hd0A, pncutd0A, 
@@ -275,7 +289,7 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
     randfromh(pn, tcutc0, hc0, pncutc0, tc0);
     randfromh(pn, tcutc1, hc1, pncutc1, tc1);
 
-    for(l=0;l<ndbl;l++) *(u+l) = *accru * unif_rand();
+    for(l=0;l<ntrial;l++) *(u+l) = *accru * unif_rand();
 
     atotsv_e = *palphatot;
     atotsv_f = *(palphatot+1);
@@ -286,7 +300,6 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
     csumnppar = 0;
 
     for(j=0;j<nstat;j++){
-      sided_ = *(sided + j);
       /* ----------------------------------------------------------
          Add new weight functions to this hard-coded menu.
          note: integer vector 'wttyp' of length 'nstat' contains 
@@ -320,22 +333,25 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
       varQt   = (double *)Calloc(ntimes, double);
       var1t   = (double *)Calloc(ntimes, double);
 
-      cpblocked(Yord, pntot, time_, nrisk_, nevent_, pntimes, pnblocks);
+      pnevty = 1;
+      cpblocked(Yord, pntot, time_, nrisk_, nevent_, pntimes, &pnevty, pnblocks);
  
       totev = 0;
       for(i=0;i<2*ntimes;i++) totev += *(nevent_ + i);
 
       (*wtfun)(time_, nrisk_, nevent_, pntimes, par, wt);
-      if(*(stattype + j)==0) wlrstat(time_,nrisk_,nevent_,wt,pntimes,stat,var,UQt,varQt,var1t);
+      if(*(stattype + j)==0) wlrstat(time_,nrisk_,nevent_,wt,pntimes,stat,var,m1,UQt,varQt,var1t);
       if(*(stattype + j)==1) ISDstat(time_, nrisk_, nevent_, pntimes, wt, stat, var);
 
-      if(ii==nsim-1){
-        *(pstat+j) = *stat;
-        *(pvar+j) = *var;
+      *(pStatTend + nsim*j + ii) = *stat/pow(ntrial, 0.5);
+      *(pVarTend + nsim*j + ii) = (*var)/ntrial;
+      *(pmTend1 + nsim*j + ii) = (*m1)/ntrial;
 
+      if(ii==nsim-1){
 	for(l=0;l<ntimes;l++){
 	  *(time+l) = *(time_ + l);
 	  *(nrisk+l) = *(nrisk_+l);
+
 	  *(nevent+l) = *(nevent_+l);
 	}
 
@@ -395,7 +411,8 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
       f_krchd = 0.0;
       f_krchd_ii = 0.0;
 
-      while(k<nlook && (1-RejNull) && (1-AccNull)){
+      isbad = 0;
+      while(k<nlook && (1-RejNull) && (1-AccNull) && (!isbad)){
         *ptlook = *(pttlook+k);
         tlook_ = *ptlook;
         *pnthslook = kacte+1;
@@ -411,15 +428,14 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
         varQt   = (double *)Calloc(ntimes, double);
         var1t   = (double *)Calloc(ntimes, double);
 
-        cpblocked(Yord, pntot, time_, nrisk_, nevent_, pntimesk, pnblocks);
+        cpblocked(Yord, pntot, time_, nrisk_, nevent_, pntimesk, &pnevty, pnblocks);
  
         (*wtfun)(time_, nrisk_, nevent_, pntimesk, par, wt);
-        if(*(stattype +j)==0) wlrstat(time_,nrisk_,nevent_,wt,pntimesk,statk,vark,UQt,varQt,var1t);
+        if(*(stattype +j)==0) wlrstat(time_,nrisk_,nevent_,wt,pntimesk,statk,vark,m1k,UQt,varQt,var1t);
         if(*(stattype +j)==1) ISDstat(time_, nrisk_, nevent_, pntimesk, wt, statk, vark);
 
         wlrZ = *statk/pow(*vark, 0.5);
         *pInfTnew = *vark/(*var);
-
         totev_k = 0;
         for(i=0;i<2*ntimesk;i++) totev_k += *(nevent_ + i);
 
@@ -434,7 +450,7 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
           *pef = 0;
           *mufuforSC = *(mufu + nlook*j + k);
           *(mufuforSC + 1) = *(mufu + nlook*j + nlook - 1);
-          StCu2Bnds(mufuforSC,pInfTnew,palphatot,sided,rho_sc,pef,pbounds+nlook*j+k);
+          StCu2Bnds(mufuforSC,pInfTnew,palphatot,psided,rho_sc,pef,pbounds+nlook*j+k);
           *mybounds = 1;
           *nbnd = 1;
         }
@@ -443,7 +459,7 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
           *pef = 1;
           *mufuforSC = *(mufu + nlook*j + k);
           *(mufuforSC + 1) = *(mufu + nlook*j + nlook - 1);
-          StCu2Bnds(mufuforSC,pInfTnew,palphatot,sided,rho_sc+1,pef,pbounds+nstat*nlook+nlook*j+k);
+          StCu2Bnds(mufuforSC,pInfTnew,palphatot,psided,rho_sc+1,pef,pbounds+nstat*nlook+nlook*j+k);
           *(mybounds + 1) = 1;
           *(nbnd + 1) = 1;
         }
@@ -476,18 +492,18 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
 
 	grpseqbnds(dofu,nbf,nbnd,nsf,rho,pnthslook,palphatot,palpha,psimin,dlact,
 		   pInfTold,pInfTnew,pInfTold_ii,pInfTnew_ii,px,py,ptmp,pintgrndx,
-		   pgqxw,pngqnodes,mufu + nlook*j + k,pbold,pbnew, mybounds,prev);
+		   pgqxw,pngqnodes,mufu + nlook*j + k,pbold,pbnew, mybounds);
 
 	/* test using *pbnew */
 	wlrsgn = (wlrZ >= 0.0 ? 1.0 : -1.0);
-	if(sided_ !=2)
+	if(abs(sided_) !=2)
 	  RejNull = (wlrZ >= *pbnew)*(sided_ ==1) + (wlrZ <= ((*pbnew)*(-1.0)))*(sided_ ==-1);
-	if(sided_ ==2)
+	if(abs(sided_) ==2)
 	  RejNull = (wlrZ * wlrsgn >= *pbnew);
 	if(*dofu==1){
-	  if(sided_ !=2)
+	  if(abs(sided_) !=2)
 	    AccNull = (wlrZ <= *(pbnew+1))*(sided_ ==1) + (wlrZ >= ((*(pbnew+1))*(-1.0)))*(sided_ ==-1);
-	  if(sided_ ==2)
+	  if(abs(sided_) ==2)
 	    AccNull = (wlrZ * wlrsgn <= *(pbnew+1));
 	}
 /*	
@@ -560,13 +576,20 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
 	*(pinffrac_ii + nlook*j + k) = *pInfTnew_ii;
 	*etaold = *etanew;
 
-        *(avgbounds + nlook*j + k) = *(avgbounds + nlook*j + k) + *(pbounds + nlook*j + k);
-        *(avgbounds + nstat*nlook + nlook*j + k) = *(avgbounds + nstat*nlook + nlook*j + k) + 
-                                                       *(pbounds + nstat*nlook + nlook*j + k);
+        isbad = isbad || R_isnancpp(*(pbounds + nlook*j + k));
+        isbad = isbad || R_isnancpp(*(pbounds + nstat*nlook + nlook*j + k));
+        isbad = isbad || R_isnancpp(*(pinffrac + nlook*j + k));
+        isbad = isbad || R_isnancpp(*(pinffrac_ii + nlook*j + k));
 
-        *(avginffrac + nlook*j + k) = *(avginffrac + nlook*j + k) + *(pinffrac + nlook*j + k);
-        *(avginffrac_ii + nlook*j + k) = *(avginffrac_ii + nlook*j + k) + *(pinffrac_ii + nlook*j + k);
+        if(!isbad)
+        {
+            *(avgbounds + nlook*j + k) = *(avgbounds + nlook*j + k) + *(pbounds + nlook*j + k);
+            *(avgbounds + nstat*nlook + nlook*j + k) = *(avgbounds + nstat*nlook + nlook*j + k) + 
+                                                           *(pbounds + nstat*nlook + nlook*j + k);
 
+            *(avginffrac + nlook*j + k) = *(avginffrac + nlook*j + k) + *(pinffrac + nlook*j + k);
+            *(avginffrac_ii + nlook*j + k) = *(avginffrac_ii + nlook*j + k) + *(pinffrac_ii + nlook*j + k);
+	}
 	k++;
 	Free(time_);
 	Free(nrisk_);
@@ -574,11 +597,18 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
 	Free(UQt);
 	Free(varQt);
 	Free(var1t);
+      } /* End sequential looks loop */
+      if(RejNull && do_proj_)
+      {
+        *t_proj=*par;
+        *(t_proj+1)=t_end-*accru;
+        *(t_proj+2)=t_end;
+        project_end(u, t0, t1, tc0, tc1, pn, t_proj, v_Tend_proj+nsim*j+ii, m_Tend_proj+nsim*j+ii);
       }
       *(pstatk+j) = *statk;
       *(pvark+j) = *vark;
-       *(pstatall+nsim*j+ii) = *statk;
-       *(pvarall+nsim*j+ii) = *vark;
+      *(pstatK+nsim*j+ii) = *statk;
+      *(pvarK+nsim*j+ii) = *vark;
       *(pRejAcc + nsim*j + ii) = RejNull;
       *(pRejAcc + nsim*nstat + nsim*j + ii) = AccNull;
       *(kstop + nsim*j + ii) = k;
@@ -586,6 +616,7 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
       csumnppar += nppar;
     } /* END different stats loop */
     Rprintf("%g\r",((double)ii)/((double)nsim));
+    if(!isbad) ii++;
   }
   /* END simulation loop */
 
@@ -607,8 +638,10 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
   Free(pintgrndx);
   Free(statk);
   Free(vark);
+  Free(m1k);
   Free(stat);
   Free(var);
+  Free(m1);
   Free(etaold);
   Free(etanew);
   Free(ptlook);
@@ -632,7 +665,6 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
   Free(pntot);
   Free(dlact);
   Free(puserVend);
-  Free(prev);
   Free(pef);
 }
 
@@ -897,7 +929,6 @@ void handle(int *pn, double *tlook, double *u, double *t0, double *t1, double *t
   ntot = n0+n1;
   *pntot = ntot;
   *pntimes = ndths;
-
 }
 
 void commonx(double *x1,double *h1,int *pn1,double *x2,double *h2,int *pn2,

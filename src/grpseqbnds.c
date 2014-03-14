@@ -9,7 +9,7 @@ void  grpseqbndsL(int *pef, double (*spfu)(double frac, double alphatot, double 
                   double *pfmin, int *dlact, double *pfracold, double *pfracnew, double *pfracold_ii, 
 		  double *pfracnew_ii, double *x, double *y, double *tmp, double *intgrndx, 
 		  double *gqxw, int *pngqnodes, double *mufu, double *bold, 
-		  double *bnew, int *mybound);
+		  double *bnew, int *mybounds);
 void      updateL(int *nbf, int *dofu, int *pef, int *pnlook, double *pfracold, double *pfracnew, 
 		  double *x, double *y, double *tmp, double *intgrndx, double *gqxw, 
 		  int *pngqnodes, double *mufu, double *bnew);
@@ -38,7 +38,7 @@ void grpseqbnds(int *dofu, int *nbf, int *nbnd, int *nsf, double *rho, int *pnlo
 		double *palpha, double *psimin, int *dlact, double *pfracold, double *pfracnew, 
 		double *pfracold_ii, double *pfracnew_ii, double *x, double *y, double *tmp, 
 		double *intgrndx, double *gqxw, int *pngqnodes, double *mufu, double *bold, 
-		double *bnew, int *mybound)
+		double *bnew, int *mybounds)
 {
   double denom;
   double *pfmin;
@@ -72,7 +72,7 @@ void grpseqbnds(int *dofu, int *nbf, int *nbnd, int *nsf, double *rho, int *pnlo
     if(*(nbnd+ef)==1 || *(nbnd+ef)==3 || *(nbnd+ef)==4)
       grpseqbndsL(pef, spfu, rho+ef, islast, pnlook+ef, palphtot+ef, palpha+ef, pfmin, 
 		  dlact+ef, pfracold + ef, pfracnew, pfracold_ii + ef, pfracnew_ii, x+ef*ngq, y+ef*ngq, 
-		  tmp+ef*ngq, intgrndx+ef*ngq, gqxw, pngqnodes, mufu, bold, bnew, mybound);
+		  tmp+ef*ngq, intgrndx+ef*ngq, gqxw, pngqnodes, mufu, bold, bnew, mybounds);
     if(*(nbnd+ef)==2){
       *(dlact+ef) = 1;
       grpseqbndsH(islast, pnlook+ef, palphtot+ef, palpha+ef, pfracold + ef, pfracnew, 
@@ -104,7 +104,7 @@ void grpseqbndsL(int *pef, double (*spfu)(double frac, double alphatot, double r
                  double *pfmin, int *dlact, double *pfracold, double *pfracnew, double *pfracold_ii, 
 		 double *pfracnew_ii, double *x, double *y, double *tmp, double *intgrndx, 
 		 double *gqxw, int *pngqnodes, double *mufu, double *bold, double *bnew,
-		 int *mybound)
+		 int *mybounds)
 {
   double vsmall=1.0e-6, vvsmall=1.0e-15, ltone=7.0, utzero=18.66, sw, x_, dx_;
   double psimin, aold, anew, sqrf, sqrdf, b, Phib,bl,bu,berr,aerr,aerrsgn,intgrl,yy,bold_;
@@ -125,7 +125,7 @@ void grpseqbndsL(int *pef, double (*spfu)(double frac, double alphatot, double r
   aold = 0.0;
   anew = psimin;
   if(*pfracold_ii > *pfmin) aold = (*spfu)(*pfracold_ii, *palphtot, *rho);
-  if(*pfracnew_ii > *pfmin || *(mybound + ef)==1) {
+  if(*pfracnew_ii > *pfmin || *(mybounds + ef)==1) {
     anew = (*spfu)(*pfracnew_ii, *palphtot, *rho);
     *dlact = 1;
   }
@@ -135,7 +135,7 @@ void grpseqbndsL(int *pef, double (*spfu)(double frac, double alphatot, double r
   sqrf = pow(*pfracnew,0.5);
   sqrdf = pow(*pfracnew - *pfracold,0.5);
 
-  if(*dlact==1 && (*islast==0 || ef==0) && *(mybound + ef)==0){
+  if(*dlact==1 && (*islast==0 || ef==0) && *(mybounds + ef)==0){
     if(nlook==1)
       b = qnorm5(*palpha,0.0,1.0,ef,zero) + sw * *mufu/sqrf;
     else{
@@ -168,7 +168,7 @@ void grpseqbndsL(int *pef, double (*spfu)(double frac, double alphatot, double r
     }
     *(bnew+ef)=b;
   }
-  if(*(mybound + ef)==1){
+  if(*(mybounds + ef)==1){
     if(*islast==1 && ef==1) *(bnew+1) = *bnew;
     b = *(bnew+ef);
     Phib = pnorm5(sqrf * b - sw * *mufu,0.0,1.0,one,zero);
@@ -183,7 +183,7 @@ void grpseqbndsL(int *pef, double (*spfu)(double frac, double alphatot, double r
     }
     *palpha = intgrl;
   }
-  if(*(mybound + 1)==0 && *islast==1 && ef==1) {
+  if(*(mybounds + 1)==0 && *islast==1 && ef==1) {
     *(bnew+1) = *bnew;
     b = *bnew;
     Phib = pnorm5(sqrf * b - *mufu,0.0,1.0,one,zero);

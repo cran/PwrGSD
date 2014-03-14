@@ -15,11 +15,11 @@ typedef void WtFun(double *time, int *nrisk, int *nevent, int *pntimes, double *
 WtFun flemhar, sflemhar, ramp, *wtfun;
 
 void wlrstat(double *time, int *nrisk, int *nevent, double *wt, int *pntimes, double *UQ, 
-	     double *varQ, double *UQt, double *varQt, double *var1t);
+	     double *varQ, double *m1, double *UQt, double *varQt, double *var1t);
 
 void WtdLogRank(double *TOS, int *Event, int *Arm, int *pn, int *wttyp, double *par,
 		double *time, int *nrisk, int *nevent, double *wt, int *pntimes, double *UQ, double *varQ, 
-                double *UQt, double *varQt, double *var1t)
+                double *m1, double *UQt, double *varQt, double *var1t)
 {
   int i,n,ntimes,one=1;
   int *pnblocks;
@@ -45,17 +45,17 @@ void WtdLogRank(double *TOS, int *Event, int *Arm, int *pn, int *wttyp, double *
   if(*wttyp==1) wtfun = &sflemhar;
   if(*wttyp==2) wtfun = &ramp;
   (*wtfun)(time, nrisk, nevent, pntimes, par, wt);
-  wlrstat(time, nrisk, nevent, wt, pntimes, UQ, varQ, UQt, varQt, var1t);
+  wlrstat(time, nrisk, nevent, wt, pntimes, UQ, varQ, m1, UQt, varQt, var1t);
 
   Free(pnblocks);
   Free(YY);  
 }
 
 void wlrstat(double *time, int *nrisk, int *nevent, double *wt, int *pntimes, double *UQ, 
-	     double *varQ, double *UQt, double *varQt, double *var1t)
+	     double *varQ, double *m1, double *UQt, double *varQt, double *var1t)
 {
   int nt,i;
-  double xev, xev1, xri, xri1, Q, e, duQ, uQ, dv1, v1, dvQ, vQ;
+  double xev, xev1, xri, xri1, Q, e, duQ, uQ, dv1, v1, dvQ, vQ, m1_;
   nt = *pntimes;
   duQ = 0.0;
   uQ = 0.0;
@@ -78,10 +78,12 @@ void wlrstat(double *time, int *nrisk, int *nevent, double *wt, int *pntimes, do
     *(var1t + i) = v1;
     dvQ = Q * Q * dv1;
     vQ += dvQ;
+    m1_ += Q*dv1;
     *(varQt + i) = vQ;
   }
   *UQ = uQ;
   *varQ = vQ;
+  *m1 = m1_;
 }
 
 /*----------------------------------------------------------------------------------------

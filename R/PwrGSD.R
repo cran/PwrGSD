@@ -14,8 +14,7 @@ glegw24 <- c( 0.0123412297185, 0.0285313860439, 0.0442774398676, 0.0592985850337
               0.107444270284,  0.0976186522496, 0.0861901617117, 0.0733464816501,
               0.0592985850337, 0.0442774398676, 0.0285313860439, 0.0123412297185)
 
-"%,%" <-
-function(x,y) paste(x,y,sep="")
+"%,%" <- function(x,y) paste(x,y,sep="")
 
 DX <- function(x)c(x[1],diff(x))
 
@@ -34,7 +33,7 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
          WtFun = c("FH","SFH","Ramp"),ppar = cbind(c(0,0)),
          Spend.Info=c("Variance","Events","Hybrid(k)","Calendar"),
          RR.Futility = NULL,qProp.one.or.Q = c("one","Q"),Nsim=NULL,
-         detail = FALSE,StatType = c("WLR","ISD"))
+         detail = FALSE,StatType = c("WLR","ISD"),doProj=FALSE)
 {
   .call. <- match.call()
   prfx <- c("Sim","Asy")
@@ -107,7 +106,8 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
     call.PBS$hx1A <- call.PBS$sx1A <- call.PBS$tcutx1B <- call.PBS$hx1B <-
     call.PBS$sx1B <- call.PBS$noncompliance <- call.PBS$gradual <-
     call.PBS$WtFun <- call.PBS$ppar <- call.PBS$Spend.Info <-
-    call.PBS$RR.Futility <- call.PBS$V.end <- call.PBS$qProp.one.or.Q <- NULL
+    call.PBS$RR.Futility <- call.PBS$V.end <- call.PBS$qProp.one.or.Q <-
+    call.PBS$Nsim <- call.PBS$doProj <- NULL
     call.PBS$n.looks <- nlook
     call.PBS$check.drift <- FALSE
     
@@ -534,15 +534,17 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
     nbetyp <- length(nbnd.e)
     nbftyp <- length(nbnd.f)
     nsum <- ncut0 + ncut1 + nlook - 2
+    wttyp.nms <- c("FH","SFH","Ramp")[1+wttyp]
     ints <- c(nlook,nstat,NGaussQ,ncut0,ncut1,ncutc0,ncutc1,ncutd0A,ncutd0B,ncutd1A,
               ncutd1B,ncutx0A,ncutx0B,ncutx1A,ncutx1B,gradual,nbnd.e,nbnd.f,
               nsf.e,nsf.f,do.futility,use.rhaz.fu,spend.info,user.V.end,is.myE,is.myF,spend.info.k,
-              qProp.one.or.Q, sided, NonBindingFutility)        
+              qProp.one.or.Q, sided, NonBindingFutility,wttyp)
     ints.nms <- c("nlook","nstat","NGaussQ","ncut0","ncut1","ncutc0",
                   "ncutc1","ncutd0A","ncutd0B","ncutd1A","ncutd1B","ncutx0A","ncutx0B",
                   "ncutx1A","ncutx1B","gradual","nbnd.e." %,% (1:nlook),"nbnd.f." %,% (1:nlook),
                   "nsf.e." %,% (1:nlook),"nsf.f." %,% (1:nlook),"do.futility","use.rhaz.fu",
-                  "spend.info","user.V.end","is.myE","is.myF","spend.info.k","qis1orQ","sided","nbf")
+                  "spend.info","user.V.end","is.myE","is.myF","spend.info.k","qis1orQ","sided","nbf",
+                  wttyp.nms)
 
     dbls <- c(accru, accrat, rho.Efficacy, rho.Futility, prob.e, prob.f)
     ntrial <- floor(accru*accrat)
@@ -583,13 +585,13 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
     	hx1A = as.double(hx1A),
     	tcutx1B = as.double(tcutx1B),
     	hx1B = as.double(hx1B),
-        wttyp = as.integer(wttyp),
         V.end = as.double(V.end),
         pinffrac = double(nstat*nlook),
         pinffrac.ii= double(nstat*nlook),
     	pbounds = as.double(c(rep(b.e, nstat), rep(b.f, nstat))),  
     	mufu = double(nstat*nlook),
     	mu = double(nstat*nlook),
+        betastar = double(nstat),
     	palpha0vec = double(2*nstat*nlook),
     	palpha1vec = double(2*nstat*nlook),
     	RR = double(5*nsum),
@@ -675,29 +677,30 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
 }
 
 "summary.PwrGSD" <- 
-function(object, ...)
+function (object, ...) 
 {
-    nlook <- object$detail$ints[1]
-    nstat <- object$detail$ints[2]
-    pwr <- c(object$dPower %*% rep(1,nlook))
-    dErrII <- 0*object$dPower
-    do.futility <- (object$detail$ints["do.futility"]==1)
-    if(do.futility) dErrII <- object$dErrorII
-    ed <- c(apply(object$dPower + dErrII, 1, 
-	  FUN=function(x, v, do.futility)
-	      { 
-	  	  n <- length(x)
-		  y <- x
-	  	  if(!do.futility) y <- c(x[-n],1-sum(x[-n]))
-	  	  sum(y*v)
-	      }, v = object$call$tlook, do.futility=do.futility))
-	eII <- c(dErrII %*% rep(1,nlook))
-	stat.nms <- dimnames(object$dPower)[[1]]
-	ans <- cbind(pwr,eII,ed)
-	dimnames(ans) <- list(stat.nms, c("Power","Type.II.Err","ExpDur"))
-	out <- object
-	out$Tbl <- ans
-	out
+    nlook <- object$detail$ints["nlook"]
+    nstat <- object$detail$ints["nstat"]
+    pwr <- c(object$dPower %*% rep(1, nlook))
+    dErrII <- 0 * object$dPower
+    do.futility <- (object$detail$ints["do.futility"] == 1)
+    if (do.futility) 
+        dErrII <- object$dErrorII
+    ed <- c(apply(object$dPower + dErrII, 1, FUN = function(a, b, 
+        do.futility) {
+        n <- length(a)
+        y <- a
+        if (!do.futility) y <- c(a[-n], 1 - sum(a[-n]))
+        sum(y * b)
+    }, b = eval(object$detail$pttlook), do.futility = do.futility))
+    eII <- c(dErrII %*% rep(1, nlook))
+    stat.nms <- dimnames(object$dPower)[[1]]
+    ans <- cbind(pwr, eII, ed)
+    dimnames(ans) <- list(stat.nms, c("Power", "Type.II.Err", 
+        "ExpDur"))
+    out <- object
+    out$Tbl <- ans
+    out
 }
 
 "print.cpd.PwrGSD" <- 
@@ -1119,10 +1122,11 @@ function(EfficacyBoundary,  n.looks, check.drift=FALSE, NonBindingFutility=NULL,
         }
         if(mode.k!="numeric")
         {
+          msg <- "Boundary type must be one of the following: 'LanDemets()'," %,%
+                  "'Haybittle()' or 'SC()'"
+          if(mode(EB[[k]])!="call") stop(msg)
           type.EB.k <- as.character(EB[[k]][[1]])
-          if(!(type.EB.k %in% c("LanDemets", "Haybittle", "SC")))
-          stop("Boundary type must be one of the following: 'LanDemets()'," %,%
-               "'Haybittle()' or 'SC()'")
+          if(!(type.EB.k %in% c("LanDemets", "Haybittle", "SC"))) stop(msg)
           .eb.[[k]] <- EB[[k]]
           .eb.[[k]]$type <- type.EB.k
         }
@@ -1133,10 +1137,11 @@ function(EfficacyBoundary,  n.looks, check.drift=FALSE, NonBindingFutility=NULL,
     }
     else
     {
+      msg <- "Boundary type must be one of the following: 'LanDemets()'," %,%
+             "'Haybittle()' or 'SC()'"
+      if(mode(m$EfficacyBoundary)!="call") stop(msg)
       type.EB <- as.character(m$EfficacyBoundary[[1]])
-      if(!(type.EB %in% c("LanDemets", "Haybittle", "SC")))
-        stop("Boundary type must be one of the following: 'LanDemets()'," %,%
-             "'Haybittle()' or 'SC()'")
+      if(!(type.EB %in% c("LanDemets", "Haybittle", "SC"))) stop(msg)
       .eb. <- EB
       .eb.$type <- type.EB
     }
@@ -1738,7 +1743,7 @@ function(object, ...)
     dimnames(out) <- list(1:nlook, c("frac","b.f","alpha.f","cum-alpha.f","b.e", "alpha.e", "cum-alpha.e"))
     ans <- list(table=out, frac=frac, frac.ii=frac.ii, drift=drift, call=cl)
   }
-  class(ans) <- "boundaries"
+  ans <- update(ans)
   ans
 }
 
@@ -1757,7 +1762,7 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
          WtFun = c("FH","SFH","Ramp"),ppar = cbind(c(0,0)),
          Spend.Info=c("Variance","Events","Hybrid(k)","Calendar"),
          RR.Futility = NULL,qProp.one.or.Q = c("one","Q"),Nsim=NULL,
-         detail = FALSE,StatType = c("WLR","ISD"))                        
+         detail = FALSE,StatType = c("WLR","ISD"),doProj=FALSE)
 {
 
     if(!missing(StatType) && any(!(StatType %in% c("WLR","ISD"))))
@@ -1780,7 +1785,8 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
     if(missing(StatType)) StatType <- rep("WLR", nstat)
 
     stattype <- 1*(StatType == "ISD")
-
+    is.detail <- !missing(detail)
+    
     .call. <- match.call()
     ppar <- t(ppar)
     ndbl <- floor(accru * accrat)
@@ -1792,10 +1798,7 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
     if (!all(sided %in% c("2>","2<","1>", "1<")))
         stop("Elements of argument \"sided\" must be " %,%
              "equal to \"2>\", \"2<\", \"1>\" or \"1<\"")
-    if(length(sided)!=nstat)
-        stop("Argument 'sided' must be a vector of length " %,% nstat %,%
-             "containing elements \"2>\", \"2<\", \"1>\" or \"1<\"")
-    sided <- c(2, -2, 1, -1)[sapply(sided, c("2>", "2<", "1>", "1<"), FUN=grep)]
+    sided <- c(2, -2, 1, -1)[grep(sided, c("2>", "2<", "1>", "1<"))]
     
     call.PBS <- .call.
     call.PBS[[1]] <- as.name("ParseBoundarySelection")
@@ -1812,7 +1815,8 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
     call.PBS$hx1A <- call.PBS$sx1A <- call.PBS$tcutx1B <- call.PBS$hx1B <-
     call.PBS$sx1B <- call.PBS$noncompliance <- call.PBS$gradual <-
     call.PBS$WtFun <- call.PBS$ppar <- call.PBS$Spend.Info <-
-    call.PBS$RR.Futility <- call.PBS$V.end <- call.PBS$qProp.one.or.Q <- NULL
+    call.PBS$RR.Futility <- call.PBS$V.end <- call.PBS$qProp.one.or.Q <-
+    call.PBS$detail <- call.PBS$Nsim <- call.PBS$doProj <- NULL
     call.PBS$n.looks <- nlook
     call.PBS$check.drift <- FALSE
         
@@ -2166,34 +2170,35 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
     
     nbetyp <- length(nbnd.e)
     nbftyp <- length(nbnd.f)
+
+    stattype.nms <- c("WLR","ISD")[1+stattype]
+    wttyp.nms <- c("FH","SFH","Ramp")[1+stattype]
     ints <- c(nlook,nstat,NGaussQ,ncut0,ncut1,ncutc0,ncutc1,ncutd0A,ncutd0B,ncutd1A,
               ncutd1B,ncutx0A,ncutx0B,ncutx1A,ncutx1B,gradual,nbnd.e,nbnd.f,
               nsf.e,nsf.f,do.futility,use.rhaz.fu,spend.info,Nsim,is.myE,is.myF,spend.info.k,
-              qProp.one.or.Q,sided,NonBindingFutility)
+              qProp.one.or.Q,sided,NonBindingFutility,stattype,wttyp,doProj)
 
     ints.nms <- c("nlook","nstat","NGaussQ","ncut0","ncut1","ncutc0","ncutc1",
                   "ncutd0A","ncutd0B","ncutd1A","ncutd1B","ncutx0A","ncutx0B","ncutx1A",
                   "ncutx1B","gradual","nbnd.e."%,%(1:nlook),"nbnd.f."%,%(1:nlook),
                   "nsf.e."%,%(1:nlook),"nsf.f."%,%(1:nlook),"do.futility",
                   "use.rhaz.fu","spend.info","Nsim","is.myE","is.myF","spend.info.k",
-                  "qis1orQ", "sided-" %,% stat.nms,NonBindingFutility)
+                  "qis1orQ", "sided","NonBindingFutility",stattype.nms,wttyp.nms,"doProj")
     
     dbls <- c(accru,accrat, rho.Efficacy, rho.Futility, prob.e, prob.f)
-    
+
     dbls.nms <- c("accru","accrat", "rho.Efficacy."%,%(1:nlook), "rho.Futility."%,%(1:nlook),
                   "prob.e."%,%(1:nlook), "prob.f."%,%(1:nlook))
     
     logRR.F <- log(RR.Futility)
     
-    ans <- .C("SimPwrGSD", 
+    details <- .C("SimPwrGSD", 
 	ints = as.integer(ints),
         dbls = as.double(dbls),
         pttlook = as.double(tlook), 
 	palphatot = as.double(c(Alpha.Efficacy,Alpha.Futility)), 
 	lrrf = as.double(logRR.F),
 	bHay = as.double(c(b.Haybittle.e, b.Haybittle.f)),
-        stattype = as.integer(stattype),
-        wttyp = as.integer(wttyp),
 	ppar = as.double(ppar), 
 	pgqxw = as.double(c(glegx,glegw)),
 	tcut0 = as.double(tcut0), 
@@ -2236,8 +2241,6 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
 	time = double(2 + ndbl), 
 	nrisk = integer(2 + 2*ndbl), 
 	nevent = integer(2 + 2*ndbl), 
-	pstat = double(nstat), 
-	pvar = double(nstat), 
 	pndths = integer(1), 
 	avg.inffrac = double(nstat * nlook),
         avg.inffrac.ii = double(nstat * nlook),
@@ -2246,77 +2249,96 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
 	palphavec = double(2 * nstat * nlook), 
 	pRejAcc = integer(2 * nstat * Nsim),
         kstop = integer(nstat * Nsim),
-        duration = double(nstat * Nsim), 
-	pstatall = double(nstat * Nsim),
-        pvarall = double(nstat * Nsim),
+        duration = double(nstat * Nsim),
+	pStatTend = double(nstat * Nsim), 
+        pVarTend = double(nstat * Nsim),
+        pmTend1 = double(nstat * Nsim),
+	pstatK = double(nstat * Nsim),
+        pvarK = double(nstat * Nsim),
+        v.Tend.proj = double(nstat * Nsim),
+        m.Tend.proj = double(nstat * Nsim),
 	PACKAGE = "PwrGSD")
-    is.detail <- !missing(detail)
-    if (is.detail) {
-        details <- ans
-        ndths <- details$pndths
-        names(details$ints) <- ints.nms
-        names(details$dbls) <- dbls.nms
-        details$pinffrac <- InfFrac
-        details$pinffrac.ii <- InfFrac.ii
-        details$alphatot <- c(Alpha.Efficacy,Alpha.Futility)
-        details$pbounds <- Bounds
-        details$palpha0vec <- matrix(ans$palphavec, nlook, 2*nstat)
-        details$mufu <- matrix(ans$mufu, nlook, nstat)
-	details$RejAcc <- matrix(details$pRejAcc, Nsim, 2*nstat)
-        details$time <- details$time[1:ndths]
-        details$nrisk <- details$nrisk[1:ndths]
-        details$nevent <- details$nevent[1:ndths]
-        details$time1 <- details$time1[1:ndths]
-        details$nrisk1 <- details$nrisk1[1:ndths]
-        details$nevent1 <- details$nevent1[1:ndths]
-    }
-    names(ints) <- ints.nms
-    StatLast <- cbind(ans$pstat, ans$pvar)
-    ndeaths <- ans$pndths
-    RejAcc <- matrix(ans$pRejAcc, Nsim, 2*nstat)
-    RejNull <- RejAcc[,1:nstat,drop=FALSE]
-    AccNull <- RejAcc[,nstat + (1:nstat)]
-    duration <- matrix(ans$duration, Nsim, nstat)
-    StatAll <- matrix(ans$pstatall, Nsim, nstat)
-    VarAll <- matrix(ans$pvarall, Nsim, nstat)
-    InfFrac <- matrix(ans$avg.inffrac, nlook, nstat)
-    InfFrac.ii <- matrix(ans$avg.inffrac.ii, nlook, nstat)
-    Bounds <- matrix(ans$avg.bounds, nlook, (1 + do.futility)*nstat)
-    kstop <- matrix(ans$kstop, Nsim, nstat)
+
+    ndths <- details$pndths
+    names(details$ints) <- ints.nms
+    names(details$dbls) <- dbls.nms
+    details$palpha0vec <- matrix(details$palphavec, nlook, 2*nstat)
+    details$palphavec <- NULL
+    details$mufu <- matrix(details$mufu, nlook, nstat)
+    details$RejAcc <- matrix(details$pRejAcc, Nsim, 2*nstat)
+    details$time <- details$time[1:ndths]
+    details$nrisk <- details$nrisk[1:ndths]
+    details$nevent <- details$nevent[1:ndths]
+    details$time1 <- details$time1[1:ndths]
+    details$nrisk1 <- details$nrisk1[1:ndths]
+    details$nevent1 <- details$nevent1[1:ndths]
+    details$StatK<- matrix(details$pstatK, Nsim, nstat)
+    details$pstatK <- NULL
+    details$VarK <- matrix(details$pvarK, Nsim, nstat)
+    details$pvarK <- NULL
+    details$pinffrac <- matrix(details$avg.inffrac, nlook, nstat)
+    details$avg.inffrac <- NULL
+    details$pinffrac.ii <- matrix(details$avg.inffrac.ii, nlook, nstat)
+    details$avg.inffrac.ii <- NULL
+    details$pbounds <- matrix(details$avg.bounds, nlook, (1 + do.futility)*nstat)
+    details$avg.bounds <- NULL   
+
+    RejNull <- details$RejAcc[,1:nstat,drop=FALSE]
+    AccNull <- details$RejAcc[,nstat + (1:nstat)]
+    duration <- matrix(details$duration, Nsim, nstat)
+    StatTend <- matrix(details$pStatTend, Nsim, nstat)
+    VarTend <- matrix(details$pVarTend, Nsim, nstat)
+    mTend1 <- matrix(details$pmTend1, Nsim, nstat)
+    details$RejAcc <- details$duration <- details$StatTend <- details$VarTend <- details$mTend1 <- NULL
+      
+    kstop <- matrix(details$kstop, Nsim, nstat)
     sum.kstop <- matrix(0, nlook, nstat)
     for(k in 1:nlook) sum.kstop[k,] <- c(rep(1,Nsim) %*% (kstop==k))
-    Nstop <- apply(sum.kstop[nlook:1,,drop=FALSE], 2, FUN=cumsum)[nlook:1,]
+    Nstop <- rbind(apply(sum.kstop[nlook:1,,drop=FALSE], 2, FUN=cumsum))[nlook:1,]
 
-    InfFrac <- InfFrac/Nstop
-    InfFrac.ii <- InfFrac.ii/Nstop
-    for(ef in 1:2)
-      Bounds[,nstat*(ef-1) + (1:nstat)] <- Bounds[,nstat*(ef-1) + (1:nstat)]/Nstop
+    details$pinffrac <- details$pinffrac/Nstop
+    details$pinffrac.ii <- details$pinffrac.ii/Nstop
+    for(ef in 1:2) details$pbounds[, nstat*(ef-1) + (1:nstat)] <- details$pbounds[, nstat*(ef-1) + (1:nstat)]/Nstop
 
-    dimnames(StatLast) <- list(stat.nms, c("stat", "var(stat)"))
-    names(ndeaths) <- "ndeaths"
     dimnames(RejNull) <- list(1:Nsim, stat.nms)
     dimnames(duration) <- list(1:Nsim, stat.nms)
-    dimnames(StatAll) <- list(1:Nsim, stat.nms)
-    dimnames(VarAll) <- list(1:Nsim, stat.nms)
-    dimnames(InfFrac) <- list(1:nlook, stat.nms)
-    dimnames(InfFrac.ii) <- list(1:nlook, stat.nms)
+    dimnames(details$StatK) <- list(1:Nsim, stat.nms)
+    dimnames(details$VarK) <- list(1:Nsim, stat.nms)
+    dimnames(details$pinffrac) <- list(1:nlook, stat.nms)
+    dimnames(details$pinffrac.ii) <- list(1:nlook, stat.nms)
+    
     bstat.nms <- "Eff." %,% stat.nms
     if(do.futility==1) bstat.nms <- c(bstat.nms, "Fut." %,% stat.nms)
-    dimnames(Bounds) <- list(1:nlook, bstat.nms)
+    dimnames(details$pbounds) <- list(1:nlook, bstat.nms)
     dimnames(sum.kstop) <- list(1:nlook, stat.nms)
-    rslts <- cbind(StatAll, VarAll^0.5, duration, RejNull)[,outer(nstat*(0:3), 1:nstat, FUN="+")]
-    dimnames(rslts) <- list(1:Nsim, c(outer(c("Stat", "SE", "Duration", "RejNull"), stat.nms, FUN=paste, sep="-")))
+
+    two.more <- 0
+    v.Tend.proj <- m.Tend.proj <- vTp.nm <- mTp.nm <- NULL
+    if(doProj)
+    {
+      v.Tend.proj <- matrix(details$v.Tend.proj, Nsim, nstat)
+      m.Tend.proj <- matrix(details$m.Tend.proj, Nsim, nstat)
+      vTp.nm <- "VarTendProj"
+      mTp.nm <- "mTend1Proj"
+      two.more <- 2
+    }
+
+    rslts <- cbind(details$StatK, details$VarK^0.5, StatTend, duration, v.Tend.proj, VarTend,
+                   m.Tend.proj, mTend1, RejNull)[,outer(nstat*(0:(6+two.more)), 1:nstat, FUN="+")]
+    dimnames(rslts) <- list(1:Nsim, c(outer(c("Stat", "SE", "StatTend","Duration", vTp.nm, "VarTend", mTp.nm, "mTend1",
+                                              "RejNull"), stat.nms, FUN=paste, sep="-")))
+    details$StatK <- details$VarK <- details$pStatTend <- details$pVarTend <- details$pmTend1 <- NULL
     dPower <- sapply(tlook, FUN=function(x,tt,rr)apply(rr*(tt==x),2,FUN=mean),tt=duration,rr=RejNull)
     dErrorII <- sapply(tlook, FUN=function(x,tt,rr)apply(rr*(tt==x),2,FUN=mean),tt=duration,rr=AccNull)
     se.dPower <- ((dPower * (1 - dPower))/Nsim)^0.5
     mu.d <- apply(duration, 2, FUN = mean)
     se.d <- (apply(duration, 2, FUN = var)/Nsim)^0.5
-    detail <- list(ints=ints,pinffrac=InfFrac, pinffrac.ii=InfFrac.ii, alphatot=c(Alpha.Efficacy,Alpha.Futility),
-                   pbounds=Bounds, palpha0vec=matrix(ans$palphavec, nlook, 2*nstat), mufu=matrix(ans$mufu, nlook, nstat))
+    
     out <- list(dPower=dPower, se.dPower=se.dPower, dErrorII=dErrorII, Exp.Dur=mu.d, se.Exp.Dur=se.d,
-                detail=detail, Nsim = Nsim, StatLast = StatLast, ndeaths = ndeaths, Elements = rslts, fail = ans$fail,
-                stat.nms=stat.nms, RejNull=RejNull, duration=duration, InfFrac=InfFrac, InfFrac.ii=InfFrac.ii,
-                Bounds=Bounds, Nstop=sum.kstop, call = .call.)
+                Nsim = Nsim, StatLast = details$StatLast, ndeaths = details$pndeaths, Results = rslts,
+                fail = details$fail,stat.nms=stat.nms, RejNull=RejNull, duration=duration,
+                InfFrac=details$pinffrac, InfFrac.ii=details$pinffrac.ii, Bounds=details$pbounds,
+                Nstop=sum.kstop, detail=list(ints=details$ints, dbls=details$dbls), call = .call.)
     if (is.detail)
         out$detail <- details
     class(out) <- c("SimPwrGSD", "PwrGSD")
@@ -2373,226 +2395,79 @@ function (Nsim, accru, accrat, tlook,
 	match.call()
 }
 
-"Dnsty" <-
-function (EfficacyBoundary = LanDemets(alpha=0.05, spending=ObrienFleming),
-          FutilityBoundary = LanDemets(alpha=0.10, spending=ObrienFleming),
-          NonBindingFutility=TRUE, frac, frac.ii = NULL, drift = NULL)
+"gsd.dens" <-
+function(x, frac=NULL, scale="Standard")
 {
-    .call. <- match.call()
-    
-    xc.km1 <- dF.km1 <- xc.k <- xr.k <- NULL
-
-    is.frac.ii <- TRUE
-    if (missing(frac.ii)) {
-        frac.ii <- frac
-        is.frac.ii <- FALSE
-    }
-    if (is.frac.ii && length(frac.ii) != length(frac)) 
-        stop("Lengths of 'frac' and 'frac.ii' must agree")
-    
-    normut <- 8.20953615160139
-    psimin <- 1e-15
-    nlooks <- length(frac)
-
-    call.PBS <- .call.
-    call.PBS[[1]] <- as.name("ParseBoundarySelection")
-    call.PBS$frac <- call.PBS$frac.ii <- NULL
-    call.PBS$check.drift <- TRUE
-    call.PBS$n.looks <- nlooks
-    eval.PBS <- eval(call.PBS)
-    do.efficacy <- TRUE
-    do.futility <- !is.null(eval.PBS$frontend$FutilityBoundary)
-    is.drift <- !missing(drift)
-    nbf <- do.futility && NonBindingFutility
-    if(!do.futility)
-      drift <- rep(0, nlooks)
-
-    Alpha.Efficacy <- eval.PBS$backend$Alpha.Efficacy
-    Alpha.Futility <- eval.PBS$backend$Alpha.Futility
-    if(is.null(Alpha.Futility)) Alpha.Futility <- 0
-    nbnd.e <- eval.PBS$backend$nbnd.e
-    nbnd.f <- eval.PBS$backend$nbnd.f
-    nsf.e <- eval.PBS$backend$nsf.e
-    nsf.f <- eval.PBS$backend$nsf.f
-    rho.Efficacy <- eval.PBS$backend$rho.Efficacy
-    rho.Futility <- eval.PBS$backend$rho.Futility
-    b.Haybittle.e <- eval.PBS$backend$b.Haybittle.e
-    b.Haybittle.f <- eval.PBS$backend$b.Haybittle.f
-    drift.end <- eval.PBS$backend$drift.end
-    be.end <- eval.PBS$backend$be.end
-    prob.e <- eval.PBS$backend$prob.e
-    prob.f <- eval.PBS$backend$prob.f
-    my.Efficacy <- eval.PBS$backend$my.Efficacy
-    my.Futility <- eval.PBS$backend$my.Futility
-    is.myE <- !all(my.Efficacy==0)
-    is.myF <- !all(my.Futility==0)
-
-    nunq <- nlooks
-    glegx <- glegx24
-    glegw <- glegw24
-    ngqnodes <- length(glegx)
-
-    b.e <- alpha.e <- rep(0, nlooks)
-    b.f <- alpha.f <- rep(0, nlooks)
-    l <- 1
-    l.act.e <- 1
-    l.act.f <- 1
-    fracold <- rep(0, 2)
-    fracold.ii <- rep(0, 2)
-    fracnew <- frac[1]
-    fracnew.ii <- frac.ii[1]
-
-    sc.drift.factor <- 1
-    mu.end <- drift.end
+  if(class(x)=="boundaries")
+  {
+    frac <- x$frac
+    x.eff <- x$table[,"b.e"]*frac^0.5
+  }
+  if(class(x)=="numeric")
+  {
+    if(missing(frac))
+      stop("You must either specify an object of class 'boundaries' or specify both the " %,%
+           "efficacy boundary, 'b.e' and information fraction, 'frac'")
+    x.eff <- x
+    if(scale=="Standard") x.eff <- x*frac^0.5
+    if(length(x.eff)!=length(frac))
+      stop("Informtion fraction and efficacy boundary must be numeric vectors of the same length.")
+  }
+  nlook <- length(frac)
   
-    if (nbnd.e[1] != 2)
-        bold.e <- normut
-    if (nbnd.e[1] == 2)
-        bold.e <- b.Haybittle.e[1]
-    if (nbnd.f[1] != 2)
-        bold.f <- -normut
-    if (nbnd.f[1] == 2) 
-        bold.f <- b.Haybittle.f[1]
-    y.e <- tmp.e <- rep(0, ngqnodes)
-    y.f <- tmp.f <- rep(0, ngqnodes)
-    x.e <- dF.e <- rep(0, ngqnodes)
-    x.f <- dF.f <- rep(0, ngqnodes)
-    if (nbnd.e[1] == 3)
-        my.Efficacy <- rep(0, nlooks)
-    if (nbnd.f[1] == 3) 
-        my.Futility <- rep(0, nlooks)
-    while (l <= nlooks) {
-      mu <- drift[l]
-        if (nbnd.e[l] == 3) {
-            my.Efficacy[l] <-
-              .C("StCu2Bnds",
-                 pmu = double(2),
-                 pfrac = as.double(fracnew.ii),
-                 pzcrit = as.double(be.end),
-                 prho = as.double(prob.e[l]),
-                 pef = as.integer(0),
-                 b = double(1),
-                 PACKAGE = "PwrGSD")$b
-            is.myE <- TRUE
-            nsf.e[l] <- 1
-        }
-        if (nbnd.f[l] == 3) {
-            my.Futility[l] <-
-              .C("StCu2Bnds",
-                 pmu = as.double(c(mu,mu.end)*sc.drift.factor),
-                 pfrac = as.double(fracnew.ii),
-                 pzcrit = as.double(be.end),
-                 prho = as.double(prob.f[l]), 
-                 pef = as.integer(1),
-                 b = double(1),
-                 PACKAGE = "PwrGSD")$b
-            is.myF <- TRUE
-            nsf.f[l] <- 1
-        }
-        bnew <- c(normut, -normut)
-        if (nbnd.e[l] == 3 || nbnd.e[l] == 4) 
-            bnew[1] <- my.Efficacy[l]
-        if ((nbnd.f[l] == 3 || nbnd.f[l] == 4) && (1 - fracnew.ii >= 
-            1e-06)) 
-            bnew[2] <- my.Futility[l]
+  gqx <- glegx24
+  gqw <- glegw24
+  ngq <- length(gqx)
 
-        ans <- .C("dnsty",
-                  nbf = as.integer(nbf),
-                  nbnd = as.integer(c(nbnd.e[l], nbnd.f[l])),
-                  nsf = as.integer(c(nsf.e[l],nsf.f[l])),
-                  rho = as.double(c(rho.Efficacy[l], rho.Futility[l])), 
-                  pnlook = as.integer(c(l.act.e, l.act.f)),
-                  palphtot = as.double(c(Alpha.Efficacy, Alpha.Futility)),
-                  palpha = double(2),
-                  psimin = as.double(psimin), 
-                  dlact = integer(2),
-                  pfracold = as.double(fracold), 
-                  pfracnew = as.double(fracnew),
-                  pfracold.ii = as.double(fracold.ii), 
-                  pfracnew.ii = as.double(fracnew.ii),
-                  xc = as.double(c(x.e, x.f)),
-                  y = as.double(c(y.e, y.f)),
-                  tmp = as.double(c(tmp.e, tmp.f)),
-                  dF = as.double(c(dF.e, dF.f)), 
-                  gqxw = as.double(c(glegx, glegw)),
-                  pngqnodes = as.integer(ngqnodes),
-                  pxc = double(ngqnodes),
-                  pxr = double(ngqnodes),
-                  bold = as.double(c(bold.e, bold.f)), 
-                  bnew = as.double(bnew),
-                  mybounds = as.integer(c(is.myE, is.myF)),
-                  PACKAGE = "PwrGSD")
-        xc.km1 <- cbind(xc.km1, ans$xc[1:ngqnodes])
-        dF.km1 <- cbind(dF.km1, ans$dF[1:ngqnodes])
-        xc.k <- cbind(xc.k, ans$pxc[1:ngqnodes])
-        xr.k <- cbind(xr.k, ans$pxr[1:ngqnodes])
-        dlact <- ans$dlact
-        if (dlact[1] == 1)
-        {
-            if (nbnd.e[l] == 1 || nbnd.e[l] == 3 || nbnd.e[l] == 4)
-                b.e[l] <- bold.e <- ifelse(is.myE, bnew[1], ans$bnew[1])
-            if (nbnd.e[l] == 2)
-            {
-                if (1 - fracnew.ii >= 1e-06) {
-                  b.e[l] <- bold.e <- b.Haybittle.e[l]
-                  Alpha.Efficacy <- Alpha.Efficacy - ans$palpha[1]
-                }
-              else b.e[l] <- ans$bnew[1]
-            }
-            alpha.e[l] <- ans$palpha[1]
-            x.e <- ans$x[1:ngqnodes]
-            dF.e <- ans$dF[1:ngqnodes]
-            fracold[1] <- ans$pfracnew
-            fracold.ii[1] <- ans$pfracnew.ii
-            l.act.e <- l.act.e + 1
-        }
-        else
-        {
-            b.e[l] <- bold.e <- ifelse(is.myE, bnew[1], normut)
-            alpha.e[l] <- ifelse(is.myE, ans$palpha[1], psimin)
-            fracold.ii[1] <- ans$pfracnew.ii
-        }
-        if (do.futility && dlact[2] == 1) {
-            if (nbnd.f[l] == 1 || nbnd.f[l] == 3 || nbnd.f[l] == 4) 
-                b.f[l] <- bold.f <- ifelse((nbnd.f[l] == 3|| nbnd.f[l] == 4) && (1 - fracnew.ii >= 1e-06),
-                                           bnew[2], ans$bnew[2])
-            if (nbnd.f[l] == 2) {
-                if (l < nlooks) {
-                  b.f[l] <- bold.f <- b.Haybittle.f[l]
-                  Alpha.Futility <- Alpha.Futility - ans$palpha[2]
-                }
-                else b.f[l] <- ans$bnew[2]
-            }
-            alpha.f[l] <- ans$palpha[2]
-            x.f <- ans$x[ngqnodes + (1:ngqnodes)]
-            dF.f <- ans$dF[ngqnodes + (1:ngqnodes)]
-            fracold[2] <- ans$pfracnew
-            fracold.ii[2] <- ans$pfracnew.ii
-            l.act.f <- l.act.f + 1
-        }
-        if (do.futility && dlact[2] == 0) {
-            b.f[l] <- bold.f <- ifelse(is.myF || (l<nlooks), bnew[2], 
-                -normut)
-            alpha.f[l] <- ifelse(is.myF, ans$palpha[2], psimin)
-            fracold.ii[2] <- ans$pfracnew.ii
-        }
-        l <- l + 1
-        fracnew <- frac[l]
-        fracnew.ii <- frac.ii[l]
-        mu <- drift[l]
+  ans <-
+  .C("gsd_dens",
+     frac=as.double(frac),
+     xeff=as.double(x.eff),
+     gqxw=as.double(c(gqx, gqw)),
+     pngq=as.integer(ngq),
+     pnlooks=as.integer(nlook),
+     x=double(nlook*ngq),
+     dF=double(nlook*ngq),
+     x1c=double(ngq),
+     dF1c=double(ngq),
+     PACKAGE="PwrGSD")
+
+  x <- matrix(ans$x, ngq, nlook)
+  dF <- matrix(ans$dF, ngq, nlook)
+  x1c <- ans$x1c
+  dF1c <- ans$dF1c
+  dimnames(x) <- dimnames(dF) <- list(1:ngq, 1:nlook)
+  list(x=x, dF=dF, x1c=x1c, dF1c=dF1c)
+}
+
+"EX1gXK" <-
+function(xk, b.eff, frac)
+{
+    nlook <- length(b.eff)
+
+    x.eff <- frac^0.5 * b.eff
+    fr.1 <- frac[1]
+    fr.k <- frac[nlook]
+    dP.Xk <- gsd.dens(x.eff, frac, scale="Brownian")
+    ngq <- length(dP.Xk$x[,1])
+    xk.vals <- with(dP.Xk, x[,nlook])
+    dP.Xk.vals <- with(dP.Xk, dF[,nlook])
+    dP.Xk.at.xk <- approx(xk.vals, dP.Xk.vals, xk)$y
+
+    x1.vals <- dP.Xk$x1c
+    dP.X1.vals <- dP.Xk$dF1c
+
+    x.eff.dr1 <- x.eff[-1]
+    frac.dr1 <- frac[-1] - fr.1
+    dP.Xk.gX1.at.xkmx1 <- rep(0, ngq)
+    for(i in 1:ngq)
+    {
+      dP.Xk.gX1 <- gsd.dens(x.eff.dr1 - x1.vals[i], frac.dr1, scale="Brownian")
+      xk.vals <- with(dP.Xk.gX1, x[,nlook-1])
+      dP.Xk.gX1.vals <-  with(dP.Xk.gX1, dF[,nlook-1])
+      dP.Xk.gX1.at.xkmx1[i] <- approx(xk.vals, dP.Xk.gX1.vals, xk - x1.vals[i], yleft=0, yright=0)$y
     }
-    out <- frac.ii
-    nms <- "frac"
-    if (do.futility) {
-        out <- cbind(out, b.f, alpha.f, cumsum(alpha.f))
-        nms <- c(nms, "b.f", "alpha.f", "cum-alpha.f")
-    }
-    out <- cbind(out, b.e, alpha.e, cumsum(alpha.e))
-    nms <- c(nms, "b.e", "alpha.e", "cum-alpha.e")
-    dimnames(out) <- list(1:nlooks, nms)
-    ans <- list(table = out, frac=frac, frac.ii=frac.ii, drift=drift, xc.km1=xc.km1, dF.km1=dF.km1,
-                xc.k=xc.k, xr.k=xr.k, call = .call.)
-    class(ans) <- "boundaries"
+    ans <- sum(x1.vals * dP.Xk.gX1.at.xkmx1*dP.X1.vals)/sum(dP.Xk.gX1.at.xkmx1*dP.X1.vals)
     ans
 }
 
@@ -3137,6 +3012,7 @@ function(formula = formula(data), data = parent.frame(), WtFun = c("FH", "SFH", 
               pntimes = as.integer(ntimes),              
               stat = double(1),
               var = double(1),
+              m1 = double(1),
               UQt = double(ntimes),
               varQt = double(ntimes),
               var1t = double(ntimes),

@@ -1,0 +1,103 @@
+\documentclass{article}
+\usepackage{harvard}
+\usepackage{hyperref}
+\usepackage{graphics}
+\usepackage{amsmath}
+\usepackage{indentfirst}
+\usepackage[utf8]{inputenc}
+\usepackage[top=1in, bottom=1in, left=1in, right=1in]{geometry}
+\DeclareMathOperator{\var}{var}
+% \VignetteIndexEntry{Using PwrGSD}
+
+\begin{document}
+<<PwrGSDpd,include=FALSE,echo=FALSE>>=
+options(keep.source = TRUE, width = 70)
+PwrGSDpd <- packageDescription("PwrGSD")
+@
+
+\title{Using PwrGSD to compute Operating Characteristics of a candidate monitoring scheme at
+  a specified hypothetical trial scenario (Version \Sexpr{PwrGSDpd$Version})}
+\author{Grant Izmirlian}
+\maketitle
+
+\section{Introduction}
+The function $\mathbf{PwrGSD}$ computes several operating characteristics, such as
+power, expected duration and relative risks at the stopping boundaries, given
+a specification of the interim monitoring scheme and choice of test statistic
+under a specified hypothetical progression of the trial. The capabilities of 
+$\mathbf{PwrGSD}$ allow for 
+\begin{itemize}
+  \item[1]{{\bf Non-proportional hazards alternatives}
+      via the specification of trial arm specific piecewise constant hazard rates, 
+      piecewise exponential survival functions, or the stipulation of one of these
+      in arm 0 together with a piecewise constant hazard ratio for the main endpoint.}
+  \item[2]{{\bf Flexible specification of the censoring distribution}
+      The trial arm specific censoring distributions may be specified via piecewise constant
+      hazard or piecewise exponential survival functions.}
+  \item[3]{{\bf Two modes of non-compliance per each of the two trial arms}
+      Each form of non-compliance is stipulated via a waiting time distribution, specified via
+      piecewise constant hazards or piecewise exponential survival, together with a post-noncompliance
+      main endpoint distribution, also specified via hazards or survival functions.}      
+  \item[4]{{\bf Choice of test statistic}
+      Currently, the asymptotic method of calculation supports several members of the weighted log-rank
+      family of statistics: Fleming-Harrington wieghts of given exponents $FH(g, \rho)$, a
+      variant $SFH(g,\rho,x)$ which is equal to the $FH(g, \rho)$ function but stopped at the value
+      attained at $x$, or the $Ramp(x)$ function, which has linear rise from zero to its maximum
+      value, attained at $x$ and then constant weight thereafter.  The simulation method of calculation
+      supports all of these plus the integrated survival difference statistic.}    
+  \item[5]{{\bf Choice of boundary construction method:}
+      Currently either Lan-Demets with a variety of possible spending functions
+      \begin{itemize}
+        \item[i]{O'Brien-Fleming}
+        \item[ii]{Pocock}
+        \item[iii]{Wang-Tsiatis Power Family}
+      \end{itemize}
+      The Haybittle method is also supported in the case of efficacy bounds only}
+  \item[6]{{\bf Efficacy bounds only or simultaneous calculation of efficacy and futility bounds}}
+\end{itemize}
+
+The goal of this vignette is to understand the features and capabilities of {\bf PwrGSD} by
+trying several examples. 
+
+In the first example, we compute power at a specific alternative, \verb`rhaz`, under an interim
+analysis plan with roughly one analysis per year, some crossover between intervention and
+control arms, with Efficacy and futility boundaries constructed via the Lan-Demets
+procedure with O'Brien-Fleming spending. We investigate the behavior of three weighted log-rank
+statistics: (i) the Fleming-Harrington(0,1) statistic, (ii) a stopped version of the F-H(0,1)
+statistic capped off at 10 years, and (iii) the deterministic weighting function with linear
+increase between time 0 and time 10 with constant weight thereafter.
+
+<<outcome-space>>=
+  tlook <- c(7.14, 8.14, 9.14, 10.14, 10.64, 11.15, 12.14, 13.14,
+             14.14, 15.14, 16.14, 17.14, 18.14, 19.14, 20.14)
+  t0 <- 0:19      
+  h0 <- c(rep(3.73e-04, 2), rep(7.45e-04, 3), rep(1.49e-03, 15))
+
+  rhaz <-c(1, 0.9125, 0.8688, 0.7814, 0.6941, 0.6943, 0.6072, 0.5202,  
+           0.4332, 0.652, 0.6524, 0.6527, 0.653, 0.6534, 0.6537, 
+           0.6541, 0.6544, 0.6547, 0.6551, 0.6554)
+  hc <- c(rep(1.05e-02, 2), rep(2.09e-02, 3), rep(4.19e-02, 15))
+  hd1B <- c(0.1109, 0.1381, 0.1485, 0.1637, 0.2446, 0.2497, 0)
+@ 
+
+<<example-1>>=
+  library(PwrGSD)
+  example.1 <- 
+    PwrGSD(EfficacyBoundary=LanDemets(alpha=0.05, spending= ObrienFleming),
+           FutilityBoundary=LanDemets(alpha=0.1, spending=ObrienFleming),
+           RR.Futility = 0.82, sided="1<",method="A",accru =7.73, accrat=9818.65,
+           tlook =tlook, tcut0 =t0, h0=h0, tcut1=t0, rhaz=rhaz, 
+           tcutc0=t0, hc0=hc, tcutc1=t0, hc1=hc, 
+           tcutd0B =c(0, 13), hd0B =c(0.04777, 0),
+           tcutd1B =0:6, hd1B =hd1B,
+           noncompliance =crossover, gradual =TRUE,
+           WtFun =c("FH", "SFH", "Ramp"),
+           ppar =c(0, 1, 0, 1, 10, 10))
+@ 
+
+In the next example, we construct the efficacy boundary using the stochastic curtailment procedure.
+<<example-2>>=
+  example.2 <- update(example.1, EfficacyBoundary=LanDemets(alpha=0.05, spending=Pow(1)))
+@ 
+
+\end{document}

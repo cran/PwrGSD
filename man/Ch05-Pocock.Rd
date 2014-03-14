@@ -37,8 +37,8 @@ Pocock()
 
     Pocock()$call
 
-## example 2: ...But the intended purpose of the spending functions its
-    ## intended purpose is in constructing calls to 'GrpSeqBnds' and to 'PwrGSD':
+## example 2: ...But the intended purpose of the spending functions is
+## in constructing calls to 'GrpSeqBnds' and to 'PwrGSD':
      
 
     frac <- c(0.07614902,0.1135391,0.168252,0.2336901,0.3186155,

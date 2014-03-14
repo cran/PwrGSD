@@ -3,17 +3,13 @@
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{The Lan-Demets method of Boundary Construction}
 \description{
-  The function \code{LanDemets} is used in calls to the functions
-  \code{GrpSeqBnds} and \code{PwrGSD} as a possible setting for the
-  arguments \code{EfficacyBoundary} and \code{FutilityBoundary}, in
-  specification of the method whereby efficacy and or futility
-  boundaries are to be constructed. The Lan-Demets method is one of
-  four currently availiable choices, the others being \code{SC}
-  (stochastic curtailment), \code{Haybittle} and user specified.
-}
-\usage{
-LanDemets(alpha, spending, from = NULL, to = NULL)
-}
+  The function \code{LanDemets} is used in calls to the functions \code{GrpSeqBnds} and
+  \code{PwrGSD} as a possible setting for the arguments \code{EfficacyBoundary} and
+  \code{FutilityBoundary}, in specification of the method whereby efficacy and or futility
+  boundaries are to be constructed. The Lan-Demets method is one of four currently
+  availiable choices, the others being \code{SC} (stochastic curtailment),
+  \code{Haybittle} (efficacy only) and user specified.  } \usage{ LanDemets(alpha,
+  spending, from = NULL, to = NULL) }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{alpha}{If \code{LanDemets} is used to specify the \code{EfficacyBoundary} 
@@ -88,8 +84,8 @@ LanDemets(alpha, spending, from = NULL, to = NULL)
     class(LanDemets(alpha=0.05, spending=Pow(2))$spending)
     LanDemets(alpha=0.05, spending=ObrienFleming)$call
 
-## example 2: ...But the intended purpose of the spending functions its
-    ## intended purpose is in constructing calls to 'GrpSeqBnds' and to 'PwrGSD':
+## example 2: ...But the intended purpose of the spending functions is
+## in constructing calls to 'GrpSeqBnds' and to 'PwrGSD':
      
 
     frac <- c(0.07614902,0.1135391,0.168252,0.2336901,0.3186155,

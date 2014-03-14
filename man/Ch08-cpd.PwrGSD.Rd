@@ -234,6 +234,6 @@ test.example <-
   Power(test.example.set,
         subset=(substring(Eff.bound.choice, 32, 34)=="Pow" & stat \%in\% c(1,3)))
 
-}
+  }
 }
 \keyword{data}

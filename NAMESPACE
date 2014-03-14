@@ -1,8 +1,11 @@
 useDynLib(PwrGSD)
+importFrom(survival, Surv)
 export("%,%",agghaz,as.boundaries,CDFOR2LRR,CondPower,CY2TOShaz,PwrGSD,cpd.PwrGSD,
-       CRRtoRR,Dnsty,DX,Elements,GrpSeqBnds,Haybittle,IntSurvDiff,LanDemets,lookup,
-       mystack,mysurvfit,ObrienFleming,Pocock,Pow,RR2RCM,RCM2RR,SC,SCtoBdry,SimGSB,
-       Power,wtdlogrank)
+       CRRtoRR,DX,Elements,EX1gXK,gsd.dens,GrpSeqBnds,Haybittle,IntSurvDiff,LanDemets,
+       lookup,mystack,mysurvfit,ObrienFleming,Pocock,Pow,RR2RCM,RCM2RR,
+       SC,SCtoBdry,SimGSB,Power,wtdlogrank)
+
+
 
 S3method(print, PwrGSD)
 S3method(summary, PwrGSD)

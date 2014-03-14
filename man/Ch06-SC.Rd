@@ -9,7 +9,7 @@
   specification of the method whereby efficacy and or futility
   boundaries are to be constructed. The Stochastic Curtailment method is
   one of four currently availiable choices, the others being
-  \code{LanDemets}, \code{Haybittle} and user specified.
+  \code{LanDemets}, \code{Haybittle} (efficacy only) and user specified.
 }
 \usage{
 SC(be.end, prob, drift.end = NULL, from = NULL, to = NULL)
@@ -71,8 +71,8 @@ SC(be.end, prob, drift.end = NULL, from = NULL, to = NULL)
     string "SC"}
   \item{be.end}{The numeric value passed to the argument 'be.end', which is the 
     value of the efficacy criterion in the scale of a standardized normal.}
-  \item{prob}{The numeric value passed to the argument 'prob', which is the probability to be
-    exceeded in order to stop.}
+  \item{prob}{The numeric value passed to the argument 'prob', which is the probability to
+    be exceeded in order to stop.}
   \item{drift.end}{The numeric value passed to the argument 'drift.end', which is the
     value of the drift function at the end of the trial. See details.}
   \item{from}{The numeric value passed to the argument 'from'. See above.}
@@ -104,8 +104,8 @@ SC(be.end, prob, drift.end = NULL, from = NULL, to = NULL)
     SC(be.end=2.10, prob=0.90, drift.end=2.34)$prob
     SC(be.end=2.10, prob=0.90, drift.end=2.34)$drift.end
 
-## example 2: ...But the intended purpose of the spending functions its
-    ## intended purpose is in constructing calls to 'GrpSeqBnds' and to 'PwrGSD':
+## example 2: ...But the intended purpose of the spending functions is
+## in constructing calls to 'GrpSeqBnds' and to 'PwrGSD':
      
 
     frac <- c(0.07614902,0.1135391,0.168252,0.2336901,0.3186155,

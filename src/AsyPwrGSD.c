@@ -30,7 +30,7 @@ void grpseqbnds(int *dofu, int *nbf, int *nbnd, int *nsf, double *rho, int *pnth
                 double *palphatot, double *palpha, double *psimin, int *dlact, 
 		double *pInfTold, double *pInfTnew, double *pInfTold_ii, double *pInfTnew_ii, 
 		double *px, double *py, double *ptmp, double *pintgrndx, double *pgqxw, 
-		int *pngqnodes, double *mufu, double *pbold, double *pbnew, int *mybound, int *prev);
+		int *pngqnodes, double *mufu, double *pbold, double *pbnew, int *mybounds);
 
 void StCu2Bnds(double *pmu,double *pfrac,double *palpha,int *psided,double *prho,int *pef,double *b);
 
@@ -53,7 +53,7 @@ void drift(int *ints,double *accru,double *accrat,double *tlook,double *ppar,dou
 	   double *tlA1,double *lA1,double *tlB1,double *lB1,double *thA0,double *hA0,
 	   double *thB0,double *hB0,double *thA1,double *hA1,double *thB1,double *hB1,
 	   int *wttyp,double *RR,int *pnjmp,double *InfFrac,double *InfFrac_ii,double *mu,
-	   double *Var_uw,double *Var,double *Eta,int *puserVend,double *Vend);
+	   double *betastar, double *Var_uw,double *Var,double *Eta,int *puserVend,double *Vend);
 
 // begin main
 void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *lrrf,
@@ -62,14 +62,14 @@ void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *
 	       double *hc1,double *tcutd0A,double *hd0A,double *tcutd0B,double *hd0B,
 	       double *tcutd1A,double *hd1A,double *tcutd1B,double *hd1B,double *tcutx0A,
 	       double *hx0A,double *tcutx0B,double *hx0B,double *tcutx1A,double *hx1A,
-	       double *tcutx1B,double *hx1B,int *wttyp,double *Vend,double *pinffrac,
-	       double *pinffrac_ii,double *pbounds,double *mufu,double *mu,
+	       double *tcutx1B,double *hx1B,double *Vend,double *pinffrac,
+	       double *pinffrac_ii,double *pbounds,double *mufu,double *mu,double *betastar,
 	       double *palpha0vec,double *palpha1vec,double *RR,int *pnjmp,double *Var_uw,
 	       double *Var, double *Eta, int *t_idx, double *betabdry, double *bstar)
 {
   int *pn,*pntot,*pnthslook,*nbnd,*nsf,*gradual,*pnlook,*pnstat,*pngqnodes,*dofu,*dlact,*pncut0;
   int *pncut1,*pncutc0,*pncutc1,*sided,*pncutd0A,*pncutd0B,*pncutd1A,*pncutd1B,*pef,*pncutx0A;
-  int *pncutx0B,*pncutx1A,*pncutx1B,*puserVend,*mybounds,*spend_info_k,*qis1orQ,*prev,*nbf;
+  int *pncutx0B,*pncutx1A,*pncutx1B,*puserVend,*mybounds,*spend_info_k,*qis1orQ,*nbf,*wttyp;
   int nlook,ncut0,ncut1,ncut,ii,j,k,kacte,kactf,l,ngqnodes,nstat,istat,ef,ixxx,flag,idx;
   int ijmp,njmp,userhazfu,spend_info,krchd_flag,nbnd_e_sv,nbnd_f_sv;
 
@@ -110,6 +110,7 @@ void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *
   qis1orQ      = ints + 16+4*nlook+7; 
   sided        = ints + 16+4*nlook+8;
   nbf          = ints + 16+4*nlook+9;
+  wttyp        = ints + 16+4*nlook+10;
 
   accru  = dbls;
   accrat = dbls + 1;
@@ -133,7 +134,6 @@ void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *
   pef        = (int *)Calloc(1,int);
   pnthslook  = (int *)Calloc(2,int);
   dlact      = (int *)Calloc(2,int);
-  prev       = (int *)Calloc(1,    int);
 
   px         = (double *)Calloc(2*ngqnodes,double);
   py         = (double *)Calloc(2*ngqnodes,double);
@@ -156,12 +156,10 @@ void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *
   mu_n       = (double *)Calloc(1,double);
   mufuforSC  = (double *)Calloc(2,double);
 
-  *prev = 0;
-
   drift(ints,accru,accrat,pttlook,ppar,pgqxw,tcut0,h0,tcut1,h1,tcutc0,hc0,tcutc1,hc1,
 	tcutd0A,hd0A,tcutd0B,hd0B,tcutd1A,hd1A,tcutd1B,hd1B,tcutx0A,hx0A,tcutx0B,hx0B,
-	tcutx1A,hx1A,tcutx1B,hx1B,wttyp,RR,pnjmp,pinffrac,pinffrac_ii,mu,Var_uw,Var,Eta,
-	puserVend,Vend);
+	tcutx1A,hx1A,tcutx1B,hx1B,wttyp,RR,pnjmp,pinffrac,pinffrac_ii,mu,betastar,
+        Var_uw,Var,Eta,puserVend,Vend);
 
   /* Error probability spending information on Variance Scale                                  */
   if(spend_info==0)
@@ -301,7 +299,7 @@ void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *
 
       grpseqbnds(dofu,nbf,nbnd,nsf,rho, pnthslook,palphatot,palpha,psimin,
                  dlact,pInfTold,pInfTnew,pInfTold_ii,pInfTnew_ii,px,py,ptmp,
-		 pintgrndx,pgqxw,pngqnodes,mufu + nlook*j + k,pbold,pbnew,mybounds,prev);
+		 pintgrndx,pgqxw,pngqnodes,mufu + nlook*j + k,pbold,pbnew,mybounds);
 
       flag=1;
       if(*dlact==1){
@@ -486,7 +484,6 @@ void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *
   Free(pbnew);
   Free(pnthslook);
   Free(pef);
-  Free(prev);
   Free(psimin);
   Free(dlact);
   Free(mu_o);

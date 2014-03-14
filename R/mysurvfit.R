@@ -1,3 +1,5 @@
+Surv <- survival::Surv
+
 "mysurvfit" <- 
 function (formula = formula(data), data = parent.frame(), subset, 
     na.action = na.fail) 
@@ -95,7 +97,6 @@ function(x, ...)
 "summary.blkdcp" <-
 function (object, event.name = "Incidence", colors = NULL, ...) 
 {
-    DX <- PwrGSD:::DX
     M <- as.matrix(object$Table)
 
     ri.ind <- which(regexpr("nrisk", dimnames(M)[[2]])>0)
