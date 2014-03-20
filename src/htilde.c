@@ -1,11 +1,20 @@
 #include<R.h>
 //
 //MACROS 
+#define MIN(x,y) (x < y ? x : y)
+#define MAX(x,y) (x > y ? x : y)
 #define COMPH(xh,h,H,n,l) *H=0.0;for(l=1;l<n;l++) *(H+l)=*(H+l-1)+ *(h+l-1) * (*(xh+l) - *(xh+l-1))
-#define hHatX(x,xh,h,H,h_,H_,n,l) l=0;while(*(xh+l)<=x && l<n) l++; h_ = *(h+l-1); H_ = *(H+l-1) + h_ * (x-*(xh+l-1))
-#define HIatW(W,xh,h,H,HI_,n,l) l=0;while(*(H+l)<=W && l<n) l++; HI_ = *(xh+l-1) + (W - *(H+l-1))/(*(h+l-1))
+#define hHatX(x,xh,h,H,h_,H_,n,l,flg) l=0; flg=1; while(flg){                                         \
+                                                    flg=1*(l<n); if(flg) flg=1*(*(xh+l)<=x); l+=flg;  \
+                                                  }                                                   \
+                                                  h_ = *(h+l-1); H_ = *(H+l-1) + h_ * (x-*(xh+l-1))
+#define HIatW(W,xh,h,H,HI_,n,l,flg) l=0; flg=1; while(flg){                                           \
+                                                    flg=1*(l<n); if(flg) flg=1*(*(H+l)<=W); l+=flg;   \
+                                                }                                                     \
+                                                HI_ = *(xh+l-1) + (W - *(H+l-1))/(*(h+l-1))
 //
-//
+// 
+
 void htildeConst(double *x,int *nx,double *h,double *hA,double *hB,
                  double *lA,double *lB,double *Stilde,double *htlde);
 
@@ -22,7 +31,7 @@ void htilde(double *x,int *nx,double *gqx,double *gqw,int *ngq,
   double hA_x_,hB_x_,D_HA,D_HB,piA,piB,thA,thB,wA,wB,phiA_B,wA_B,phiB_A,wB_A,h_,H_;
   double SI_1, SI_2, SI_3, SI_4, SI_5, fI_1, fI_2, fI_3, fI_4, fI_5, tmp;
   double *H, *HA, *HB, *LA, *LB;
-  int nnx, nngq, nnh, nnhA, nnhB, nnlA, nnlB, i, l, j, k, idx;
+  int nnx, nngq, nnh, nnhA, nnhB, nnlA, nnlB, i, l, flg, j, k, idx;
 
   nnx = *nx;
   nngq = *ngq;
@@ -44,23 +53,22 @@ void htilde(double *x,int *nx,double *gqx,double *gqw,int *ngq,
   COMPH(xlA,lA,LA,nnlA,l);
   COMPH(xlB,lB,LB,nnlB,l);
   
-  hHatX(*tend,xlA,lA,LA,lA_,LAtend,nnlA,l);
-  hHatX(*tend,xlB,lB,LB,lB_,LBtend,nnlB,l);
+  hHatX(*tend,xlA,lA,LA,lA_,LAtend,nnlA,l,flg);
+  hHatX(*tend,xlB,lB,LB,lB_,LBtend,nnlB,l,flg);
   
   for(i=0;i<nnx;i++){
     xx = *(x+i);
-    hHatX(xx, xh, h, H, h_, H_, nnh,l);
-    hHatX(xx,xlA,lA,LA,lA_,LA_,nnlA,l);
-    hHatX(xx,xlB,lB,LB,lB_,LB_,nnlB,l);
-    hHatX(xx,xh,h,H,h_x,H_x,nnhB,l);
-    hHatX(xx,xhA,hA,HA,hA_x,HA_x,nnhA,l);
-    hHatX(xx,xhB,hB,HB,hB_x,HB_x,nnhB,l);
+    hHatX(xx,xh,h,H,h_x,H_x,nnh,l,flg);
+    hHatX(xx,xlA,lA,LA,lA_,LA_,nnlA,l,flg);
+    hHatX(xx,xlB,lB,LB,lB_,LB_,nnlB,l,flg);
+    hHatX(xx,xhA,hA,HA,hA_x,HA_x,nnhA,l,flg);
+    hHatX(xx,xhB,hB,HB,hB_x,HB_x,nnhB,l,flg);
 
     SlAx = exp(-LA_);
     SlBx = exp(-LB_);
 
-    SI_1 = exp(-H_) * SlAx * SlBx;
-    fI_1 = h_ * SI_1;
+    SI_1 = exp(-H_x) * SlAx * SlBx;
+    fI_1 = h_x * SI_1;
 
     SI_2 = 0.0;
     fI_2 = 0.0;
@@ -79,14 +87,14 @@ void htilde(double *x,int *nx,double *gqx,double *gqw,int *ngq,
       wB = *(gqw + j)*(1.0 - SlBx)/2.0;
       LB_ = -log(1.0-thB);
 
-      HIatW(LA_, xlA, lA, LA, xiA, nnlA, l);
-      HIatW(LB_, xlB, lB, LB, xiB, nnlB, l);
+      HIatW(LA_, xlA, lA, LA, xiA, nnlA, l, flg);
+      HIatW(LB_, xlB, lB, LB, xiB, nnlB, l, flg);
 
-      hHatX(xiA, xh, h, H, h_xiA, H_xiA, nnh,l);
-      hHatX(xiB, xh, h, H, h_xiB, H_xiB, nnh,l);
+      hHatX(xiA, xh, h, H, h_xiA, H_xiA, nnh, l, flg);
+      hHatX(xiB, xh, h, H, h_xiB, H_xiB, nnh, l, flg);
 
-      hHatX(xiA,xhA,hA,HA,hA_xiA,HA_xiA,nnhA,l);
-      hHatX(xiB,xhB,hB,HB,hB_xiB,HB_xiB,nnhB,l);
+      hHatX(xiA,xhA,hA,HA,hA_xiA,HA_xiA,nnhA,l,flg);
+      hHatX(xiB,xhB,hB,HB,hB_xiB,HB_xiB,nnhB,l,flg);
 
       piA = piB = 0.0;
       if(*gradual==1){
@@ -106,8 +114,8 @@ void htilde(double *x,int *nx,double *gqx,double *gqw,int *ngq,
       SI_3 += DS;
       fI_3 += hB_x_ * DS;
       
-      hHatX(xiB, xlA, lA, LA, lA_xiB, LA_xiB, nnlA, l);
-      hHatX(xiA, xlB, lB, LB, lB_xiA, LB_xiA, nnlB, l);
+      hHatX(xiB, xlA, lA, LA, lA_xiB, LA_xiB, nnlA, l, flg);
+      hHatX(xiA, xlB, lB, LB, lB_xiA, LB_xiA, nnlB, l, flg);
       
       SlA_xiB = exp(-LA_xiB);
       SlB_xiA = exp(-LB_xiA);
@@ -116,16 +124,16 @@ void htilde(double *x,int *nx,double *gqx,double *gqw,int *ngq,
 	phiA_B = (1.0 - SlA_xiB) * (1.0 + *(gqx + k))/2.0;
 	wA_B = *(gqw + k) * (1.0 - SlA_xiB)/2.0;
 	LA_B = -log(1.0 - phiA_B);
-	HIatW(LA_B, xlA, lA, LA, tauA_B, nnlA, l);
-	hHatX(tauA_B, xh, h, H, h_AB, H_AB, nnh, l);
-	hHatX(tauA_B, xhA, hA, HA, hA_AB, HA_AB, nnhA, l);
+	HIatW(LA_B, xlA, lA, LA, tauA_B, nnlA, l, flg);
+	hHatX(tauA_B, xh, h, H, h_AB, H_AB, nnh, l, flg);
+	hHatX(tauA_B, xhA, hA, HA, hA_AB, HA_AB, nnhA, l, flg);
 
 	phiB_A = (1.0 - SlB_xiA) * (1.0 + *(gqx + k))/2.0;
 	wB_A = *(gqw + k) * (1.0 - SlB_xiA)/2.0;
 	LB_A = -log(1.0 - phiB_A);
-	HIatW(LB_A, xlB, lB, LB, tauB_A, nnlB, l);
-	hHatX(tauB_A, xh, h, H, h_BA, H_BA, nnh, l);
-	hHatX(tauB_A, xhB, hB, HB, hB_BA, HB_BA, nnhB, l);
+	HIatW(LB_A, xlB, lB, LB, tauB_A, nnlB, l, flg);
+	hHatX(tauB_A, xh, h, H, h_BA, H_BA, nnh, l, flg);
+	hHatX(tauB_A, xhB, hB, HB, hB_BA, HB_BA, nnhB, l, flg);
 
 	piA=piB=0.0;
 	if(*gradual==1){

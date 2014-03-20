@@ -265,21 +265,21 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
     switch(noncompliance,
       none =
       {
-          tcutd0A <- 0
-          hd0A <- 1e-7
-          ncutd0A <- 1
+          tcutd0A <- c(0,tend)
+          hd0A <- c(1e-7,0)
+          ncutd0A <- 2
 
-          tcutd0B <- 0
-    	  hd0B <- 1e-7
-    	  ncutd0B <- 1
+          tcutd0B <- c(0,tend)
+    	  hd0B <- c(1e-7,0)
+    	  ncutd0B <- 2
           
-          tcutd1A <- 0
-          hd1A <- 1e-7
-          ncutd1A <- 1
+          tcutd1A <- c(0,tend)
+          hd1A <- c(1e-7,0)
+          ncutd1A <- 2
 
-          tcutd1B <- 0
-          hd1B <- 1e-7
-          ncutd1B <- 1
+          tcutd1B <- c(0,tend)
+          hd1B <- c(1e-7,0)
+          ncutd1B <- 2
 
           tcutx0A <- tcut0
           hx0A <- h0
@@ -319,13 +319,13 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
           if(no.hd1B) hd1B <- stoh(tcutd1B, sd1B)
           ncutd1B <- length(tcutd1B)
 
-          tcutd0A <- 0
-          hd0A <- 1e-7
-          ncutd0A <- 1
+          tcutd0A <- c(0,tend)
+          hd0A <- c(1e-7,0)
+          ncutd0A <- 2
 
-          tcutd1A <- 0
-          hd1A <- 1e-7
-          ncutd1A <- 1
+          tcutd1A <- c(0,tend)
+          hd1A <- c(1e-7,0)
+          ncutd1A <- 2
 
           tcutx0A <- tcut0
           hx0A <- h0
@@ -471,13 +471,13 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
                  ncutx1A <- length(tcutx1A)
 
               if(no.dB){
-                  tcutd0B <- 0
-                  hd0B <- 1e-7
-                  ncutd0B <- 1
+                  tcutd0B <- c(0,tend)
+                  hd0B <- c(1e-7,0)
+                  ncutd0B <- 2
 
-                  tcutd1B <- 0
-                  hd1B <- 1e-7
-                  ncutd1B <- 1
+                  tcutd1B <- c(0,tend)
+                  hd1B <- c(1e-7,0)
+                  ncutd1B <- 2
 
                   tcutx0B <- tcut0
                   hx0B <- h0
@@ -502,13 +502,13 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
               ncutx1B <- length(tcutx1B)
 
               if(no.dA){
-                  tcutd0A <- 0
-                  hd0A <- 1e-7
-                  ncutd0A <- 1
+                  tcutd0A <- c(0,tend)
+                  hd0A <- c(1e-7,0)
+                  ncutd0A <- 2
 
-                  tcutd1A <- 0
-                  hd1A <- 1e-7
-                  ncutd1A <- 1
+                  tcutd1A <- c(0,tend)
+                  hd1A <- c(1e-7,0)
+                  ncutd1A <- 2
 
                   tcutx0A <- tcut0
                   hx0A <- h0

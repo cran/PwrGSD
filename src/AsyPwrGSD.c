@@ -21,8 +21,9 @@
 
 #define normut 8.20953615160139
 #define MAX(x,y) (x > y ? x : y)
-#define wchidx(x,xgrid,n,l) l=0;while(*(xgrid+l)<=x && l<n) l++
-
+#define wchidx(x,xgrid,n,l,flg) l=0; flg=1; while(flg){                                                   \
+                                              flg=1*(l<n); if(flg) flg=1*(*(xgrid+l)<=x && l<n); l+=flg;  \
+                                            } /*   don't remove this line or add anything onto the end please */
 void printmat(double *pA, int nr, int nc, char *name);
 void printmati(int *pA, int nr, int nc, char *name);
 
@@ -71,7 +72,7 @@ void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *
   int *pncut1,*pncutc0,*pncutc1,*sided,*pncutd0A,*pncutd0B,*pncutd1A,*pncutd1B,*pef,*pncutx0A;
   int *pncutx0B,*pncutx1A,*pncutx1B,*puserVend,*mybounds,*spend_info_k,*qis1orQ,*nbf,*wttyp;
   int nlook,ncut0,ncut1,ncut,ii,j,k,kacte,kactf,l,ngqnodes,nstat,istat,ef,ixxx,flag,idx;
-  int ijmp,njmp,userhazfu,spend_info,krchd_flag,nbnd_e_sv,nbnd_f_sv;
+  int ijmp,njmp,userhazfu,spend_info,krchd_flag,nbnd_e_sv,nbnd_f_sv,flg;
 
   double *ptlook,*val,*pInfTold,*pInfTnew,*pInfTold_ii,*pInfTnew_ii,*psimin,*palpha,*pbold,*pbnew;
   double *px,*py,*ptmp,*pintgrndx,*mu_o,*mu_n,*Psiab_o,*Psiab_n,*Psiminfa_o,*Psiminfa_n,*Psibinf_o;
@@ -438,7 +439,7 @@ void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *
   }
 
   for(k=0;k<nlook;k++){
-    wchidx(*(pttlook+k),tjmp,njmp,l);
+    wchidx(*(pttlook+k),tjmp,njmp,l,flg);
     *(t_idx + k) = l-1;
   }
   for(istat=0;istat<nstat;istat++){  

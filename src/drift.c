@@ -2,14 +2,24 @@
 #include<R.h>
 //
 //MACROS 
+#define MIN(x,y) (x < y ? x : y)
+#define MAX(x,y) (x > y ? x : y)
 #define COMPH(xh,h,H,n,l) *H=0.0;for(l=1;l<n;l++) *(H+l)=*(H+l-1)+ *(h+l-1) * (*(xh+l) - *(xh+l-1))
-#define hHatX(x,xh,h,H,h_,H_,n,l) l=0;while(*(xh+l)<=x && l<n) l++; h_ = *(h+l-1); H_ = *(H+l-1) + h_ * (x-*(xh+l-1))
-#define HIatW(W,xh,h,H,HI_,n,l) l=0;while(*(H+l)<=W && l<n) l++; HI_ = *(xh+l-1) + (W - *(H+l-1))/(*(h+l-1))
-#define wchidx(x,xgrid,n,l) l=0;while(*(xgrid+l)<=x && l<n) l++
+#define hHatX(x,xh,h,H,h_,H_,n,l,flg) l=0; flg=1; while(flg){                                             \
+                                                    flg=1*(l<n); if(flg) flg=1*(*(xh+l)<=x); l+=flg;      \
+                                                  }                                                       \
+                                                  h_ = *(h+l-1); H_ = *(H+l-1) + h_ * (x-*(xh+l-1))
+#define HIatW(W,xh,h,H,HI_,n,l,flg) l=0; flg=1; while(flg){                                               \
+                                                  flg=1*(l<n); if(flg) flg=1*(*(H+l)<=W); l+=flg;         \
+                                                }                                                         \
+                                                HI_ = *(xh+l-1) + (W - *(H+l-1))/(*(h+l-1))
+#define wchidx(x,xgrid,n,l,flg) l=0; flg=1; while(flg){                                                   \
+                                              flg=1*(l<n); if(flg) flg=1*(*(xgrid+l)<=x && l<n); l+=flg;  \
+                                            } /*   don't remove this line or add anything onto the end please */
 #define unique(x,n,y,m,l,old) m = 0;                           \
                               l = 0;                           \
                               old = -10 + *x;                  \
-                              while(l<n)                       \
+                              while(l<n){		       \
                                 if(fabs(*(x+l)-old)<=1e-16) {  \
                                   old = *(x+l);                \
                                   l++;                         \
@@ -19,10 +29,8 @@
                                   old = *(x+l);                \
                                   l++;                         \
                                   m++;                         \
-                                }  /*   don't remove this line or add anything onto the end please */
-
-#define MIN(x,y) (x<=y ? x : y)
-#define MAX(x,y) (x>=y ? x : y)
+                                }                              \
+			      }   /*   don't remove this line or add anything onto the end please */
 
 //
 //
@@ -48,7 +56,7 @@ void drift(int *ints,double *accru,double *accrat,double *tlook,double *ppar,dou
 	   double *mu,double *betastar, double *Var_uw, double *Var, double *Eta,
            int *puserVend,double *Vend)
 {
-  int nnstat,nngq,l,j,j0,j1,istat,nnh0,nnh1,nnsm,nnjmp,nnhc0,nnhc1,nnlA0,nnlB0,nnlA1,nmx,flaguserVE;
+  int nnstat,nngq,l,flg,j,j0,j1,istat,nnh0,nnh1,nnsm,nnjmp,nnhc0,nnhc1,nnlA0,nnlB0,nnlA1,nmx,flaguserVE;
   int nnlB1,nnhA0,nnhB0,nnhA1,nnhB1,nhmax,nnlook,ilook,ijmp,ntrial,isumppar,istop, nppar;
   int *ntlook,*nstat,*ngq,*nh0,*nh1,*nhc0,*nhc1,*nlA0,*nlB0,*nlA1,*nlB1,*nhA0,*nhB0,*nhA1;
   int *nhB1,*gradual,*one;
@@ -137,6 +145,13 @@ void drift(int *ints,double *accru,double *accrat,double *tlook,double *ppar,dou
   SStlde1 = (double *)Calloc(1, double);
   hhtlde1 = (double *)Calloc(1, double);
 
+  *ftlde0=0.0;
+  *Stlde0=1.0;
+  *htlde0=0.0;
+  *ftlde1=0.0;
+  *Stlde1=1.0;
+  *htlde1=0.0;
+
   htilde(tjmp,pnnjmp,gqx,gqw,ngq,th0,h0,nh0,thA0,hA0,nhA0,thB0,hB0,nhB0,tlA0,lA0,
 	 nlA0,tlB0,lB0,nlB0,gradual,tend,ftlde0,Stlde0,htlde0);
 
@@ -147,10 +162,10 @@ void drift(int *ints,double *accru,double *accrat,double *tlook,double *ppar,dou
     *(RR+l) = *(tjmp+l);
     *(RR+nnjmp+l) = *(htlde0+l);
     *(RR+2*nnjmp+l) = *(htlde1+l)/(*(htlde0+l));
-    wchidx(*(tjmp+l),th0,nnh0,j0);
+    wchidx(*(tjmp+l),th0,nnh0,j0,flg);
     j0 = MAX(j0-1,0);
     *(RR+3*nnjmp+l) = *(h0+j0);
-    wchidx(*(tjmp+l),th1,nnh1,j1);
+    wchidx(*(tjmp+l),th1,nnh1,j1,flg);
     j1 = MAX(j1-1,0);
     *(RR+4*nnjmp+l) = *(h1+j1)/(*(h0+j0));
   }
@@ -187,8 +202,8 @@ void drift(int *ints,double *accru,double *accrat,double *tlook,double *ppar,dou
       for(j=0;j<nngq;j++){
         xi_ = *(xi+j);
         w = *(gqw+j)*t_END/2.0;
-        hHatX(xi_,thc0,hc0,Hc0,hc0_,Hc0_,nnhc0,l);
-        hHatX(xi_,thc1,hc1,Hc1,hc1_,Hc1_,nnhc1,l);
+        hHatX(xi_,thc0,hc0,Hc0,hc0_,Hc0_,nnhc0,l,flg);
+        hHatX(xi_,thc1,hc1,Hc1,hc1_,Hc1_,nnhc1,l,flg);
         Sc = 2.0*exp(-(Hc0_ + Hc1_))/(exp(-Hc0_) + exp(-Hc1_));
         S_LR = MIN((t_END - xi_)/t_ENR,1.0);
         Stlde = (*(Stlde0+j) + *(Stlde1+j))/2.0;
@@ -248,8 +263,8 @@ void drift(int *ints,double *accru,double *accrat,double *tlook,double *ppar,dou
       for(j=0;j<nngq;j++){
 	xi_ = *(xi+j);
 	w = *(gqw+j)*t_jmp/2.0;
-	hHatX(xi_,thc0,hc0,Hc0,hc0_,Hc0_,nnhc0,l);
-	hHatX(xi_,thc1,hc1,Hc1,hc1_,Hc1_,nnhc1,l);
+	hHatX(xi_,thc0,hc0,Hc0,hc0_,Hc0_,nnhc0,l,flg);
+	hHatX(xi_,thc1,hc1,Hc1,hc1_,Hc1_,nnhc1,l,flg);
 	Sc = 2.0*exp(-(Hc0_ + Hc1_))/(exp(-Hc0_) + exp(-Hc1_));
 	S_LR = MIN((t_jmp - xi_)/t_ENR,1.0);
 	Stlde = (*(Stlde0+j) + *(Stlde1+j))/2.0;

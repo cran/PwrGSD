@@ -1,12 +1,18 @@
 #include<R.h>
 
 /* MACROS */
+#define MIN(x,y) (x<y ? x : y)
+#define MAX(x,y) (x>y ? x : y)
 #define COMPH(xh,h,H,n,l) *H=0.0;for(l=1;l<n;l++) *(H+l)=*(H+l-1)+ *(h+l-1) * (*(xh+l) - *(xh+l-1))
-#define hatX(x,xh,h,h_,n,l) l=0;while(*(xh+l)<=x && l<n) l++; h_ = *(h+l-1)
-#define hHatX(x,xh,h,H,h_,H_,n,l) l=0;while(*(xh+l)<=x && l<n) l++; h_ = *(h+l-1); H_ = *(H+l-1) + h_ * (x-*(xh+l-1))
-#define HIatW(W,xh,h,H,HI_,n,l) l=0;while(*(H+l)<=W && l<n) l++; HI_ = *(xh+l-1) + (W - *(H+l-1))/(*(h+l-1))
-#define MIN(x,y) (x<=y ? x : y)
-#define MAX(x,y) (x>=y ? x : y)
+#define hatX(x,xh,h,h_,n,l,flg) l=0; flg=1; while(flg){                                         \
+                                              flg=1*(l<n); if(flg) flg=1*(*(xh+l)<=x); l+=flg;  \
+                                            }                                                   \
+                                            h_ = *(h+l-1)
+#define hHatX(x,xh,h,H,h_,H_,n,l,flg) l=0; flg=1; while(flg){                                         \
+                                                    flg=1*(l<n); if(flg) flg=1*(*(xh+l)<=x); l+=flg;  \
+                                                  }                                                   \
+                                                  h_ = *(h+l-1); H_ = *(H+l-1) + h_ * (x-*(xh+l-1))
+//
 
 void printmat(double *,int,int,char *);
 void Qmoments(double *pK, double *ph, double *ptc, double *ptr, double *ptau, double *ans);
@@ -15,10 +21,10 @@ void driftfu(int *ints,double *accru,double *accrat,double *tlook,double *ppar,d
 	     double *th0,double *h0,double *lrrf,double *thc0,double *hc0,double *thc1,
 	     double *hc1,int *wttyp,double *mufu,int *puserVend,double *Vend)
 {
-  int nnstat,nngq,l,j,istat,nnh0,nnh1,nnhc0,nnhc1,isumppar,istop,flaguserVE,qis1orQ;
+  int nnstat,nngq,l,flg,j,istat,nnh0,nnh1,nnhc0,nnhc1,isumppar,istop,flaguserVE,qis1orQ;
   int nnlook,ilook,ntrial,nppar, *lbuff,*ntlook,*nstat,*ngq,*nh0,*nhc0,*nhc1,*pqis1orQ;
 
-  double t_ENR,t_END,vend,xi_,w,t_AN,Q,dMU,Beta,ans_MU,lrrf_,h0_,H0_,S0_,h1_,H1_,S1_,hc0_,Hc0_,hc1_;
+  double t_ENR,t_END,vend,xi_,w,t_AN,Q,dMU,Beta,ans_MU,lrrf_,Lrrf_,h0_,H0_,S0_,h1_,H1_,S1_,hc0_,Hc0_,hc1_;
   double Hc1_,Sc,S_LR,S,f,h_avg;
   double *xi,*H0,*H1,*th1,*h1,*Hc0,*Hc1,*V_END,*gqx,*gqw,*Qstop,*atten,*Qmom_args;
 
@@ -73,8 +79,8 @@ void driftfu(int *ints,double *accru,double *accrat,double *tlook,double *ppar,d
   COMPH(thc1,hc1,Hc1,nnhc1,l);
 
 
-  hHatX(t_END,th0,h0,H0,h0_,H0_,nnh0,l);
-  hHatX(t_END,th1,h1,H1,h1_,H1_,nnh1,l);
+  hHatX(t_END,th0,h0,H0,h0_,H0_,nnh0,l,flg);
+  hHatX(t_END,th1,h1,H1,h1_,H1_,nnh1,l,flg);
   S0_ = exp(-H0_);
   S1_ = exp(-H1_);
   S = (S0_ + S1_)/2.0;
@@ -89,8 +95,8 @@ void driftfu(int *ints,double *accru,double *accrat,double *tlook,double *ppar,d
 
       istop = 0.0;
       if(*(wttyp+istat) == 1){
-        hHatX(*(ppar+isumppar+2),th0,h0,H0,h0_,H0_,nnh0,l);
-        hHatX(*(ppar+isumppar+2),th1,h1,H1,h1_,H1_,nnh1,l);
+        hHatX(*(ppar+isumppar+2),th0,h0,H0,h0_,H0_,nnh0,l,flg);
+        hHatX(*(ppar+isumppar+2),th1,h1,H1,h1_,H1_,nnh1,l,flg);
         S0_ = exp(-H0_);
         S1_ = exp(-H1_);
         S = (S0_ + S1_)/2.0;
@@ -116,12 +122,12 @@ void driftfu(int *ints,double *accru,double *accrat,double *tlook,double *ppar,d
       for(j=0;j<nngq;j++){
         xi_ = *(xi+j);
         w = *(gqw+j)*t_END/2.0;
-        hHatX(xi_,th0,h0,H0,h0_,H0_,nnh0,l);
-        hHatX(xi_,th1,h1,H1,h1_,H1_,nnh1,l);
+        hHatX(xi_,th0,h0,H0,h0_,H0_,nnh0,l,flg);
+        hHatX(xi_,th1,h1,H1,h1_,H1_,nnh1,l,flg);
         S0_ = exp(-H0_);
         S1_ = exp(-H1_);
-        hHatX(xi_,thc0,hc0,Hc0,hc0_,Hc0_,nnhc0,l);
-        hHatX(xi_,thc1,hc1,Hc1,hc1_,Hc1_,nnhc1,l);
+        hHatX(xi_,thc0,hc0,Hc0,hc0_,Hc0_,nnhc0,l,flg);
+        hHatX(xi_,thc1,hc1,Hc1,hc1_,Hc1_,nnhc1,l,flg);
         Sc = 2.0*exp(-(Hc0_ + Hc1_))/(exp(-Hc0_) + exp(-Hc1_));
         S_LR = MIN((t_END - xi_)/t_ENR,1.0);
         S = (S0_ + S1_)/2.0;
@@ -163,12 +169,12 @@ void driftfu(int *ints,double *accru,double *accrat,double *tlook,double *ppar,d
       for(j=0;j<nngq;j++){
 	xi_ = *(xi+j);
 	w = *(gqw+j)*t_AN/2.0;
-        hHatX(xi_,th0,h0,H0,h0_,H0_,nnh0,l);
-        hHatX(xi_,th1,h1,H1,h1_,H1_,nnh1,l);
+        hHatX(xi_,th0,h0,H0,h0_,H0_,nnh0,l,flg);
+        hHatX(xi_,th1,h1,H1,h1_,H1_,nnh1,l,flg);
 	S0_ = exp(-H0_);
         S1_ = exp(-H1_);
-	hHatX(xi_,thc0,hc0,Hc0,hc0_,Hc0_,nnhc0,l);
-	hHatX(xi_,thc1,hc1,Hc1,hc1_,Hc1_,nnhc1,l);
+	hHatX(xi_,thc0,hc0,Hc0,hc0_,Hc0_,nnhc0,l,flg);
+	hHatX(xi_,thc1,hc1,Hc1,hc1_,Hc1_,nnhc1,l,flg);
 	Sc = 2.0*exp(-(Hc0_ + Hc1_))/(exp(-Hc0_) + exp(-Hc1_));
 	S_LR = MIN((t_AN - xi_)/t_ENR,1.0);
 	S = (S0_ + S1_)/2.0;
@@ -195,7 +201,7 @@ void driftfu(int *ints,double *accru,double *accrat,double *tlook,double *ppar,d
         if(qis1orQ==1){
 	  dMU *= Q;
 	}
-	hatX(xi_,th1,lrrf,lrrf_,nnh1,l);
+	hatX(xi_,th1,lrrf,lrrf_,nnh1,l,flg);
 	Beta = lrrf_;
 	ans_MU += Beta * dMU;
       }

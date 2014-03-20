@@ -1,6 +1,6 @@
-729bab36c9dc72998f070c60c9c27541 *DESCRIPTION
+9eef3e6234d745b1b2693dbce9601de6 *DESCRIPTION
 37b24ab6b3eb9a6b1bd4da21d0a10dae *NAMESPACE
-c291f848310bc20928f1e3fd3a675889 *R/PwrGSD.R
+86369b139901ceb2b475fd063c71a709 *R/PwrGSD.R
 6fe5ebcc796fbc27f950c6148e866338 *R/mysurvfit.R
 f7c9019308a4fa9f71f9b692e4228620 *build/vignette.rds
 c0c67cf7683b91129f12ea5814526cf2 *data/lung.rda
@@ -46,7 +46,7 @@ f0e8e59eb5c0b45cd9524cac4a384433 *man/Ch1D-pste.Rd
 4715cc7a9bf270aa0d18cee7d39dd668 *man/Ch1E-SCtoBdry.Rd
 1c972fc200f1b6f97b136773524cca3b *man/Ch1F-gsddens.Rd
 bd2e38e12731318aa9a399f8fc332296 *man/Ch20-EX1gXK.Rd
-f120b79d71e444b6e70279685e045e95 *src/AsyPwrGSD.c
+9e2d8285065c50a625f8247df55c75dc *src/AsyPwrGSD.c
 c50605de39b65506e19b6d2f740e90ff *src/Finv.c
 a3ed4da510ca155d4cc6243a16d7d4f2 *src/SimPwrGSD.c
 d10bcfa36dc28e54ae310b141c25b69e *src/StCu2Bnds.c
@@ -54,10 +54,10 @@ d10bcfa36dc28e54ae310b141c25b69e *src/StCu2Bnds.c
 1b826781620e4984253687b61e559ac2 *src/agghaz.c
 1aa9cc780f348bb9d544a213b72778ea *src/cmptpwrgsd.c
 b8efa50d9d4818889ec1e0326d599374 *src/cpblocked.c
-e6389966069116ad050a0d9108649546 *src/drift.c
-3dec1bcd4e96484fc83c4d49b9d9f3f8 *src/driftfu.c
+798a536d7d524b61afa21376c0e99413 *src/drift.c
+f23df06fb17ca3892b149d492196f632 *src/driftfu.c
 7ba903999c960c22346223a0b394883f *src/grpseqbnds.c
-81e13e8b5d46d145d8497ec43ccf595e *src/htilde.c
+4c78e093b5ca39059eab6855fafc9d6a *src/htilde.c
 6cf1a6bafef08254ee858156f1f0660d *src/intsurvdiff.c
 40f752f2e13f5fe5d85449467fda8a0c *src/lookup.c
 758015e23abbdc86f70fcc7a5965ddac *src/myapprox.c
