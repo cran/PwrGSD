@@ -63,6 +63,7 @@ void wlrstat(double *time, int *nrisk, int *nevent, double *wt, int *pntimes, do
   v1 = 0.0;
   dvQ = 0.0;
   vQ = 0.0;
+  m1_ = 0.0;
   for(i=0;i<nt;i++){
     xev = (double) (*(nevent + 2*i) + *(nevent + 2*i + 1));
     xev1 = (double) (*(nevent + 2*i + 1));

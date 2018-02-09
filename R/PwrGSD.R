@@ -2974,22 +2974,31 @@ function(formula = formula(data), data = parent.frame(), WtFun = c("FH", "SFH", 
     mt <- attr(m, "terms")
     if (is.empty.model(mt)) 
         stop("No treatment indicator specified in model")
-    Arm <- model.matrix(mt, m)[, -1]
+    R <- model.extract(m, "response")
+    X <- model.matrix(mt, m)
+    nc <- ncol(X)
+    Arm <- X[,-1]
     nlev <- length(unique(Arm))
 
-    R <- model.extract(m, "response")
-    if(nlev>2 || class(R)!="Surv")
+    if(nlev>2 || nc > 2 || class(R)!="Surv")
       stop("Argument 'formula' is expected to have a response of class \"Surv\" and " %,%
            "a single predictor containing two levels")
+
+    Arm <- 1*(Arm==sort(unique(Arm))[2])
+    
     ind.too.small <- (R[,1]<1e-10)
     n.too.small <- sum(ind.too.small)
     if(n.too.small > 0) {
       warning("Deleting " %,% n.too.small %,% "observatioins that are less than 10^-10\n")
       R <- R[-which(ind.too.small),]
       Arm <- Arm[-which(ind.too.small)]
-    }    
+    }
     TOS <- R[, 1]
     Event <- R[, 2]
+    nev <- length(unique(Event))
+    if(nev > 2) stop("Your event indicator variable, " %,% as.character(.call.$formula[[2]][[2]]) %,% ", has more than 2 levels.")
+    Event <- 1*(Event==sort(unique(Event)[2]))
+
     ntimes <- length(unique(TOS[Event!=0]))
     n <- length(Event)
     if(missing(WtFun)){
@@ -3033,6 +3042,12 @@ function(formula = formula(data), data = parent.frame(), WtFun = c("FH", "SFH", 
     out$n1 <- sum(Arm == sA[2])
     out$n <- out$n0 + out$n1
     out$Z <- ans$stat/ans$var^0.5
+    cf <- with(ans, var^0.5/m1)
+    zc <- qnorm(1-0.05/2)
+    bstar <- out$Z*cf
+    bstar.l <- bstar - zc*cf
+    bstar.u <- bstar + zc*cf
+    out$extra <-  list(betastar=bstar, lower95=bstar.l, upper95=bstar.u)
     out$sided <- sided
     class(out) <- "survtest"
     out$call <- .call.
@@ -3132,6 +3147,11 @@ function(formula = formula(data), data = parent.frame(), WtFun = c("FH", "SFH", 
         exp1))
     dimnames(tbl) <- list(z.nm %,% c("=0:", "=1:"), names(tbl))
     print(tbl)
+    if(!is.null(x$extra))
+    {
+      xtra <- as.data.frame(x$extra)
+      print(xtra)
+    }
     ans <- c(Z, pval)
     names(ans) <- c("z", "p-val")
     print(ans)

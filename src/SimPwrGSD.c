@@ -615,7 +615,7 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
       *(duration + nsim*j + ii) = tlook_;
       csumnppar += nppar;
     } /* END different stats loop */
-    Rprintf("%g\r",((double)ii)/((double)nsim));
+    Rprintf("%g\r",round(1000*((double)ii)/((double)nsim))/100);
     if(!isbad) ii++;
   }
   /* END simulation loop */

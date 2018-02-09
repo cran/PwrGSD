@@ -1,5 +1,15 @@
-useDynLib(PwrGSD)
+useDynLib(PwrGSD, .registration = TRUE)
 importFrom(survival, Surv)
+
+importFrom("grDevices", "col2rgb", "gray")
+importFrom("graphics", "axis", "box", "co.intervals", "grid", "lines",
+           "mtext", "par", "plot", "plot.new", "plot.window", "points",
+           "polygon", "rect", "text")
+importFrom("stats", "approx", "is.empty.model", "model.extract",
+           "model.frame", "model.matrix", "na.fail", "na.pass",
+           "optim", "optimize", "pnorm", "qnorm", "quantile", "rnorm",
+           "update", "var")
+
 export("%,%",agghaz,as.boundaries,CDFOR2LRR,CondPower,CY2TOShaz,PwrGSD,cpd.PwrGSD,
        CRRtoRR,DX,Elements,EX1gXK,gsd.dens,GrpSeqBnds,Haybittle,IntSurvDiff,LanDemets,
        lookup,mystack,mysurvfit,ObrienFleming,Pocock,Pow,RR2RCM,RCM2RR,

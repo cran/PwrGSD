@@ -399,7 +399,13 @@ PwrGSD(EfficacyBoundary = LanDemets(alpha = 0.05, spending = ObrienFleming),
   Clinical Trials Chapman & Hall/Crc, Boca Raton FL
 
   Proschan, M.A., Lan, K.K.G., Wittes, J.T.  (2006), corr 2nd printing (2008) Statistical
-  Monitoring of Clinical Trials A Unified Approach Springer Verlag, New York }
+  Monitoring of Clinical Trials A Unified Approach Springer Verlag, New
+  York 
+
+  Izmirlian G. (2014). Estimation of the relative risk following group
+  sequential procedure based upon the weighted log-rank statistic.
+  Statistics and its Interface 7(1), 27-42
+}
 
 \author{Grant Izmirlian \email{izmirlian@nih.gov}}
 
