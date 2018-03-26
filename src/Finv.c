@@ -11,7 +11,7 @@ void Finv(double *tgrid, double *hgrid, long *ntgrid, double *ugrid, long *nugri
   for(i=0;i<nu;i++){
     res = -log(1 - *(ugrid+i));
     j=0;
-    while(res>0&&j<ntm1){
+    while((res>0)&&(j<ntm1)){
       ressv = res;
       res -= *(hgrid+j)*(*(tgrid+j+1)- *(tgrid+j));
       j++;

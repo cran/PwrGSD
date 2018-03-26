@@ -21,8 +21,8 @@
 
 #define normut 8.20953615160139
 #define MAX(x,y) (x > y ? x : y)
-#define wchidx(x,xgrid,n,l,flg) l=0; flg=1; while(flg){                                                   \
-                                              flg=1*(l<n); if(flg) flg=1*(*(xgrid+l)<=x && l<n); l+=flg;  \
+#define wchidx(x,xgrid,n,l,flg) l=0; flg=1; while(flg){                                                        \
+                                           flg=1*(l<n); if(flg) flg=1*((*(xgrid+l)<=x) && (l<n)); l+=flg;      \
                                             } /*   don't remove this line or add anything onto the end please */
 void printmat(double *pA, int nr, int nc, char *name);
 void printmati(int *pA, int nr, int nc, char *name);
@@ -215,7 +215,7 @@ void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *
   CS_q_dEta = (double *)Calloc(nstat*njmp,double);
   q = (double *)Calloc(nstat*njmp,double);
 
-  if(*sided==-1 || *sided==-2)    
+  if((*sided==-1) || (*sided==-2))    
     for(l=0;l<nlook*nstat;l++) {
       *(mufu+l) = *(mufu+l) * (-1.0);
       *(mu+l) = *(mu+l) * (-1.0);
@@ -242,14 +242,14 @@ void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *
     *pInfTold_ii = 0.0;
     *(pInfTold_ii+1) = 0.0;
 
-    if(*mybounds==0 || nbnd_e_sv==3){
-      if(*nbnd==1 || nbnd_e_sv==3) *pbold = normut;
+    if((*mybounds==0) || (nbnd_e_sv==3)){
+      if((*nbnd==1) || (nbnd_e_sv==3)) *pbold = normut;
       if(*nbnd==2) *pbold = *bHay;
     }
 
-    if(*(mybounds+1)==0 || nbnd_f_sv==3){
-      if(*(nbnd+1)==1 || nbnd_f_sv==3) *(pbold+1) = -normut;
-      if(*(nbnd+1)==2) *(pbold+1) = *bHay;
+    if((*(mybounds+1)==0) || (nbnd_f_sv==3)){
+      if((*(nbnd+1)==1) || (nbnd_f_sv==3)) *(pbold+1) = -normut;
+      if((*(nbnd+1)==2)) *(pbold+1) = *bHay;
     }
 
     *palphatot = atotsv_e;
@@ -333,9 +333,9 @@ void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *
         *pInfTold_ii = *pInfTnew_ii;
 
       }
-      if(*dofu==1 && *(dlact+1)==1){
+      if((*dofu==1) && (*(dlact+1)==1)){
         if(*(nbnd+1)==1) {
-	  b_tmp = (*(mybounds+1) && 1.0 - *pInfTnew_ii >= 1e-6 ? *(pbounds + nstat*nlook + nlook*j + k) : *(pbnew+1));
+	  b_tmp = ((*(mybounds+1)) && (1.0 - *pInfTnew_ii >= 1e-6) ? *(pbounds + nstat*nlook + nlook*j + k) : *(pbnew+1));
           *(pbounds + nstat*nlook + nlook*j + k) = b_tmp;
           *(pbold+1) = b_tmp;
         }
@@ -352,7 +352,7 @@ void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *
 	*(pInfTold_ii + 1) = *pInfTnew_ii;
         kactf += 1;
       }
-      if(*dofu==1 && *(dlact+1)==0){
+      if((*dofu==1) && (*(dlact+1)==0)){
 	b_tmp = (*(mybounds+1) ? *(pbounds + nstat*nlook + nlook*j + k) : -normut);
         *(pbounds + nstat*nlook + nlook*j + k) = b_tmp;
         *(pbold+1) = b_tmp;
@@ -458,7 +458,7 @@ void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *
       vend = *(Var + njmp*istat + *(t_idx + nlook - 1));
       for(k=0;k<nlook;k++)
       {
-        b = *(pbounds + nstat*nlook*ef + nlook*istat + k) * (1.0 - 2 * (*sided==-1||*sided==-2));
+        b = *(pbounds + nstat*nlook*ef + nlook*istat + k) * (1.0 - 2 * ((*sided==-1)||(*sided==-2)));
         *(betabdry + nstat*nlook*ef + nlook*istat + k) = 
           pow(vend,0.5) * b/(xntrialhlf* *(CS_q_dEta + njmp*istat + *(t_idx + k)));
       }

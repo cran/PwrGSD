@@ -69,7 +69,7 @@ void grpseqbnds(int *dofu, int *nbf, int *nbnd, int *nsf, double *rho, int *pnlo
       spfu = &powersp;
       *pfmin = pow(*psimin/(*(palphtot+ef)),1.0/(*(rho+ef)));
     }
-    if(*(nbnd+ef)==1 || *(nbnd+ef)==3 || *(nbnd+ef)==4)
+    if((*(nbnd+ef)==1) || (*(nbnd+ef)==3) || (*(nbnd+ef)==4))
       grpseqbndsL(pef, spfu, rho+ef, islast, pnlook+ef, palphtot+ef, palpha+ef, pfmin, 
 		  dlact+ef, pfracold + ef, pfracnew, pfracold_ii + ef, pfracnew_ii, x+ef*ngq, y+ef*ngq, 
 		  tmp+ef*ngq, intgrndx+ef*ngq, gqxw, pngqnodes, mufu, bold, bnew, mybounds);
@@ -83,7 +83,7 @@ void grpseqbnds(int *dofu, int *nbf, int *nbnd, int *nsf, double *rho, int *pnlo
   if(*islast==0){
     for(ef=0;ef<1+*dofu;ef++){
       *pef = ef;
-      if((*(nbnd+ef)==1 || *(nbnd+ef)==3 || *(nbnd+ef)==4) && *(dlact+ef)==1)
+      if(((*(nbnd+ef)==1) || (*(nbnd+ef)==3) || (*(nbnd+ef)==4)) && (*(dlact+ef)==1))
 	updateL(nbf, dofu, pef, pnlook+ef, pfracold + ef, pfracnew, x+ef*ngq, y+ef*ngq, 
 		tmp+ef*ngq, intgrndx+ef*ngq, gqxw, pngqnodes, mufu, bnew);
       if(*(nbnd+ef)==2)
@@ -125,7 +125,7 @@ void grpseqbndsL(int *pef, double (*spfu)(double frac, double alphatot, double r
   aold = 0.0;
   anew = psimin;
   if(*pfracold_ii > *pfmin) aold = (*spfu)(*pfracold_ii, *palphtot, *rho);
-  if(*pfracnew_ii > *pfmin || *(mybounds + ef)==1) {
+  if((*pfracnew_ii > *pfmin) || (*(mybounds + ef)==1)) {
     anew = (*spfu)(*pfracnew_ii, *palphtot, *rho);
     *dlact = 1;
   }
@@ -135,7 +135,7 @@ void grpseqbndsL(int *pef, double (*spfu)(double frac, double alphatot, double r
   sqrf = pow(*pfracnew,0.5);
   sqrdf = pow(*pfracnew - *pfracold,0.5);
 
-  if(*dlact==1 && (*islast==0 || ef==0) && *(mybounds + ef)==0){
+  if((*dlact==1) && ((*islast==0) || (ef==0)) && (*(mybounds + ef)==0)){
     if(nlook==1)
       b = qnorm5(*palpha,0.0,1.0,ef,zero) + sw * *mufu/sqrf;
     else{
@@ -145,7 +145,7 @@ void grpseqbndsL(int *pef, double (*spfu)(double frac, double alphatot, double r
       berr = (bu-bl)/2.0;
       aerr = 1.0;
       hangs=0;
-      while((berr>vsmall||aerr>vvsmall)&&hangs<300){
+      while(((berr>vsmall)||(aerr>vvsmall))&&(hangs<300)){
 	Phib = pnorm5(sqrf * b - sw * *mufu,0.0,1.0,one,zero);
 	intgrl = 0.0;
 	for (j=0;j<ngqnodes;j++){
@@ -169,7 +169,7 @@ void grpseqbndsL(int *pef, double (*spfu)(double frac, double alphatot, double r
     *(bnew+ef)=b;
   }
   if(*(mybounds + ef)==1){
-    if(*islast==1 && ef==1) *(bnew+1) = *bnew;
+    if((*islast==1) && (ef==1)) *(bnew+1) = *bnew;
     b = *(bnew+ef);
     Phib = pnorm5(sqrf * b - sw * *mufu,0.0,1.0,one,zero);
     intgrl = 0.0;
@@ -183,7 +183,7 @@ void grpseqbndsL(int *pef, double (*spfu)(double frac, double alphatot, double r
     }
     *palpha = intgrl;
   }
-  if(*(mybounds + 1)==0 && *islast==1 && ef==1) {
+  if((*(mybounds + 1)==0) && (*islast==1) && (ef==1)) {
     *(bnew+1) = *bnew;
     b = *bnew;
     Phib = pnorm5(sqrf * b - *mufu,0.0,1.0,one,zero);
@@ -229,7 +229,7 @@ void grpseqbndsH(int *islast, int *pnlook, double *palphtot, double *palpha,
     }
   }
   
-  if(nlook>1&&(*islast==0)){
+  if((nlook>1)&&(*islast==0)){
     b = *bin;
     Phib = pnorm5(sqrf * b,0.0,1.0,one,zero);
     intgrl = 0.0;
@@ -241,14 +241,14 @@ void grpseqbndsH(int *islast, int *pnlook, double *palphtot, double *palpha,
     *palpha = intgrl;
   }
   
-  if(nlook>1&&(*islast==1)){
+  if((nlook>1)&&(*islast==1)){
     bl=vsmall;
     bu=*bin;
     b = (bl+bu)/2.0;
     berr = (bu-bl)/2.0;
     aerr = 1.0;
     hangs=0;
-    while((berr>vsmall||aerr>vvsmall)&&hangs<300){
+    while(((berr>vsmall)||(aerr>vvsmall))&&(hangs<300)){
       Phib = pnorm5(sqrf * b,0.0,1.0,one,zero);
       intgrl = 0.0;
       for (j=0;j<ngqnodes;j++){
@@ -321,7 +321,7 @@ void updateL(int *nbf, int *dofu, int *pef, int *pnlook, double *pfracold, doubl
   sqrf = pow(*pfracnew,0.5);
   sqrdf = pow(*pfracnew - *pfracold,0.5);
   a=-9.0;
-  if(*dofu==1 && (*nbf==0 || ef==1)){
+  if((*dofu==1) && ((*nbf==0) || (ef==1))){
     a = *(bnew+1);
     Phia = pnorm5(sqrf * a - sw * *mufu,0.0,1.0,one,zero);
   }
@@ -371,7 +371,7 @@ void updateH(int *dofu, int *islast, int *pnlook, double *pfracold, double *pfra
   }
   else Phia = 0.0;
   b = *bin;
-  if(*islast==1&nlook>1) b = *blast;
+  if((*islast==1)&&(nlook>1)) b = *blast;
   Phib=pnorm5(sqrf * b,0.0,1.0,one,zero);
 
   if(nlook==1)

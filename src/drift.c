@@ -5,17 +5,17 @@
 #define MIN(x,y) (x < y ? x : y)
 #define MAX(x,y) (x > y ? x : y)
 #define COMPH(xh,h,H,n,l) *H=0.0;for(l=1;l<n;l++) *(H+l)=*(H+l-1)+ *(h+l-1) * (*(xh+l) - *(xh+l-1))
-#define hHatX(x,xh,h,H,h_,H_,n,l,flg) l=0; flg=1; while(flg){                                             \
-                                                    flg=1*(l<n); if(flg) flg=1*(*(xh+l)<=x); l+=flg;      \
-                                                  }                                                       \
+#define hHatX(x,xh,h,H,h_,H_,n,l,flg) l=0; flg=1; while(flg){                                                   \
+                                                    flg=1*(l<n); if(flg) flg=1*(*(xh+l)<=x); l+=flg;            \
+                                                  }                                                             \
                                                   h_ = *(h+l-1); H_ = *(H+l-1) + h_ * (x-*(xh+l-1))
-#define HIatW(W,xh,h,H,HI_,n,l,flg) l=0; flg=1; while(flg){                                               \
-                                                  flg=1*(l<n); if(flg) flg=1*(*(H+l)<=W); l+=flg;         \
-                                                }                                                         \
+#define HIatW(W,xh,h,H,HI_,n,l,flg) l=0; flg=1; while(flg){                                                     \
+                                                  flg=1*(l<n); if(flg) flg=1*(*(H+l)<=W); l+=flg;               \
+                                                }                                                               \
                                                 HI_ = *(xh+l-1) + (W - *(H+l-1))/(*(h+l-1))
-#define wchidx(x,xgrid,n,l,flg) l=0; flg=1; while(flg){                                                   \
-                                              flg=1*(l<n); if(flg) flg=1*(*(xgrid+l)<=x && l<n); l+=flg;  \
-                                            } /*   don't remove this line or add anything onto the end please */
+#define wchidx(x,xgrid,n,l,flg) l=0; flg=1; while(flg){                                                         \
+                                                flg=1*(l<n); if(flg) flg=1*((*(xgrid+l)<=x) && (l<n)); l+=flg;	\
+                                            } /*   don't remove this line or add anything onto the end please  */
 #define unique(x,n,y,m,l,old) m = 0;                           \
                               l = 0;                           \
                               old = -10 + *x;                  \
@@ -298,7 +298,7 @@ void drift(int *ints,double *accru,double *accrat,double *tlook,double *ppar,dou
 	Beta = log(*(htlde1+j)) - log(*(htlde0+j));
 	ans_MU += Beta * dMU;
       }
-      if(fabs(t_jmp - *(tlook+ilook))<=1e-16 && ilook < nnlook){
+      if((fabs(t_jmp - *(tlook+ilook))<=1e-16) && (ilook < nnlook)){
         *(InfFrac + nnlook*istat + ilook) = ans_IF;
 	*(InfFrac_ii + nnlook*istat + ilook) = ans_IF_uw;
         *(mu + nnlook*istat + ilook) = pow(ntrial,0.5) * ans_MU/pow(*(V_END+istat),0.5);

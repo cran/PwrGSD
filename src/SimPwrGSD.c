@@ -22,9 +22,9 @@
 
 /* MACROS */
 #define COMPH(xh,h,H,n,l) *H=0.0;for(l=1;l<n;l++) *(H+l)=*(H+l-1)+ *(h+l-1) * (*(xh+l) - *(xh+l-1))
-#define hatX(x,xh,h,h_,n,l) l=0;while(*(xh+l)<=x && l<n) l++; h_ = *(h+l-1)
-#define hHatX(x,xh,h,H,h_,H_,n,l) l=0;while(*(xh+l)<=x && l<n) l++; h_ = *(h+l-1); H_ = *(H+l-1) + h_ * (x-*(xh+l-1))
-#define HIatW(W,xh,h,H,HI_,n,l) l=0;while(*(H+l)<=W && l<n) l++; HI_ = *(xh+l-1) + (W - *(H+l-1))/(*(h+l-1))
+#define hatX(x,xh,h,h_,n,l) l=0;while((*(xh+l)<=x) && (l<n)) l++; h_ = *(h+l-1)
+#define hHatX(x,xh,h,H,h_,H_,n,l) l=0;while((*(xh+l))<=x && (l<n)) l++; h_ = *(h+l-1); H_ = *(H+l-1) + h_ * (x-*(xh+l-1))
+#define HIatW(W,xh,h,H,HI_,n,l) l=0;while((*(H+l)<=W) && (l<n)) l++; HI_ = *(xh+l-1) + (W - *(H+l-1))/(*(h+l-1))
 #define MIN(x,y) (x<=y ? x : y)
 #define MAX(x,y) (x>=y ? x : y)
 
@@ -383,12 +383,12 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
       *pInfTold_ii       = 0.0;
       *(pInfTold_ii + 1) = 0.0;
 
-      if(*mybounds==0 || nbnd_e_sv==3){
-        if(*nbnd==1 || nbnd_e_sv==3) *pbold = normut;   
+      if((*mybounds==0) || (nbnd_e_sv==3)){
+        if((*nbnd==1) || (nbnd_e_sv==3)) *pbold = normut;   
         if(*nbnd==2) *pbold = *bHay;
       }
-      if(*(mybounds+1)==0 || nbnd_f_sv==3){
-        if(*(nbnd+1)==1 || nbnd_f_sv==3) *(pbold+1) = -normut;
+      if((*(mybounds+1)==0) || (nbnd_f_sv==3)){
+        if((*(nbnd+1)==1) || (nbnd_f_sv==3)) *(pbold+1) = -normut;
         if(*(nbnd+1)==2) *(pbold+1) = *bHay;
       }
 
@@ -412,7 +412,7 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
       f_krchd_ii = 0.0;
 
       isbad = 0;
-      while(k<nlook && (1-RejNull) && (1-AccNull) && (!isbad)){
+      while((k<nlook) && (1-RejNull) && (1-AccNull) && (!isbad)){
         *ptlook = *(pttlook+k);
         tlook_ = *ptlook;
         *pnthslook = kacte+1;
@@ -439,7 +439,7 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
         totev_k = 0;
         for(i=0;i<2*ntimesk;i++) totev_k += *(nevent_ + i);
 
-        if(k>= *spend_info_k && krchd_flag==0) {
+        if((k>= *spend_info_k) && (krchd_flag==0)) {
           var_krchd = *vark;
 	  evnts_krchd =totev_k;
           krchd_flag=1;
@@ -541,9 +541,9 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
 	  *pInfTold_ii = *pInfTnew_ii;
 
 	}
-	if(*dofu==1 && *(dlact+1)==1){
+	if((*dofu==1) && (*(dlact+1)==1)){
 	  if(*(nbnd+1)==1) {
-	    b_tmp = (*(mybounds+1) && 1.0 - *pInfTnew_ii >= 1e-6 ? *(pbounds + nstat*nlook + nlook*j + k) : *(pbnew+1));
+	    b_tmp = ((*(mybounds+1)) && (1.0 - *pInfTnew_ii >= 1e-6) ? *(pbounds + nstat*nlook + nlook*j + k) : *(pbnew+1));
 	    *(pbounds + nstat*nlook + nlook*j + k) = b_tmp;
 	    *(pbold+1) = b_tmp;
 	  }
@@ -560,7 +560,7 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
 	  *(pInfTold_ii + 1) = *pInfTnew_ii;
 	  kactf += 1;
 	}
-	if(*dofu==1 && *(dlact+1)==0){
+	if((*dofu==1) && (*(dlact+1)==0)){
 	  b_tmp = (*(mybounds+1) ? *(pbounds + nstat*nlook + nlook*j + k) : -normut);
 	  *(pbounds + nstat*nlook + nlook*j + k) = b_tmp;
 	  *(pbold+1) = b_tmp;

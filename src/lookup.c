@@ -1,5 +1,5 @@
 //MACROS
-#define fatx(x,xgrid,f,f0,f_,n,l) l=n;while((*(xgrid+l-1)>x) && l>0) l--; f_=f0; if(l!=0) f_= *(f+l-1)
+#define fatx(x,xgrid,f,f0,f_,n,l) l=n;while((*(xgrid+l-1)>x) && (l>0)) l--; f_=f0; if(l!=0) f_= *(f+l-1)
 #define MIN(x,y) (x<=y ? x : y)
 #define MAX(x,y) (x>=y ? x : y)
 

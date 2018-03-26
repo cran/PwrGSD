@@ -310,22 +310,22 @@ void invrt3by3(double *A, double *Ainv)
   *sqrA = pow(*A, 0.5);
 
   j=0;
-  while(j>=0 && j < p)
+  while((j>=0) && (j < p))
   {
     s = 0.0;
     k=0;
-    while(k>=0 && k <j)
+    while((k>=0) && (k <j))
     {
       s += (*(sqrA + p*k + j)) * (*(sqrA + p*k + j));
       k++;
     }
     *(sqrA + p*j + j) = pow(*(A + p*j + j) - s, 0.5);
     i=j+1;
-    while(i>j && i<p)
+    while((i>j) && (i<p))
     {
       s=0.0;
       k=0;
-      while(k>=0 && k <j)
+      while((k>=0) && (k <j))
       {
         s += (*(sqrA + p*k + i))*(*(sqrA + p*k + j));
         k++;

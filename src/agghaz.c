@@ -32,7 +32,7 @@ void agghaz(double *tagg, double *time, int *nrisk, int *nevent, int *pndth, int
     for (i=0;i<ndths;i++){
       DT = t_old - *(time + ndths-1-i);
       for(jj=0;jj<nb;jj++) *(DN+jj) = *(DN+jj) + *(nevent + ndths*jj + ndths-1-i);
-      if(DT >= *tagg || i==(ndths-1)){
+      if((DT >= *tagg) || (i==(ndths-1))){
         *(timea + nagg-1-l) = *(time + ndths-1-i);
 	t_old = *(time + ndths-1-i);
 	for(jj=0;jj<nb;jj++){

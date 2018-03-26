@@ -32,16 +32,16 @@ void cpblocked(itea *Yord, int *pn, double *time, int *nrisk, int *nevent, int *
   i=n-1;
   l=0;
   for(j=0;j<nb;j++) *(nr + j)=0;
-  while(i>=0 && l < ntimes){
+  while((i>=0) && (l < ntimes)){
     isev = 0;
     for(j=0;j<nb;j++) *(dr + j) = 0;
     for(j=0;j<nb;j++) for(k=0;k<nevty;k++) *(dnev + nb*k + j) = 0;
     yn = (Yord+i)->time;
     yhold = yn;
     cont=1;
-    while(yn == yhold && cont){
+    while((yn == yhold) && cont){
       yo = yn;
-      isev = isev || 1*((Yord+i)->event > 0);
+      isev = isev || ((Yord+i)->event > 0);
       for(j=0;j<nb;j++)
       {
         for(k=0;k<nevty;k++)
