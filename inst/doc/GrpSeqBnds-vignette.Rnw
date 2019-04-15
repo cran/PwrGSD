@@ -1,5 +1,4 @@
 \documentclass{article}
-\usepackage{harvard}
 \usepackage{hyperref}
 \usepackage{graphics}
 \usepackage{amsmath}

@@ -21,11 +21,10 @@ void WtdLogRank(double *TOS, int *Event, int *Arm, int *pn, int *wttyp, double *
 		double *time, int *nrisk, int *nevent, double *wt, int *pntimes, double *UQ, double *varQ, 
                 double *m1, double *UQt, double *varQt, double *var1t)
 {
-  int i,n,ntimes,one=1;
-  int *pnblocks;
+  int i,n,ntimes;
+  int *pnblocks, *pnevtypes;
   pnblocks = (int *)Calloc(1, int);
-  *pnblocks = 2;
-
+  pnevtypes = (int *)Calloc(1, int);
   itea *YY;
 
   n = *pn;
@@ -39,7 +38,9 @@ void WtdLogRank(double *TOS, int *Event, int *Arm, int *pn, int *wttyp, double *
     (YY+i)->arm = *(Arm+i);
   }
 
-  cpblocked(YY, pn, time, nrisk, nevent, pntimes, &one, pnblocks);
+  *pnblocks=2;
+  *pnevtypes=1;
+  cpblocked(YY, pn, time, nrisk, nevent, pntimes, pnevtypes, pnblocks);
 
   if(*wttyp==0) wtfun = &flemhar;
   if(*wttyp==1) wtfun = &sflemhar;
@@ -48,6 +49,7 @@ void WtdLogRank(double *TOS, int *Event, int *Arm, int *pn, int *wttyp, double *
   wlrstat(time, nrisk, nevent, wt, pntimes, UQ, varQ, m1, UQt, varQt, var1t);
 
   Free(pnblocks);
+  Free(pnevtypes);
   Free(YY);  
 }
 

@@ -2997,9 +2997,10 @@ function(formula = formula(data), data = parent.frame(), WtFun = c("FH", "SFH", 
     Event <- R[, 2]
     nev <- length(unique(Event))
     if(nev > 2) stop("Your event indicator variable, " %,% as.character(.call.$formula[[2]][[2]]) %,% ", has more than 2 levels.")
-    Event <- 1*(Event==sort(unique(Event)[2]))
+    Event <- 1*(Event==sort(unique(Event))[2])
 
     ntimes <- length(unique(TOS[Event!=0]))
+
     n <- length(Event)
     if(missing(WtFun)){
       param <- c(0,0)
