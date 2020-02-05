@@ -1,6 +1,6 @@
 /*  Copyright (C) 2004	    Grant Izmirlian
  *
- *  This program is free software; you can redistribute it and/or modify
+ *  This program is free software; you can redistrbute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
@@ -30,6 +30,8 @@
 
 #define normut 8.20953615160139
 
+#include "PwrGSD.h"
+
 typedef struct{
   int index;
   double time;
@@ -37,9 +39,9 @@ typedef struct{
   int arm;
 } itea;
 
-typedef int cmprfun(const void *, const void *);
+WtFun flemhar, sflemhar, ramp, *wtfun;
 
-cmprfun CmprDbl, *cmprdbl, *f;
+CmprFun compitea, CmprDbl, *cmprdbl, *f;
 
 void    randfromh(int *pn, double *tcut, double *h, int *pncut, 
                   double *t);
@@ -60,8 +62,6 @@ void    cpblocked(itea *Yord, int *pn, double *time, int *nrisk, int *nevent, in
 void      commonx(double *x1,double *h1,int *pn1,double *x2,double *h2,int *pn2,
 	          double *x,double *hh1,double *hh2,int *pn);
 
-typedef void WtFun(double *time, int *nrisk, int *nevent, int *pntimes, double *par, double *wt);
-
 void       wlrstat(double *time, int *nrisk, int *nevent, double *wt, int *pntimes, double *UQ,
                    double *varQ, double *m1, double *UQt, double *varQt, double *var1t);
 void       ISDstat(double *time, int *nrisk, int *nevent, int *pntimes, double *wt, double *stat,
@@ -72,7 +72,6 @@ void       ISDstat(double *time, int *nrisk, int *nevent, int *pntimes, double *
    prototype convention according to the type definition 'wlrstat', shown above. Then and add the name of the 
    function to the following list of names declared as type 'WtFun'. 
 -------------------------------------------------------------------------------------------------------------*/
-WtFun *wtfun, flemhar, sflemhar, ramp;
 
 void   grpseqbnds(int *dofu, int *nbf, int *nbnd, int *nsf, double *rho, int *pnthslook, 
                   double *palphatot, double *palpha, double *psimin, int *dlact, 
@@ -107,18 +106,18 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
   int *pntimesk,*pn,*pntot,*pnthslook,*nbnd,*nsf,*pnsim,*pnlook,*pnstat,*pngqnodes,*pncut0;
   int *pncut1,*pncutc0,*pncutc1,*pncutd0A,*pncutd0B,*pncutd1A,*pncutd1B,*pncutx0A,*pncutx0B;
   int *pncutx1A,*pncutx1B,*psided,*gradual,*dofu,*dlact,*pnblocks,*nrisk_,*nevent_,*puserVend;
-  int *spend_info_k,*mybounds,*qis1orQ,*pef,*nbf,*stattype,*wttyp,*do_proj;
-  int ngq2,nstlk,nstlk2,ntrial,n,nlook,ncut0,ncut1,ncut,sided_,ii,i,j,k,kacte,kactf,l,ntimes;
-  int ntimesk,ngqnodes,nsim,nstat,RejNull,AccNull,totev,totev_k,ixxx,flag,idx,nppar,csumnppar;
-  int userhazfu,spend_info,krchd_flag,evnts_krchd,nbnd_e_sv,nbnd_f_sv,pnevty,isbad,do_proj_;
+  int *spend_info_k,*mybounds,*pef,*nbf,*stattype,*wttyp,*do_proj;
+  int ngq2,nstlk,nstlk2,ntrial,n,nlook,ncut0,ncut1,sided_,ii,i,j,k,kacte,kactf,l,ntimes;
+  int ntimesk,ngqnodes,nsim,nstat,RejNull,AccNull,totev,totev_k,idx,nppar=0,csumnppar;
+  int userhazfu,spend_info,krchd_flag,evnts_krchd,nbnd_e_sv,nbnd_f_sv,pnevty,isbad=0,do_proj_;
 
   itea *Yord;
 
   double *pstatk,*pvark,*pinffrac,*pinffrac_ii,*pbounds,*ptlook,*wt,*pInfTold,*pInfTnew,*pInfTold_ii;
   double *pInfTnew_ii,*par,*palpha,*pbold,*pbnew,*px,*py,*ptmp,*pintgrndx,*statk,*vark,*m1k,*stat,*var,*m1;
-  double *etaold,*etanew,*psimin,*rho,*accru,*accrat,*pgqx,*pgqw,*time_,*Vend,*rho_sc,*mufuforSC; 
+  double *etaold,*etanew,*psimin,*rho,*accru,*accrat,*time_,*Vend,*rho_sc,*mufuforSC; 
   double *UQt,*varQt,*var1t,*t_proj;
-  double atotsv_e,atotsv_f,wlrsgn,wlrZ,f_k,f_k_ii,tlook_,a_tmp,b_tmp,var_krchd,f_krchd;
+  double atotsv_e,atotsv_f,wlrsgn,wlrZ,f_k,f_k_ii,tlook_=0.0,b_tmp,var_krchd,f_krchd;
   double f_krchd_ii, t_end;
 
   pnlook       = ints;
@@ -148,7 +147,7 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
   pnsim        = ints + 16+4*nlook+3;
   mybounds     = ints + 16+4*nlook+4; /* 16+4*nlook+4 through 16+4*nlook+5  */
   spend_info_k = ints + 16+4*nlook+6;
-  qis1orQ      = ints + 16+4*nlook+7;
+  //  qis1orQ      = ints + 16+4*nlook+7;
   psided       = ints + 16+4*nlook+8; 
   nbf          = ints + 16+4*nlook+9;
   stattype     = ints + 16+4*nlook+10;
@@ -172,8 +171,8 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
 
   ngqnodes = *pngqnodes;
   ngq2 = 2*ngqnodes;
-  pgqx = pgqxw;
-  pgqw = pgqxw + ngqnodes;
+  //  pgqx = pgqxw;
+  //  pgqw = pgqxw + ngqnodes;
   nsim = *pnsim;
 
   nstlk = nstat*nlook;
@@ -183,7 +182,7 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
   n = ntrial/2;
   ncut0 = *pncut0;
   ncut1 = *pncut1;
-  ncut = MAX(ncut0, ncut1);
+  //  ncut = MAX(ncut0, ncut1);
 
   Yord        = (itea   *)Calloc(ntrial,  itea);
   pinffrac    = (double *)Calloc(nstlk, double);
@@ -483,9 +482,14 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
 
         /* Hybrid: linear switch from Variance Scale to Events Scale starting after analysis '*spend_info_k' */
         if(spend_info==2)
-          if(k>= *spend_info_k) *pInfTnew_ii = f_krchd +  (1.0 - f_krchd)/(1.0 - f_krchd_ii) * (f_k_ii - f_krchd_ii);
+	{
+          if(k>= *spend_info_k) 
+	  {
+	    *pInfTnew_ii = f_krchd +  (1.0 - f_krchd)/(1.0 - f_krchd_ii) * (f_k_ii - f_krchd_ii);
+	  }
           else *pInfTnew_ii = f_k;
-
+	}
+	
         /* Error probability spending information on Calender Time Scale */
 	if(spend_info==3)
 	  *pInfTnew_ii = *ptlook/(*(pttlook + nlook -1));
@@ -710,10 +714,10 @@ void randhcdtl(int *pn, double *tcut, double *h, int *pncut, double *tend,
                double *tcutxA, double *hxA, int *pncutxA, double *tcutxB, 
 	       double *hxB, int *pncutxB, int *gradual, int *code, double *t)
 {
-  int n,ncut,ncutdA,ncutdB,ncutxA,ncutxB,nncutxA,nncutxB,ncutx,i,l,cd;
+  int n,ncut,ncutdA,ncutdB,ncutxA,ncutxB,nncutxA,nncutxB,ncutx,i,l,cd=0;
   int *pnncutxA,*pnncutxB;
-  double tdAi, tdBi, td, u,X,htd,Htd,hx_td,Hx_td,HI_,htd_,Htd_;
-  double hdAtend,HdAtend,hdBtend,HdBtend,pi;
+  double tdAi, tdBi, td=0.0, u,X,htd,Htd,hx_td,Hx_td,HI_,htd_,Htd_;
+  double hdAtend,HdAtend=0.0,hdBtend,HdBtend=0.0,pi;
   double *H,*HdA,*HdB,*HxA,*HxB,*tcutx,*hx,*Hx;
   double *ttcutxA,*hh_A,*HH_A,*hhxA,*HHxA,*ttcutxB,*hh_B,*HH_B,*hhxB,*HHxB;
 
@@ -762,25 +766,24 @@ void randhcdtl(int *pn, double *tcut, double *h, int *pncut, double *tend,
   H = (double *)Calloc(ncut,double);
   HxA = (double *)Calloc(ncutxA,double);
   HxB = (double *)Calloc(ncutxB,double);
-  if(*gradual == 1){
-    HdA = (double *)Calloc(ncutdA,double);
-    HdB = (double *)Calloc(ncutdB,double);
-    ttcutxA = (double *)Calloc(nncutxA,double);
-    hh_A = (double *)Calloc(nncutxA,double);
-    HH_A = (double *)Calloc(nncutxA,double);
-    hhxA = (double *)Calloc(nncutxA,double);
-    HHxA = (double *)Calloc(nncutxA,double);
-    ttcutxB = (double *)Calloc(nncutxB,double);
-    hh_B = (double *)Calloc(nncutxB,double);
-    HH_B = (double *)Calloc(nncutxB,double);
-    hhxB = (double *)Calloc(nncutxB,double);
-    HHxB = (double *)Calloc(nncutxB,double);
-    tcutx = (double *)Calloc(ncutx,double);
-    hx = (double *)Calloc(ncutx,double);
-    Hx = (double *)Calloc(ncutx,double);
-    pnncutxA = (int *)Calloc(1,int);
-    pnncutxB = (int *)Calloc(1,int);
-  }
+
+  HdA = (double *)Calloc(ncutdA,double);
+  HdB = (double *)Calloc(ncutdB,double);
+  ttcutxA = (double *)Calloc(nncutxA,double);
+  hh_A = (double *)Calloc(nncutxA,double);
+  HH_A = (double *)Calloc(nncutxA,double);
+  hhxA = (double *)Calloc(nncutxA,double);
+  HHxA = (double *)Calloc(nncutxA,double);
+  ttcutxB = (double *)Calloc(nncutxB,double);
+  hh_B = (double *)Calloc(nncutxB,double);
+  HH_B = (double *)Calloc(nncutxB,double);
+  hhxB = (double *)Calloc(nncutxB,double);
+  HHxB = (double *)Calloc(nncutxB,double);
+  tcutx = (double *)Calloc(ncutx,double);
+  hx = (double *)Calloc(ncutx,double);
+  Hx = (double *)Calloc(ncutx,double);
+  pnncutxA = (int *)Calloc(1,int);
+  pnncutxB = (int *)Calloc(1,int);
 
   COMPH(tcut,h,H,ncut,l);
   COMPH(tcutxA,hxA,HxA,ncutxA,l);
@@ -892,8 +895,8 @@ void randhcdtl(int *pn, double *tcut, double *h, int *pncut, double *tend,
 void handle(int *pn, double *tlook, double *u, double *t0, double *t1, double *tc0,
             double *tc1, itea *YY, int *pntot, int *pntimes)
 {
-  int n, n0, n1, ntot, i, j, ndths, ntimes, l;
-  double tout, tmpp, old;
+  int n, n0, n1, ntot, i, j, ndths;
+  double tout, tmpp;
 
   n = *pn;
 

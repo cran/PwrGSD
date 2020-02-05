@@ -2936,26 +2936,34 @@ function(x,xh,h,xhA,hA,xhB,hB,xlA,lA,xlB,lB,gradual=FALSE)
 	pn = as.integer(N),
 	tcut = as.double(tcut),
 	h = as.double(h),
-	pncut = as.integer(length(tcut)),
+        pncut = as.integer(length(tcut)),
 	t = as.double(rep(0,N)),
 	PACKAGE = "PwrGSD")
 }
 
-"trandhcdtl" <- function(N, tcut, h, tcutxA, hxA, tdA, tcutxB, hxB, tdB)
+"trandhcdtl" <- function(N, tcut, h, tend, tcutdA, hdA, tcutdB, hdB, tcutxA, hxA, tcutxB, hxB, gradual)
 {
 	.C("trandhcdtl",
 	pn = as.integer(N),
 	tcut = as.double(tcut),
 	h = as.double(h),
 	pncut = as.integer(length(tcut)),
-	tcutxA = as.double(tcutxA),
+        tend = as.double(tend),
+        tcutdA = as.double(tcutdA),
+        hdA = as.double(hdA),
+        pncutdA = as.integer(length(tcutdA)),
+        tdA = as.double(rep(0,N)),
+        tcutdB = as.double(tcutdB),
+        hdB = as.double(hdB),
+        pncutdB = as.integer(length(tcutdB)),
+        tdB = as.double(rep(0,N)),
+        tcutxA = as.double(tcutxA),
 	hxA = as.double(hxA),
 	pncutxA = as.integer(length(tcutxA)),
-	tdA = as.double(tdA),
 	tcutxB = as.double(tcutxB),
 	hxB = as.double(hxB),
 	pncutXB = as.integer(length(tcutxB)),
-	tdB = as.double(tdB),
+        gradual = as.integer(gradual),
 	code = as.integer(rep(0,N)),
 	t = as.double(rep(0,N)),
 	PACKAGE = "PwrGSD")
@@ -2997,7 +3005,7 @@ function(formula = formula(data), data = parent.frame(), WtFun = c("FH", "SFH", 
     Event <- R[, 2]
     nev <- length(unique(Event))
     if(nev > 2) stop("Your event indicator variable, " %,% as.character(.call.$formula[[2]][[2]]) %,% ", has more than 2 levels.")
-    Event <- 1*(Event==sort(unique(Event))[2])
+    Event <- 1*(Event==sort(unique(Event))[nev])
 
     ntimes <- length(unique(TOS[Event!=0]))
 

@@ -4,7 +4,7 @@
 void Finv(double *tgrid, double *hgrid, long *ntgrid, double *ugrid, long *nugrid, double *xgrid)
 {
   long nt, ntm1, nu, i, j;
-  double ressv, res;
+  double ressv=0.0, res=0.0;
   nt = *ntgrid;
   ntm1 = nt-1;
   nu = *nugrid;

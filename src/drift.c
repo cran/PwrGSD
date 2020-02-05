@@ -56,13 +56,13 @@ void drift(int *ints,double *accru,double *accrat,double *tlook,double *ppar,dou
 	   double *mu,double *betastar, double *Var_uw, double *Var, double *Eta,
            int *puserVend,double *Vend)
 {
-  int nnstat,nngq,l,flg,j,j0,j1,istat,nnh0,nnh1,nnsm,nnjmp,nnhc0,nnhc1,nnlA0,nnlB0,nnlA1,nmx,flaguserVE;
-  int nnlB1,nnhA0,nnhB0,nnhA1,nnhB1,nhmax,nnlook,ilook,ijmp,ntrial,isumppar,istop, nppar;
+  int nnstat,nngq,l,flg,j,j0,j1,istat,nnh0,nnh1,nnsm,nnjmp,nnhc0,nnhc1,nmx,flaguserVE;
+  int nnlook,ilook,ijmp,ntrial,isumppar,nppar;
   int *ntlook,*nstat,*ngq,*nh0,*nh1,*nhc0,*nhc1,*nlA0,*nlB0,*nlA1,*nlB1,*nhA0,*nhB0,*nhA1;
   int *nhB1,*gradual,*one;
 
-  double t_ENR,t_END,vend_uw,vend,xi_,w,t_AN,Q,dV_uw,dV,dMU,Beta,ans_MU,hc0_,Hc0_,hc1_;
-  double Hc1_,Sc,S_LR,Stlde,ftlde,V_uw,V,et, old, t_jmp,ans_IF_uw, ans_IF,tmp;
+  double t_ENR,t_END,vend_uw,vend,xi_,w,Q,dV_uw,dV,dMU,Beta,ans_MU,hc0_,Hc0_,hc1_;
+  double Hc1_,Sc,S_LR,Stlde,ftlde,V_uw,V,et, old, t_jmp,ans_IF_uw, ans_IF;
   double *xi,*ftlde0,*Stlde0,*htlde0,*ftlde1,*Stlde1,*htlde1,*Hc0,*Hc1,*V_END_uw,*V_END;
   double *tjump,*tjmp,*tend,*gqx,*gqw,*Qstop,*fftlde0,*SStlde0,*hhtlde0,*fftlde1,*SStlde1,*hhtlde1;
 
@@ -98,14 +98,6 @@ void drift(int *ints,double *accru,double *accrat,double *tlook,double *ppar,dou
   nnsm = nnh0 + nnh1 + nnlook - 2;
   nnhc0 = *nhc0;
   nnhc1 = *nhc1;
-  nnlA0 = *nlA0;
-  nnlB0 = *nlB0;
-  nnlA1 = *nlA1;
-  nnlB1 = *nlB1;
-  nnhA0 = *nhA0;
-  nnhB0 = *nhB0;
-  nnhA1 = *nhA1;
-  nnhB1 = *nhB1;
 
   Hc0 = (double *)Calloc(nnhc0, double);
   Hc1 = (double *)Calloc(nnhc1, double);
@@ -119,6 +111,7 @@ void drift(int *ints,double *accru,double *accrat,double *tlook,double *ppar,dou
   Qstop = (double *)Calloc(nnstat, double);
   one = (int *)Calloc(1, int);
   *one = 1;
+  Q=0.0;
 
   if(nnh0>1) for(l=0;l<nnh0-1;l++) *(tjump + l) = *(th0 + l + 1);
   if(nnh1>1) for(l=0;l<nnh1-1;l++) *(tjump + nnh0 - 1 + l) = *(th1 + l + 1);
@@ -187,7 +180,6 @@ void drift(int *ints,double *accru,double *accrat,double *tlook,double *ppar,dou
     for(istat=0;istat<nnstat;istat++){
       vend = 0.0;
       vend_uw = 0.0;
-      istop = 0;
       if(*(wttyp+istat) == 1){
 	htilde(ppar+isumppar+2,one,gqx,gqw,ngq,th0,h0,nh0,thA0,hA0,nhA0,thB0,hB0,nhB0,tlA0,lA0,
                nlA0,tlB0,lB0,nlB0,gradual,tend,fftlde0,SStlde0,hhtlde0);
@@ -218,7 +210,6 @@ void drift(int *ints,double *accru,double *accrat,double *tlook,double *ppar,dou
           Q = pow(Stlde,*(ppar+isumppar))*pow(1.0-Stlde,*(ppar+isumppar+1));
 	  if(xi_ > *(ppar + isumppar+2)) {
             Q= *(Qstop+istat);
-            istop=1;
           }
         }
         if(*(wttyp+istat) == 2){
@@ -259,7 +250,6 @@ void drift(int *ints,double *accru,double *accrat,double *tlook,double *ppar,dou
       et = 0.0;
       V_uw = 0.0;
       V = 0.0;
-      istop = 0;
       for(j=0;j<nngq;j++){
 	xi_ = *(xi+j);
 	w = *(gqw+j)*t_jmp/2.0;
@@ -279,7 +269,6 @@ void drift(int *ints,double *accru,double *accrat,double *tlook,double *ppar,dou
 	    Q = pow(Stlde,*(ppar+isumppar))*pow(1.0-Stlde,*(ppar+isumppar+1));
 	    if(xi_ > *(ppar + isumppar+2)){
 		Q= *(Qstop+istat);
-		istop=1;
 	    }
 	}
 	if(*(wttyp+istat) == 2){

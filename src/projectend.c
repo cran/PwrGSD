@@ -20,9 +20,9 @@ typedef int CmprFun(const void *x, const void *y);
 CmprFun cmpr_IND_VAL;
 
 void printmat(double *a, int nr, int nc, char *nm);
-void print_itea(itea *YY, int n, char *label);
-void print_tre(double *time, int *risk, int *event, int n, char *label);
-void print_pair(double *x, double *y, int n, char *x_lab, char *y_lab);
+// void print_itea(itea *YY, int n, char *label);
+// void print_tre(double *time, int *risk, int *event, int n, char *label);
+// void print_pair(double *x, double *y, int n, char *x_lab, char *y_lab);
 void makeRR(double *TI, double *Toth, double *T_R, double *tlook, int *pntot, double *pRR);
 void makeYY(double *TI, double *Toth, double *u, double *tlook, int *pnn, int *pntimes, itea *YY);
 void cpblocked(itea *Yord, int *pn, double *time, int *nrisk, int *nevent, int *pntimes, 
@@ -367,43 +367,43 @@ void invrt3by3(double *A, double *Ainv)
   Free(sqrA);
 }
 
-void print_itea(itea *YY, int n, char *label)
-{
-  int i;
-  char cc;
-  Rprintf("%s:\n",label);
-  for(i=0;i<n;i++)
-  {
-    if((n%31)) Rprintf("index\t time\t event\t arm\n");
-    if((n%32)) scanf("continue? %c?\n",&cc);
-    Rprintf("%d\t %g\t %d\t %d\n", (YY+i)->index,(YY+i)->time,(YY+i)->event,(YY+i)->arm);
-  }
-}
+// void print_itea(itea *YY, int n, char *label)
+// {
+//   int i;
+//   char cc;
+//   Rprintf("%s:\n",label);
+//   for(i=0;i<n;i++)
+//   {
+//     if((n%31)) Rprintf("index\t time\t event\t arm\n");
+//     if((n%32)) scanf("continue? %c?\n",&cc);
+//     Rprintf("%d\t %g\t %d\t %d\n", (YY+i)->index,(YY+i)->time,(YY+i)->event,(YY+i)->arm);
+//   }
+// }
 
-void print_tre(double *time, int *risk, int *event, int n, char *label)
-{
-  int i;
-  char cc;
-  Rprintf("%s:\n",label);
-  for(i=0;i<n;i++)
-  {
-    if((n%31)) Rprintf("time\t nrisk\t nevent\n");
-    if((n%32)) scanf("continue? %c?\n",&cc);
-    Rprintf("%g\t %d\t %d\n", *(time + i),*(risk + i),*(event + i));
-  }
-}
+// void print_tre(double *time, int *risk, int *event, int n, char *label)
+// {
+//   int i;
+//   char cc;
+//   Rprintf("%s:\n",label);
+//   for(i=0;i<n;i++)
+//   {
+//     if((n%31)) Rprintf("time\t nrisk\t nevent\n");
+//     if((n%32)) scanf("continue? %c?\n",&cc);
+//     Rprintf("%g\t %d\t %d\n", *(time + i),*(risk + i),*(event + i));
+//   }
+// }
 
-void print_pair(double *x, double *y, int n, char *x_lab, char *y_lab)
-{
-  int i;
-  char cc;
-  for(i=0;i<n;i++)
-  {
-    if((n%31)) Rprintf("%s\t%s\n",x_lab,y_lab);
-    if((n%32)) scanf("continue? %c?\n",&cc);
-    Rprintf("%g\t %g\n", *(x + i),*(y + i));
-  }
-}
+// void print_pair(double *x, double *y, int n, char *x_lab, char *y_lab)
+// {
+//   int i;
+//   char cc;
+//   for(i=0;i<n;i++)
+//   {
+//     if((n%31)) Rprintf("%s\t%s\n",x_lab,y_lab);
+//     if((n%32)) scanf("continue? %c?\n",&cc);
+//     Rprintf("%g\t %g\n", *(x + i),*(y + i));
+//   }
+// }
 
 int cmpr_IND_VAL(const void *xx, const void *yy)
 {

@@ -68,17 +68,19 @@ void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *
 	       double *palpha0vec,double *palpha1vec,double *RR,int *pnjmp,double *Var_uw,
 	       double *Var, double *Eta, int *t_idx, double *betabdry, double *bstar)
 {
-  int *pn,*pntot,*pnthslook,*nbnd,*nsf,*gradual,*pnlook,*pnstat,*pngqnodes,*dofu,*dlact,*pncut0;
-  int *pncut1,*pncutc0,*pncutc1,*sided,*pncutd0A,*pncutd0B,*pncutd1A,*pncutd1B,*pef,*pncutx0A;
-  int *pncutx0B,*pncutx1A,*pncutx1B,*puserVend,*mybounds,*spend_info_k,*qis1orQ,*nbf,*wttyp;
-  int nlook,ncut0,ncut1,ncut,ii,j,k,kacte,kactf,l,ngqnodes,nstat,istat,ef,ixxx,flag,idx;
+  //  int *pn,*pntot,*gradual;
+  //  int *pncut0, *pncut1,*pncutc0, *pncutc1,*pncutd0A,*pncutd0B,*pncutd1A, *pncutd1B;
+  //  int *pncutx0A,*pncutx0B,*pncutx1A,*pncutx1B;
+  int *pnthslook,*nbnd,*nsf,*pnlook,*pnstat,*pngqnodes,*dofu,*dlact,*sided;
+  int *pef,*puserVend,*mybounds,*spend_info_k,*nbf,*wttyp;
+  int nlook,j,k,kacte,kactf,l,ngqnodes,nstat,istat,ef;
   int ijmp,njmp,userhazfu,spend_info,krchd_flag,nbnd_e_sv,nbnd_f_sv,flg;
 
-  double *ptlook,*val,*pInfTold,*pInfTnew,*pInfTold_ii,*pInfTnew_ii,*psimin,*palpha,*pbold,*pbnew;
+  double *ptlook,*pInfTold,*pInfTnew,*pInfTold_ii,*pInfTnew_ii,*psimin,*palpha,*pbold,*pbnew;
   double *px,*py,*ptmp,*pintgrndx,*mu_o,*mu_n,*Psiab_o,*Psiab_n,*Psiminfa_o,*Psiminfa_n,*Psibinf_o;
   double *Psibinf_n,*palpha10,*palpha11,*q,*tjmp,*rr,*CS_q_dEta,*rho,*rho_sc,*accru,*accrat,*mufuforSC;
-  double atotsv_e,atotsv_f,fmin,sqrf,s,stlde,b,Eta_old,CS_,xntrial,xntrialhlf,V_,f1,dt;
-  double dEta,fp,f_k,a_tmp,b_tmp,f_krchd,f_krchd_ii,f_k_ii,vend;
+  double atotsv_e,atotsv_f,s,stlde,b,Eta_old,CS_,xntrial,xntrialhlf;
+  double dEta,f_k,b_tmp,f_krchd,f_krchd_ii,f_k_ii,vend;
 
 /* dbls <- c(rho.Efficacy,rho.Futility,accru,accrat,spend.info.p) */
 /* void AsyPwrGSD(int *ints,double *rho,double *spend_info_p,double *accrual,*/
@@ -87,19 +89,19 @@ void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *
   nlook        = *pnlook;
   pnstat       = ints +  1;
   pngqnodes    = ints +  2;
-  pncut0       = ints +  3;
-  pncut1       = ints +  4;
-  pncutc0      = ints +  5;
-  pncutc1      = ints +  6;
-  pncutd0A     = ints +  7;
-  pncutd0B     = ints +  8;
-  pncutd1A     = ints +  9;
-  pncutd1B     = ints + 10;
-  pncutx0A     = ints + 11;
-  pncutx0B     = ints + 12;
-  pncutx1A     = ints + 13;
-  pncutx1B     = ints + 14;
-  gradual      = ints + 15;
+  //  pncut0       = ints +  3;
+  //  pncut1       = ints +  4;
+  //  pncutc0      = ints +  5;
+  //  pncutc1      = ints +  6;
+  //  pncutd0A     = ints +  7;
+  //  pncutd0B     = ints +  8;
+  //  pncutd1A     = ints +  9;
+  //  pncutd1B     = ints + 10;
+  //  pncutx0A     = ints + 11;
+  //  pncutx0B     = ints + 12;
+  //  pncutx1A     = ints + 13;
+  //  pncutx1B     = ints + 14;
+  //  gradual      = ints + 15;
   nbnd         = ints + 16;            /* 16           through 16+2*nlook-1 */
   nsf          = ints + 16+2*nlook;    /* 16+2*nlook   through 16+4*nlook-1 */
   dofu         = ints + 16+4*nlook;
@@ -108,7 +110,7 @@ void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *
   puserVend    = ints + 16+4*nlook+3;
   mybounds     = ints + 16+4*nlook+4;  /* 16+4*nlook+4 through 16+4*nlook+5 */
   spend_info_k = ints + 16+4*nlook+6;
-  qis1orQ      = ints + 16+4*nlook+7; 
+  //  qis1orQ      = ints + 16+4*nlook+7; 
   sided        = ints + 16+4*nlook+8;
   nbf          = ints + 16+4*nlook+9;
   wttyp        = ints + 16+4*nlook+10;
@@ -296,13 +298,10 @@ void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *
       *pnthslook = kacte+1;
       *(pnthslook+1) = kactf+1;
 
-      flag = 0;
-
       grpseqbnds(dofu,nbf,nbnd,nsf,rho, pnthslook,palphatot,palpha,psimin,
                  dlact,pInfTold,pInfTnew,pInfTold_ii,pInfTnew_ii,px,py,ptmp,
 		 pintgrndx,pgqxw,pngqnodes,mufu + nlook*j + k,pbold,pbnew,mybounds);
 
-      flag=1;
       if(*dlact==1){
         if (*nbnd == 1){
           b_tmp = (*mybounds ? *(pbounds + nlook*j + k): *pbnew);

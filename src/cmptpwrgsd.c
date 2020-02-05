@@ -58,7 +58,7 @@ void cmptpwrgsd(int *dofu,int *pnlook,double *pfrac_k,double *pfrac_kp1,double *
       *(Psiab_o + i) = exp(-xab_i*xab_i/(2.0*(*pfrac_k)) - logrt2pi - log(sqrf_o));
     }
   }
-
+  xbinf_i=0.0;
   if(nlook>1){
     prob0 = 0.0;
     prob1 = 0.0;

@@ -2,6 +2,8 @@
 #include<Rmath.h>
 #define MIN(x,y) (x < y ? x : y)
 
+#include "PwrGSD.h"
+
 typedef struct{
   int index;
   double time;
@@ -11,9 +13,6 @@ typedef struct{
 
 void cpblocked(itea *Yord, int *pn, double *time, int *nrisk, int *nevent, int *pntimes, int *pnevtypes, int *pnblocks);
 
-typedef void WtFun(double *time, int *nrisk, int *nevent, int *pntimes, double *par, double *wt);
-WtFun flemhar, sflemhar, ramp, *wtfun;
-
 void wlrstat(double *time, int *nrisk, int *nevent, double *wt, int *pntimes, double *UQ, 
 	     double *varQ, double *m1, double *UQt, double *varQt, double *var1t);
 
@@ -21,7 +20,7 @@ void WtdLogRank(double *TOS, int *Event, int *Arm, int *pn, int *wttyp, double *
 		double *time, int *nrisk, int *nevent, double *wt, int *pntimes, double *UQ, double *varQ, 
                 double *m1, double *UQt, double *varQt, double *var1t)
 {
-  int i,n,ntimes;
+  int i,n;
   int *pnblocks, *pnevtypes;
   pnblocks = (int *)Calloc(1, int);
   pnevtypes = (int *)Calloc(1, int);

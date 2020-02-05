@@ -2,15 +2,14 @@
 #include<Rmath.h>
 #define MIN(x,y) (x < y ? x : y)
 
+#include "PwrGSD.h"
+
 typedef struct{
   int index;
   double time;
   int event;
   int arm;
 } itea;
-
-typedef int CmprFun(const void *x, const void *y);
-CmprFun compitea, *f;
 
 void cpblocked(itea *Yord, int *pn, double *time, int *nrisk, int *nevent, int *pntimes, int *pnevtypes, int *pnblocks)
 {

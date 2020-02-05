@@ -3,6 +3,8 @@
 #define MIN(x,y) (x < y ? x : y)
 #define EPS 1.0e-10
 
+#include "PwrGSD.h"
+
 typedef struct{
   int index;
   double time;
@@ -11,9 +13,6 @@ typedef struct{
 } itea;
 
 void cpblocked(itea *Yord, int *pn, double *time, int *nrisk, int *nevent, int *pntimes, int *pnevtypes, int *pnblocks);
-
-typedef void WtFun(double *time, int *nrisk, int *nevent, int *pntimes, double *par, double *wt);
-WtFun flemhar, sflemhar, ramp, *wtfun;
 
 void ISDstat(double *time, int *nrisk, int *nevent, int *pntimes, double *wt, double *stat, 
 	     double *var);

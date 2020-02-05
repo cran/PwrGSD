@@ -1,6 +1,6 @@
 Package: PwrGSD
 Title: Power in a Group Sequential Design
-Version: 2.3.1
+Version: 2.3.2
 Author: Grant Izmirlian <izmirlig@mail.nih.gov>
 Depends: survival
 Description: Tools for the evaluation of interim analysis plans for sequentially
@@ -11,6 +11,6 @@ Description: Tools for the evaluation of interim analysis plans for sequentially
 Maintainer: Grant Izmirlian <izmirlig@mail.nih.gov>
 License: GPL (>= 2)
 NeedsCompilation: yes
-Packaged: 2019-04-15 20:43:59 UTC; izmirlig
+Packaged: 2020-01-21 23:23:36 UTC; izmirlig
 Repository: CRAN
-Date/Publication: 2019-04-15 21:22:51 UTC
+Date/Publication: 2020-02-06 00:40:06 UTC

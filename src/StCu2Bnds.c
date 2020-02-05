@@ -36,7 +36,7 @@ so a_k = (a_m - (mu(t_m)-mu(t_k)) - (1-f_k)^0.5 *qnorm(rho))/f_k^0.5
 
 void StCu2Bnds(double *pmu, double *pfrac, double *pzcrit, double *prho, int *pef, double *b)
 {
-  int ef, k;
+  int ef;
   double rho, be_end, mu_end, f_k, mu_k;
 
   ef = *pef;
