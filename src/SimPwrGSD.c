@@ -1,6 +1,6 @@
 /*  Copyright (C) 2004	    Grant Izmirlian
  *
- *  This program is free software; you can redistrbute it and/or modify
+ *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 2 of the License, or
  *  (at your option) any later version.
@@ -79,7 +79,7 @@ void   grpseqbnds(int *dofu, int *nbf, int *nbnd, int *nsf, double *rho, int *pn
 		  double *px, double *py, double *ptmp, double *pintgrndx, double *pgqxw, 
 		  int *pngqnodes, double *mu, double *pbold, double *pbnew, int *mybounds);
 
-void StCu2Bnds(double *pmu,double *pfrac,double *palpha,int *psided,double *prho,int *pef,double *b);
+void StCu2Bnds(double *pmu, double *pfrac, double *pzcrit, double *prho,int *pef, double *b);
 void project_end(double *u, double *t0, double *t1, double *tc0, double *tc1, int *pn, double *t_proj, 
                  double *v_Tend_proj, double *m_Tend_proj);
 
@@ -90,24 +90,24 @@ int R_isnancpp(double x);
 
 /* BEGIN MAIN */
 void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,double *lrrf,
-                  double *bHay,double *ppar,double *pgqxw,double *tcut0,double *h0,double *tcut1,
-		  double *h1,double *tcutc0,double *hc0,double *tcutc1,double *hc1,double *tcutd0A,
-		  double *hd0A,double *tcutd0B,double *hd0B,double *tcutd1A,double *hd1A,
-		  double *tcutd1B,double *hd1B,double *tcutx0A,double *hx0A,double *tcutx0B,
-		  double *hx0B,double *tcutx1A,double *hx1A,double *tcutx1B,double *hx1B,double *t0,
-		  double *t1,double *tc0,double *tc1,double *td0A,double *td0B,double *td1A,
-		  double *td1B,int *code,double *u,double *TOS,int *Event,int *Arm,double *time,
-		  int *nrisk,int *nevent,int *pntimes,double *avginffrac,double *avginffrac_ii,
-		  double *avgbounds,double *mufu, double *palphavec,int *pRejAcc,int *kstop,
-		  double *duration,double *pStatTend,double *pVarTend,double *pmTend1,
-		  double *pstatK,double *pvarK,double *v_Tend_proj, double *m_Tend_proj)
+                  double *bHay, double *bendSC, double *ppar,double *pgqxw,double *tcut0,double *h0,
+		  double *tcut1, double *h1,double *tcutc0,double *hc0,double *tcutc1,double *hc1,
+		  double *tcutd0A, double *hd0A,double *tcutd0B,double *hd0B,double *tcutd1A,
+		  double *hd1A, double *tcutd1B,double *hd1B,double *tcutx0A,double *hx0A,
+		  double *tcutx0B,double *hx0B,double *tcutx1A,double *hx1A,double *tcutx1B,
+		  double *hx1B,double *t0,double *t1,double *tc0,double *tc1,double *td0A,
+		  double *td0B,double *td1A, double *td1B,int *code,double *u,double *TOS,
+		  int *Event,int *Arm,double *time, int *nrisk,int *nevent,int *pntimes,
+		  double *avginffrac,double *avginffrac_ii, double *avgbounds,double *mufu,
+		  double *palphavec,int *pRejAcc,int *kstop, double *duration,double *pStatTend,
+		  double *pVarTend,double *pmTend1, double *pstatK,double *pvarK,double *v_Tend_proj,
+		  double *m_Tend_proj)
 {
-  GetRNGstate();
   int *pntimesk,*pn,*pntot,*pnthslook,*nbnd,*nsf,*pnsim,*pnlook,*pnstat,*pngqnodes,*pncut0;
   int *pncut1,*pncutc0,*pncutc1,*pncutd0A,*pncutd0B,*pncutd1A,*pncutd1B,*pncutx0A,*pncutx0B;
   int *pncutx1A,*pncutx1B,*psided,*gradual,*dofu,*dlact,*pnblocks,*nrisk_,*nevent_,*puserVend;
   int *spend_info_k,*mybounds,*pef,*nbf,*stattype,*wttyp,*do_proj;
-  int ngq2,nstlk,nstlk2,ntrial,n,nlook,ncut0,ncut1,sided_,ii,i,j,k,kacte,kactf,l,ntimes;
+  int ngq2,nstlk,nstlk2,ntrial,n,nlook,sided_,ii,i,j,k,kacte,kactf,l,ntimes;
   int ntimesk,ngqnodes,nsim,nstat,RejNull,AccNull,totev,totev_k,idx,nppar=0,csumnppar;
   int userhazfu,spend_info,krchd_flag,evnts_krchd,nbnd_e_sv,nbnd_f_sv,pnevty,isbad=0,do_proj_;
 
@@ -180,9 +180,6 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
   ntrial = (int)((*accru)*(*accrat));
   ntrial = ntrial + (ntrial%2);
   n = ntrial/2;
-  ncut0 = *pncut0;
-  ncut1 = *pncut1;
-  //  ncut = MAX(ncut0, ncut1);
 
   Yord        = (itea   *)Calloc(ntrial,  itea);
   pinffrac    = (double *)Calloc(nstlk, double);
@@ -264,6 +261,7 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
       for(l=0;l<nlook;l++) *(mufu + nlook*j + l) = *(mufu + nlook*j + l) * (-1.0);
 
   /* BEGIN simulation loop */
+  GetRNGstate();
   ii=0;
   while(ii<nsim){
     R_CheckUserInterrupt();
@@ -449,7 +447,7 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
           *pef = 0;
           *mufuforSC = *(mufu + nlook*j + k);
           *(mufuforSC + 1) = *(mufu + nlook*j + nlook - 1);
-          StCu2Bnds(mufuforSC,pInfTnew,palphatot,psided,rho_sc,pef,pbounds+nlook*j+k);
+	  StCu2Bnds(mufuforSC, pInfTnew, bendSC, rho_sc, pef, pbounds+nlook*j+k);
           *mybounds = 1;
           *nbnd = 1;
         }
@@ -458,7 +456,7 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
           *pef = 1;
           *mufuforSC = *(mufu + nlook*j + k);
           *(mufuforSC + 1) = *(mufu + nlook*j + nlook - 1);
-          StCu2Bnds(mufuforSC,pInfTnew,palphatot,psided,rho_sc+1,pef,pbounds+nstat*nlook+nlook*j+k);
+	  StCu2Bnds(mufuforSC, pInfTnew, bendSC, rho_sc+1, pef, pbounds+nstat*nlook+nlook*j+k);
           *(mybounds + 1) = 1;
           *(nbnd + 1) = 1;
         }
@@ -766,24 +764,25 @@ void randhcdtl(int *pn, double *tcut, double *h, int *pncut, double *tend,
   H = (double *)Calloc(ncut,double);
   HxA = (double *)Calloc(ncutxA,double);
   HxB = (double *)Calloc(ncutxB,double);
-
-  HdA = (double *)Calloc(ncutdA,double);
-  HdB = (double *)Calloc(ncutdB,double);
-  ttcutxA = (double *)Calloc(nncutxA,double);
-  hh_A = (double *)Calloc(nncutxA,double);
-  HH_A = (double *)Calloc(nncutxA,double);
-  hhxA = (double *)Calloc(nncutxA,double);
-  HHxA = (double *)Calloc(nncutxA,double);
-  ttcutxB = (double *)Calloc(nncutxB,double);
-  hh_B = (double *)Calloc(nncutxB,double);
-  HH_B = (double *)Calloc(nncutxB,double);
-  hhxB = (double *)Calloc(nncutxB,double);
-  HHxB = (double *)Calloc(nncutxB,double);
-  tcutx = (double *)Calloc(ncutx,double);
-  hx = (double *)Calloc(ncutx,double);
-  Hx = (double *)Calloc(ncutx,double);
-  pnncutxA = (int *)Calloc(1,int);
-  pnncutxB = (int *)Calloc(1,int);
+  //  if(*gradual == 1){
+    HdA = (double *)Calloc(ncutdA,double);
+    HdB = (double *)Calloc(ncutdB,double);
+    ttcutxA = (double *)Calloc(nncutxA,double);
+    hh_A = (double *)Calloc(nncutxA,double);
+    HH_A = (double *)Calloc(nncutxA,double);
+    hhxA = (double *)Calloc(nncutxA,double);
+    HHxA = (double *)Calloc(nncutxA,double);
+    ttcutxB = (double *)Calloc(nncutxB,double);
+    hh_B = (double *)Calloc(nncutxB,double);
+    HH_B = (double *)Calloc(nncutxB,double);
+    hhxB = (double *)Calloc(nncutxB,double);
+    HHxB = (double *)Calloc(nncutxB,double);
+    tcutx = (double *)Calloc(ncutx,double);
+    hx = (double *)Calloc(ncutx,double);
+    Hx = (double *)Calloc(ncutx,double);
+    pnncutxA = (int *)Calloc(1,int);
+    pnncutxB = (int *)Calloc(1,int);
+    //  }
 
   COMPH(tcut,h,H,ncut,l);
   COMPH(tcutxA,hxA,HxA,ncutxA,l);

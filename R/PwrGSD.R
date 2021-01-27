@@ -559,6 +559,7 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
     	palphatot = as.double(c(Alpha.Efficacy,Alpha.Futility)),
     	lrrf = as.double(log(RR.Futility)),
         bHay = as.double(c(b.Haybittle.e, b.Haybittle.f)),
+        bendSC = as.double(be.end),
     	ppar = as.double(ppar),
     	pgqxw = as.double(c(glegx,glegw)),
     	tcut0 = as.double(tcut0),
@@ -649,6 +650,12 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
     out <- list(dPower = Pwr, dErrorII = dErrII, detail = detail,call=.call.)
     class(out) <- "PwrGSD"
     out
+}
+
+"detail" <-
+function(obj)
+{
+    obj$detail
 }
 
 "print.PwrGSD" <- function (x, ...)
@@ -1837,6 +1844,7 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
     b.Haybittle.e <- eval.PBS$backend$b.Haybittle.e
     b.Haybittle.f <- eval.PBS$backend$b.Haybittle.f
     drift.end <- eval.PBS$backend$drift.end
+    be.end <- eval.PBS$backend$be.end
     prob.e <- eval.PBS$backend$prob.e
     prob.f <- eval.PBS$backend$prob.f
     my.Efficacy <- eval.PBS$backend$my.Efficacy
@@ -2197,8 +2205,9 @@ function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
         dbls = as.double(dbls),
         pttlook = as.double(tlook), 
 	palphatot = as.double(c(Alpha.Efficacy,Alpha.Futility)), 
-	lrrf = as.double(logRR.F),
-	bHay = as.double(c(b.Haybittle.e, b.Haybittle.f)),
+        lrrf = as.double(logRR.F),                  
+        bHay = as.double(c(b.Haybittle.e, b.Haybittle.f)),
+        bendSC = as.double(be.end),          
 	ppar = as.double(ppar), 
 	pgqxw = as.double(c(glegx,glegw)),
 	tcut0 = as.double(tcut0), 
@@ -2930,46 +2939,46 @@ function(x,xh,h,xhA,hA,xhB,hB,xlA,lA,xlB,lB,gradual=FALSE)
 	list(htilde = ans$htlde, ftilde = ans$ftlde, Stilde = ans$Stlde, call=.call.)
 }
 
-"trandfromh" <- function(N, tcut, h)
+"trandfromh" <- function(N, tcut, h, tend)
 {
 	.C("trandfromh",
 	pn = as.integer(N),
 	tcut = as.double(tcut),
 	h = as.double(h),
         pncut = as.integer(length(tcut)),
+        tend = as.double(tend),    
 	t = as.double(rep(0,N)),
 	PACKAGE = "PwrGSD")
 }
 
 "trandhcdtl" <- function(N, tcut, h, tend, tcutdA, hdA, tcutdB, hdB, tcutxA, hxA, tcutxB, hxB, gradual)
 {
-	.C("trandhcdtl",
-	pn = as.integer(N),
-	tcut = as.double(tcut),
-	h = as.double(h),
-	pncut = as.integer(length(tcut)),
-        tend = as.double(tend),
-        tcutdA = as.double(tcutdA),
-        hdA = as.double(hdA),
-        pncutdA = as.integer(length(tcutdA)),
-        tdA = as.double(rep(0,N)),
-        tcutdB = as.double(tcutdB),
-        hdB = as.double(hdB),
-        pncutdB = as.integer(length(tcutdB)),
-        tdB = as.double(rep(0,N)),
-        tcutxA = as.double(tcutxA),
-	hxA = as.double(hxA),
-	pncutxA = as.integer(length(tcutxA)),
-	tcutxB = as.double(tcutxB),
-	hxB = as.double(hxB),
-	pncutXB = as.integer(length(tcutxB)),
-        gradual = as.integer(gradual),
-	code = as.integer(rep(0,N)),
-	t = as.double(rep(0,N)),
-	PACKAGE = "PwrGSD")
+    .C("trandhcdtl",
+       pn = as.integer(N),
+       tcut = as.double(tcut),
+       h = as.double(h),
+       pncut = as.integer(length(tcut)),
+       tend = as.double(tend),
+       tcutdA = as.double(tcutdA),
+       hdA = as.double(hdA),
+       pncutdA = as.integer(length(tcutdA)),
+       tdA = double(N),
+       tcutdB = as.double(tcutdB),
+       hdB = as.double(hdB),
+       pncutdB = as.integer(length(tcutdB)),
+       tdB = double(N),
+       tcutxA = as.double(tcutxA),
+       hxA = as.double(hxA),
+       pncutxA = as.integer(length(tcutxA)),
+       tcutxB = as.double(tcutxB), 
+       hxB = as.double(hxB),
+       pncutxB = as.integer(length(tcutxB)),
+       gradual = as.integer(gradual),
+       code = integer(N),
+       t = double(N));
 }
 
-"wtdlogrank" <- 
+"wtdlogrank" <-
 function(formula = formula(data), data = parent.frame(), WtFun = c("FH", "SFH", "Ramp"),
          param = c(0, 0), sided = c(2, 1), subset, na.action, w=FALSE) 
 {

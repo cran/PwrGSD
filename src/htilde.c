@@ -28,10 +28,10 @@ void htilde(double *x,int *nx,double *gqx,double *gqw,int *ngq,
   double h_x,H_x,hA_x,HA_x,hB_x,HB_x,DS,SlAx,SlBx,LAtend,LBtend;
   double lA_,LA_,lB_,LB_,lA_xiB,LA_xiB,lB_xiA,LB_xiA,SlA_xiB,SlB_xiA;
   double LA_B,tauA_B,h_AB,H_AB,hA_AB,HA_AB,LB_A,tauB_A,h_BA,H_BA,hB_BA,HB_BA;
-  double hA_x_,hB_x_,D_HA,D_HB,piA,piB,thA,thB,wA,wB,phiA_B,wA_B,phiB_A,wB_A,h_,H_;
-  double SI_1, SI_2, SI_3, SI_4, SI_5, fI_1, fI_2, fI_3, fI_4, fI_5, tmp;
+  double hA_x_,hB_x_,D_HA,D_HB,piA,piB,thA,thB,wA,wB,phiA_B,wA_B,phiB_A,wB_A;
+  double SI_1, SI_2, SI_3, SI_4, SI_5, fI_1, fI_2, fI_3, fI_4, fI_5;
   double *H, *HA, *HB, *LA, *LB;
-  int nnx, nngq, nnh, nnhA, nnhB, nnlA, nnlB, i, l, flg, j, k, idx;
+  int nnx, nngq, nnh, nnhA, nnhB, nnlA, nnlB, i, l, flg, j, k;
 
   nnx = *nx;
   nngq = *ngq;

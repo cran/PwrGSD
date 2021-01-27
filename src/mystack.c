@@ -2,7 +2,7 @@
 
 void mystack(int *pn, int *pnfus, int *pnfuvars, int *pnbasevars, double *basevars, double *fuvars, double *out)
 {
-    int i, j, k, l, n, nfus, nfuvars, nbasevars;
+    int i, j, k, n, nfus, nfuvars, nbasevars;
     
     n = *pn;
     nfus = *pnfus;

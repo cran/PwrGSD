@@ -57,12 +57,12 @@ void drift(int *ints,double *accru,double *accrat,double *tlook,double *ppar,dou
            int *puserVend,double *Vend)
 {
   int nnstat,nngq,l,flg,j,j0,j1,istat,nnh0,nnh1,nnsm,nnjmp,nnhc0,nnhc1,nmx,flaguserVE;
-  int nnlook,ilook,ijmp,ntrial,isumppar,nppar;
+  int nnlook,ilook,ijmp,ntrial,isumppar,nppar=0;
   int *ntlook,*nstat,*ngq,*nh0,*nh1,*nhc0,*nhc1,*nlA0,*nlB0,*nlA1,*nlB1,*nhA0,*nhB0,*nhA1;
   int *nhB1,*gradual,*one;
 
-  double t_ENR,t_END,vend_uw,vend,xi_,w,Q,dV_uw,dV,dMU,Beta,ans_MU,hc0_,Hc0_,hc1_;
-  double Hc1_,Sc,S_LR,Stlde,ftlde,V_uw,V,et, old, t_jmp,ans_IF_uw, ans_IF;
+  double t_ENR,t_END,vend_uw,vend,xi_,w,Q,dV_uw,dV,dMU,Beta,ans_MU=0.0,hc0_,Hc0_,hc1_;
+  double Hc1_,Sc,S_LR,Stlde,ftlde,V_uw,V,et=0.0, old, t_jmp,ans_IF_uw, ans_IF;
   double *xi,*ftlde0,*Stlde0,*htlde0,*ftlde1,*Stlde1,*htlde1,*Hc0,*Hc1,*V_END_uw,*V_END;
   double *tjump,*tjmp,*tend,*gqx,*gqw,*Qstop,*fftlde0,*SStlde0,*hhtlde0,*fftlde1,*SStlde1,*hhtlde1;
 

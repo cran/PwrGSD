@@ -11,8 +11,8 @@ importFrom("stats", "approx", "is.empty.model", "model.extract",
            "update", "var")
 
 export("%,%",agghaz,as.boundaries,CDFOR2LRR,CondPower,CY2TOShaz,PwrGSD,cpd.PwrGSD,
-       CRRtoRR,DX,Elements,EX1gXK,gsd.dens,GrpSeqBnds,Haybittle,IntSurvDiff,LanDemets,
-       lookup,mystack,mysurvfit,ObrienFleming,Pocock,Pow,RR2RCM,RCM2RR,
+       CRRtoRR,detail,DX,Elements,EX1gXK,gsd.dens,GrpSeqBnds,Haybittle,IntSurvDiff,
+       LanDemets,lookup,mystack,mysurvfit,ObrienFleming,Pocock,Pow,RR2RCM,RCM2RR,
        SC,SCtoBdry,SimGSB,Power,wtdlogrank)
 
 

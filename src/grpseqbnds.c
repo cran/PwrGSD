@@ -106,17 +106,16 @@ void grpseqbndsL(int *pef, double (*spfu)(double frac, double alphatot, double r
 		 double *gqxw, int *pngqnodes, double *mufu, double *bold, double *bnew,
 		 int *mybounds)
 {
-  double vsmall=1.0e-6, vvsmall=1.0e-15, ltone=7.0, utzero=18.66, sw, x_, dx_;
-  double psimin, aold, anew, sqrf, sqrdf, b, Phib,bl,bu,berr,aerr,aerrsgn,intgrl,yy,bold_;
+  double vsmall=1.0e-6, vvsmall=1.0e-15, sw, x_, dx_;
+  double psimin, aold, anew, sqrf, sqrdf, b, Phib,bl,bu,berr,aerr,aerrsgn,intgrl=0.0,yy;
   double *gqx, *gqw;
-  int nlook,nlkm1,ifault,i,j,ef,ngqnodes,hangs,zero=0, one=1;
+  int nlook,i,j,ef,ngqnodes,hangs,zero=0, one=1;
 
   ngqnodes=*pngqnodes;
   gqx = gqxw;
   gqw = gqxw + ngqnodes;
 
   nlook = *pnlook;
-  nlkm1 = nlook - 1;
   ef = *pef;
   sw = (double) ef;
   psimin = (*spfu)(*pfmin, *palphtot, *rho);
@@ -204,17 +203,16 @@ void grpseqbndsH(int *islast, int *pnlook, double *palphtot, double *palpha,
 		 double *intgrndx, double *gqxw, int *pngqnodes, double *mufu,
 		 double *bin, double *blast)
 {
-  double vsmall=1.0e-6, vvsmall=1.0e-15, ltone=7.0, utzero=18.66;
-  double sqrf, sqrdf, b, Phib,bl,bu,berr,aerr,aerrsgn,intgrl,yy;
+  double vsmall=1.0e-6, vvsmall=1.0e-15;
+  double sqrf, sqrdf, b, Phib,bl,bu,berr,aerr,aerrsgn,intgrl=0.0,yy;
   double *gqx, *gqw;
-  int nlook,nlkm1,ifault,i,j,ngqnodes,hangs,zero=0, one=1;
+  int nlook,i,j,ngqnodes,hangs,zero=0, one=1;
 
   ngqnodes=*pngqnodes;
   gqx = gqxw;
   gqw = gqxw + ngqnodes;
 
   nlook = *pnlook;
-  nlkm1 = nlook - 1;
   sqrf = pow(*pfracnew,0.5);
   sqrdf = pow(*pfracnew - *pfracold,0.5);
   if(nlook==1) {
@@ -306,7 +304,7 @@ void updateL(int *nbf, int *dofu, int *pef, int *pnlook, double *pfracold, doubl
 	     double *x, double *y, double *tmp, double *intgrndx, double *gqxw,
 	     int *pngqnodes, double *mufu, double *bnew)
 {
-  int ngq, nlook, i, j, one=1, zero=0, nlkm1, ef;
+  int ngq, nlook, i, j, one=1, zero=0, ef;
   double a, b, Phia, Phib, sqrf, sqrdf, sw; 
   double *gqx, *gqw;
 
@@ -315,7 +313,6 @@ void updateL(int *nbf, int *dofu, int *pef, int *pnlook, double *pfracold, doubl
   gqw = gqxw + ngq;
 
   nlook = *pnlook;
-  nlkm1 = nlook -1;
   ef = *pef;
   sw = (double) ef;
   sqrf = pow(*pfracnew,0.5);
@@ -349,12 +346,11 @@ void updateL(int *nbf, int *dofu, int *pef, int *pnlook, double *pfracold, doubl
   }
 }
 
-
 void updateH(int *dofu, int *islast, int *pnlook, double *pfracold, double *pfracnew, 
 	     double *x, double *y, double *tmp, double *intgrndx, double *gqxw,
 	     int *pngqnodes, double *mufu, double *bin, double *blast)
 {
-  int nlook, ngq, i, j, one=1, zero=0, ef;
+  int nlook, ngq, i, j, one=1, zero=0;
   double a, b, Phia, Phib, sqrf, sqrdf;
   double *gqx, *gqw;
 

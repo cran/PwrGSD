@@ -8,7 +8,7 @@ void zero(double *x, int n);
 void gsd_dens(double *frac, double *xeff, double *gqxw, int *pngq, int *pnlooks, double *xx, double *dF, double *x1c, double *dF1c)
 {
   int ngq, nlooks, i, k, j;
-  double x, Phi_x, u, du, fkm1, fk, sqrDfk, x_r_k, dx_r_k, dx_r_k_, x_c_km1_, dx_c_km1, x_c_k_, dx_c_k, x_a_k, dx_a_k, dx_a_k_;
+  double x, Phi_x, u, du, fkm1, fk, sqrDfk, x_r_k, dx_r_k, x_c_km1_, dx_c_km1, x_c_k_, dx_c_k, dx_a_k;
   double *x_c_km1, *dF_c_km1, *x_c_k, *dF_c_k, *x_c_km1_sv, *dF_c_km1_sv;
 
   ngq = *pngq;

@@ -33,7 +33,7 @@ void grpseqbnds(int *dofu, int *nbf, int *nbnd, int *nsf, double *rho, int *pnth
 		double *px, double *py, double *ptmp, double *pintgrndx, double *pgqxw, 
 		int *pngqnodes, double *mufu, double *pbold, double *pbnew, int *mybounds);
 
-void StCu2Bnds(double *pmu,double *pfrac,double *palpha,int *psided,double *prho,int *pef,double *b);
+void StCu2Bnds(double *pmu,double *pfrac,double *pzcrit, double *prho,int *pef,double *b);
 
 void cmptpwrgsd(int *dofu,int *pnlook,double *pfrac_k,double *pfrac_kp1,double *mu_o,
                 double *mu_n,double *Psiab_o,double *Psiab_n,double *Psiminfa_o,
@@ -58,7 +58,7 @@ void drift(int *ints,double *accru,double *accrat,double *tlook,double *ppar,dou
 
 // begin main
 void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *lrrf,
-	       double *bHay,double *ppar,double *pgqxw,double *tcut0,double *h0,
+	       double *bHay, double *bendSC, double *ppar,double *pgqxw,double *tcut0,double *h0,
 	       double *tcut1,double *h1,double *tcutc0,double *hc0,double *tcutc1,
 	       double *hc1,double *tcutd0A,double *hd0A,double *tcutd0B,double *hd0B,
 	       double *tcutd1A,double *hd1A,double *tcutd1B,double *hd1B,double *tcutx0A,
@@ -272,7 +272,7 @@ void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *
         *pef = 0;
         *mufuforSC = *(mufu + nlook*j + k);
         *(mufuforSC + 1) = *(mufu + nlook*j + nlook - 1);
-        StCu2Bnds(mufuforSC,pInfTnew,palphatot,sided,rho_sc,pef,pbounds+nlook*j+k);
+        StCu2Bnds(mufuforSC,pInfTnew, bendSC, rho_sc,pef,pbounds+nlook*j+k);
         *mybounds = 1;
         *nbnd = 1;
       }
@@ -281,7 +281,7 @@ void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *
         *pef = 1;
         *mufuforSC = *(mufu + nlook*j + k);
         *(mufuforSC + 1) = *(mufu + nlook*j + nlook - 1);
-        StCu2Bnds(mufuforSC,pInfTnew,palphatot,sided,rho_sc+1,pef,pbounds+nstat*nlook+nlook*j+k);
+        StCu2Bnds(mufuforSC,pInfTnew, bendSC, rho_sc+1,pef,pbounds+nstat*nlook+nlook*j+k);
         /*-----------------------------------------------------------------------------------------------------------------------|
         | Rprintf("j:%d, k:%d, mu_k:%g, mu_end:%g, fnew:%g, alpha:%g, sided:%d, rho:%g, pef:%d, b:%g\n",                         |
         |          j,k,*mufuforSC,*(mufuforSC+1),*pInfTnew,* palphatot,*sided,*(rho_sc+1),*pef,*(pbounds+nstat*nlook+nlook*j+k));|

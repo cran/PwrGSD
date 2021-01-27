@@ -21,10 +21,10 @@ void driftfu(int *ints,double *accru,double *accrat,double *tlook,double *ppar,d
 	     double *th0,double *h0,double *lrrf,double *thc0,double *hc0,double *thc1,
 	     double *hc1,int *wttyp,double *mufu,int *puserVend,double *Vend)
 {
-  int nnstat,nngq,l,flg,j,istat,nnh0,nnh1,nnhc0,nnhc1,isumppar,istop,flaguserVE,qis1orQ;
-  int nnlook,ilook,ntrial,nppar, *lbuff,*ntlook,*nstat,*ngq,*nh0,*nhc0,*nhc1,*pqis1orQ;
+  int nnstat,nngq,l,flg,j,istat,nnh0,nnh1,nnhc0,nnhc1,isumppar,flaguserVE,qis1orQ;
+  int nnlook,ilook,ntrial,nppar=0, *lbuff,*ntlook,*nstat,*ngq,*nh0,*nhc0,*nhc1,*pqis1orQ;
 
-  double t_ENR,t_END,vend,xi_,w,t_AN,Q,dMU,Beta,ans_MU,lrrf_,Lrrf_,h0_,H0_,S0_,h1_,H1_,S1_,hc0_,Hc0_,hc1_;
+  double t_ENR,t_END,vend,xi_,w,t_AN,Q=0.0,dMU,Beta,ans_MU,lrrf_,h0_,H0_,S0_,h1_,H1_,S1_,hc0_,Hc0_,hc1_;
   double Hc1_,Sc,S_LR,S,f,h_avg;
   double *xi,*H0,*H1,*th1,*h1,*Hc0,*Hc1,*V_END,*gqx,*gqw,*Qstop,*atten,*Qmom_args;
 
@@ -93,7 +93,6 @@ void driftfu(int *ints,double *accru,double *accrat,double *tlook,double *ppar,d
       *(atten + istat)=1.0;
       vend = 0.0;
 
-      istop = 0.0;
       if(*(wttyp+istat) == 1){
         hHatX(*(ppar+isumppar+2),th0,h0,H0,h0_,H0_,nnh0,l,flg);
         hHatX(*(ppar+isumppar+2),th1,h1,H1,h1_,H1_,nnh1,l,flg);
@@ -141,7 +140,6 @@ void driftfu(int *ints,double *accru,double *accrat,double *tlook,double *ppar,d
           Q = pow(S,*(ppar+isumppar))*pow(1.0-S,*(ppar+isumppar+1));
           if(xi_ > *(ppar + isumppar+2)) {
 	    Q= *(Qstop + istat);
-            istop=1;
 	  }
         }
         if(*(wttyp+istat) == 2){
@@ -165,7 +163,6 @@ void driftfu(int *ints,double *accru,double *accrat,double *tlook,double *ppar,d
       for(l=0;l<nngq;l++) *(xi+l) = (*(gqx+l)+1.0)*t_AN/2.0;
 
       ans_MU = 0.0;
-      istop = 0;
       for(j=0;j<nngq;j++){
 	xi_ = *(xi+j);
 	w = *(gqw+j)*t_AN/2.0;
@@ -189,7 +186,6 @@ void driftfu(int *ints,double *accru,double *accrat,double *tlook,double *ppar,d
 	    Q = pow(S,*(ppar+isumppar))*pow(1.0-S,*(ppar+isumppar+1));
 	    if(xi_ > *(ppar + isumppar+2)) {
 	      Q= *(Qstop + istat);
-              istop = 1;
 	    }
 	}
 	if(*(wttyp+istat) == 2){

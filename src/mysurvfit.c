@@ -14,7 +14,7 @@ void cpblocked(itea *Yord, int *pn, double *time, int *nrisk, int *nevent, int *
 void mysurvfit(double *TOS, int *Event, int *Arm, int *pn, double *time, int *nrisk, int *nevent, 
                int *pntimes, int *pnevtypes, int *pnblocks)
 {
-  int i,j,n;
+  int i,n;
   itea *YY;
 
   n = *pn;

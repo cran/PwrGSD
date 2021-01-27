@@ -12,9 +12,9 @@ void cmptpwrgsd(int *dofu,int *pnlook,double *pfrac_k,double *pfrac_kp1,double *
 		double *Psiminfa_n,double *Psibinf_o,double *Psibinf_n,double *gqxw,
 		int *pngqnodes,double *bold,double *bnew,double *palpha0,double *palpha1)
 {
-  double eps,sqrf_o,sqrf_n,sqrdf,a_o,a_n,b_o,b_n,Phia_o,Phia_n;
+  double eps,sqrf_o,sqrf_n,sqrdf,a_o=0.0,a_n,b_o,b_n,Phia_o,Phia_n;
   double Phib_o,Phib_n,sab_i,xab_i,sab_j,xab_j,dsab_j,sminfa_i;
-  double xminfa_i,dsminfa_i,sbinf_i,xbinf_i;
+  double xminfa_i=0.0,dsminfa_i,sbinf_i,xbinf_i;
   double dsbinf_i,psiab,psiminfa,psibinf,prob0,prob1,del;
   double *gqx, *gqw;
   int nlook,i,j;

@@ -39,7 +39,7 @@ void project_end(double *T_R, double *T0, double *T1, double *Tc0, double *Tc1, 
 {
   int n,ntot,ntimes,one=1,three=3,i; 
   int *int_buff,*pntot,*pntimes,*nrisk,*nevent;
-  double s,t_Q,tau_m_ter,tau,H_tQ,H_tau_m_ter,H_tau,H_min,H_max,RR,norm,I_1,I_2,I_3,I_4,J_1,J_2;
+  double s,t_Q,tau_m_ter,H_tQ,H_tau_m_ter,H_tau,H_min,H_max,RR,norm,I_1,I_2,I_3,I_4,J_1,J_2;
   double *dbl_buff,*tlook,*time,*TI,*Toth,*H,*coef,*H_proj,*pRR;
   itea *YY;
   /*
@@ -97,7 +97,6 @@ void project_end(double *T_R, double *T0, double *T1, double *Tc0, double *Tc1, 
 
   t_Q         = *t_proj;
   tau_m_ter   = *(t_proj + 1);
-  tau         = *(t_proj + 2);
   H_tQ        = *H_proj;
   H_tau_m_ter = *(H_proj + 1);
   H_tau       = *(H_proj + 2);

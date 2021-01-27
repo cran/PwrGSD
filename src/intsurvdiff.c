@@ -21,7 +21,7 @@ void IntSurvDiff(double *TOS, int *Event, int *Arm, int *pn, int *wttyp, double 
 		double *time, int *nrisk, int *nevent, int *pntimes, double *stat, 
 		double *var, double *wt)
 {
-  int i,n,ntimes;
+  int i,n;
   int *pnevtypes, *pnblocks;
   pnevtypes = (int *)Calloc(1, int);
   pnblocks = (int *)Calloc(1, int);
@@ -59,7 +59,7 @@ void ISDstat(double *time, int *nrisk, int *nevent, int *pntimes, double *wt, do
 	     double *var)
 {
   int nt,ntm1,i;
-  double xev0, xev1, xri0, xri1, q, stat_, var_, S0_, S1_, t_im1, dt, cs0, cs1, V;
+  double xev0, xev1, xri0, xri1, q, stat_, S0_, S1_, t_im1, dt, cs0, cs1, V;
   double *dV0, *dV1, *qS0dt, *qS1dt;
   nt = *pntimes;
 
@@ -70,7 +70,6 @@ void ISDstat(double *time, int *nrisk, int *nevent, int *pntimes, double *wt, do
 
   ntm1 = nt-1;
   stat_ = 0.0;
-  var_ = 0.0;
   S0_=1.0;
   S1_=1.0;
   t_im1 = 0.0;
