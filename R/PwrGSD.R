@@ -18,6 +18,9 @@ glegw24 <- c( 0.0123412297185, 0.0285313860439, 0.0442774398676, 0.0592985850337
 
 DX <- function(x)c(x[1],diff(x))
 
+eq <- function(x,y)abs(x-y)<1e-10
+gt <- function(x,y)x-y > 1e-10
+
 "PwrGSD" <- 
 function(EfficacyBoundary = LanDemets(alpha=0.05,spending=ObrienFleming),
          FutilityBoundary = LanDemets(alpha=0.10,spending=ObrienFleming),
@@ -877,7 +880,14 @@ function (EfficacyBoundary = LanDemets(alpha=0.05, spending=ObrienFleming),
     }
     if (is.frac.ii && length(frac.ii) != length(frac)) 
         stop("Lengths of 'frac' and 'frac.ii' must agree")
-    
+
+    rng.frac <- range(frac)
+    rng.frac.ii <- range(frac.ii)
+    bad.fr <- rng.frac[1] < 0 || gt(rng.frac[2],1) || rng.frac.ii[1] < 0 || gt(rng.frac.ii[2],1)
+    bad.fr <- bad.fr || any(diff(frac) < 0) || any(diff(frac.ii) < 0)
+    msg.fr <- "Arguments 'frac' and 'frac.ii' must be increasing sequences and have values lying on (0, 1]."
+    if (bad.fr) stop(msg.fr)
+
     normut <- 8.20953615160139
     psimin <- 1e-15
     nlooks <- length(frac)
@@ -920,6 +930,21 @@ function (EfficacyBoundary = LanDemets(alpha=0.05, spending=ObrienFleming),
     glegw <- glegw24
     ngqnodes <- length(glegx)
 
+    if(nbnd.e[1]==4)
+    {
+       frac <- c(frac[1]/2, frac)
+       my.Efficacy <- c(6/frac[1]^0.5, my.Efficacy)
+       if(!is.frac.ii) frac.ii <- frac
+       drift <- c(0, drift)
+       nbnd.e <- c(4, nbnd.e)
+       nbnd.f <- c(0, nbnd.f)
+       nsf.e <- c(1, nsf.e)
+       nsf.f <- c(0, nsf.f)
+       rho.Efficacy <- c(0, rho.Efficacy)
+       rho.Futility <- c(0, rho.Futility)
+       nlooks <- nlooks + 1
+    }
+
     b.e <- alpha.e <- rep(0, nlooks)
     b.f <- alpha.f <- rep(0, nlooks)
     l <- 1
@@ -932,15 +957,16 @@ function (EfficacyBoundary = LanDemets(alpha=0.05, spending=ObrienFleming),
 
     sc.drift.factor <- 1
     mu.end <- drift.end
-  
-    if (nbnd.e[1] != 2)
-        bold.e <- normut
-    if (nbnd.e[1] == 2)
-        bold.e <- b.Haybittle.e[1]
-    if (nbnd.f[1] != 2)
-        bold.f <- -normut
-    if (nbnd.f[1] == 2) 
-        bold.f <- b.Haybittle.f[1]
+
+    
+    if (nbnd.e[1] == 2) bold.e <- b.Haybittle.e[1]
+    if (nbnd.e[1] == 4) bnew.e <- bold.e <- my.Efficacy[1]
+    if (!(nbnd.e[1] %in% c(2,4)))  bold.e <- normut
+
+    if (nbnd.f[1] == 2) bold.f <- b.Haybittle.f[1]
+    if(nbnd.f[1]==4) bnew.f <- bold.f <- my.Futility[1]
+    if (!(nbnd.f[1] %in% c(2,4))) bold.f <- -normut
+
     y.e <- tmp.e <- rep(0, ngqnodes)
     y.f <- tmp.f <- rep(0, ngqnodes)
     x.e <- intgrndx.e <- rep(0, ngqnodes)
@@ -983,7 +1009,6 @@ function (EfficacyBoundary = LanDemets(alpha=0.05, spending=ObrienFleming),
         if ((nbnd.f[l] == 3 || nbnd.f[l] == 4) && (1 - fracnew.ii >= 
             1e-06)) 
             bnew[2] <- my.Futility[l]
-
         ans <- .C("grpseqbnds",
                   do.futility = as.integer(do.futility),
                   nbf = as.integer(nbf),
@@ -1013,7 +1038,7 @@ function (EfficacyBoundary = LanDemets(alpha=0.05, spending=ObrienFleming),
         dlact <- ans$dlact
         if (dlact[1] == 1)
         {
-            if (nbnd.e[l] == 1 || nbnd.e[l] == 3 || nbnd.e[l] == 4) 
+            if (nbnd.e[l] == 1 || nbnd.e[l] == 3 || nbnd.e[l] == 4)
                 b.e[l] <- bold.e <- ifelse(is.myE, bnew[1], ans$bnew[1])
             if (nbnd.e[l] == 2)
             {
@@ -1073,6 +1098,14 @@ function (EfficacyBoundary = LanDemets(alpha=0.05, spending=ObrienFleming),
     }
     out <- cbind(out, b.e, alpha.e, cumsum(alpha.e))
     nms <- c(nms, "b.e", "alpha.e", "cum-alpha.e")
+    if(nbnd.e[1]==4)
+    {
+        frac <- frac[-1]
+        frac.ii <- frac.ii[-1]
+        drift <- drift[-1]
+        out <- out[-1,]
+        nlooks <- nlooks - 1
+    }
     dimnames(out) <- list(1:nlooks, nms)
     ans <- list(table = out, frac=frac, frac.ii=frac.ii, drift=drift, call = .call.)
     class(ans) <- "boundaries"
