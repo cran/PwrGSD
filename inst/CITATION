@@ -1,0 +1,30 @@
+"%,%" <- paste0
+
+citHeader("To cite RRF in publications use:")
+
+ bibentry(bibtype="techreport",
+         title = "Interim Analysis Planning using the PwrGSD package",
+         author = person(family="Izmirlian", given="Grant",email="grant.izmirlian@nih.gov"),
+         institution = "NCI Div. of Cancer Prevention",
+         year         = "2004",      		 
+         textVersion = 
+         paste("G. Izmirlian(2004). ", 
+               "Interim Analysis Planning using the PwrGSD package. ",
+               " NCI Div. of Cancer Prevention Technical Report.",
+               sep=""))		
+
+ bibentry(bibtype = "Article",
+          title = "Estimation of the relative risk following group sequential procedure based upon the " %,%
+                  "weighted log-rank statistic", 
+         author = person(family="Izmirlian", given="Grant",email="grant.izmirlian@nih.gov"),
+	 journal = "Statistics and its Interface",
+         year         = "2014",      
+         volume       = "7",
+         number       = "1",
+         pages        = "27-42",
+         textVersion = 
+         paste("G. Izmirlian (2014). ", 
+               "Estimation of the relative risk following group sequential " %,% 
+               "procedure based upon the weighted log-rank statistic. ",
+               "Statistics and its Interface 7(1): 27-42.",
+               sep=""))

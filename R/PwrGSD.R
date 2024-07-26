@@ -716,8 +716,9 @@ function (object, ...)
 "print.cpd.PwrGSD" <- 
 function(x, ...)
 {
-        print(x$call)
-        sapply(x$Elements, FUN = print.PwrGSD)
+    if(!is.null(x$call)) print(x$call)
+    if(is.null(x$Elements[[1]])) print(unclass(x))
+    else sapply(x$Elements, FUN = print.PwrGSD)
 }
 
 "summary.cpd.PwrGSD" <- 
@@ -2440,12 +2441,12 @@ function (Nsim, accru, accrat, tlook,
 "gsd.dens" <-
 function(x, frac=NULL, scale="Standard")
 {
-  if(class(x)=="boundaries")
+  if(inherits(x, "boundaries"))
   {
     frac <- x$frac
     x.eff <- x$table[,"b.e"]*frac^0.5
   }
-  if(class(x)=="numeric")
+  if(inherits(x, "numeric"))
   {
     if(missing(frac))
       stop("You must either specify an object of class 'boundaries' or specify both the " %,%
@@ -3030,7 +3031,7 @@ function(formula = formula(data), data = parent.frame(), WtFun = c("FH", "SFH", 
     Arm <- X[,-1]
     nlev <- length(unique(Arm))
 
-    if(nlev>2 || nc > 2 || class(R)!="Surv")
+    if(nlev>2 || nc > 2 || !inherits(R, "Surv"))
       stop("Argument 'formula' is expected to have a response of class \"Surv\" and " %,%
            "a single predictor containing two levels")
 
@@ -3122,7 +3123,7 @@ function(formula = formula(data), data = parent.frame(), WtFun = c("FH", "SFH", 
     nlev <- length(unique(Arm))
 
     R <- model.extract(m, "response")
-    if(nlev>2 || class(R)!="Surv")
+    if(nlev>2 || !inherits(R, "Surv"))
       stop("Argument 'formula' is expected to have a response of class \"Surv\" and " %,%
            "a single predictor containing two levels")
     ind.too.small <- (R[,1]<1e-10)
@@ -3505,7 +3506,7 @@ function (formula, data, given.values, rows, columns, show.given = TRUE,
     bad.formula <- function() stop("invalid conditioning formula")
     bad.lengths <- function() stop("incompatible variable lengths")
     formula <- deparen(formula)
-    if (!inherits(formula, "formula")) 
+    if (!inherits(formula, "formula"))
         bad.formula()
     y <- deparen(formula[[2]])
     rhs <- deparen(formula[[3]])
@@ -4000,5 +4001,8 @@ function (object, fu.vars, create.idvar = FALSE)
     options(stringsAsFactors=FALSE)
     ver <- read.dcf(file=system.file("DESCRIPTION", package=pkgname),
                     fields="Version")
-    packageStartupMessage(paste(pkgname, ver))
+    msg <- paste(pkgname, ver) %,% "\n\n" %,% "Type ?PwrGSD"
+    msg <- msg %,% "\n\n" %,% "Please cite this package in your work use citation(\"PwrGSD\") \n" %,% 
+                              "or toBibtex(citation(\"PwrGSD\"))"
+    packageStartupMessage(msg)
 }

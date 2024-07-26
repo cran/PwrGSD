@@ -264,8 +264,6 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
   GetRNGstate();
   ii=0;
   while(ii<nsim){
-    R_CheckUserInterrupt();
-
     /* times of death due to lung cancer in arm 0  */
     /* generated conditional upon td0Ai and td0Bi. */
     randhcdtl(pn, tcut0, h0, pncut0, pttlook+nlook-1, tcutd0A, hd0A, pncutd0A, 
