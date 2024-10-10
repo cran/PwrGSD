@@ -19,6 +19,7 @@
 #define EPS 1e-10
 #include<R.h>
 #include <R_ext/Utils.h>
+#include "PwrGSD_mem.h"
 
 /* MACROS */
 #define COMPH(xh,h,H,n,l) *H=0.0;for(l=1;l<n;l++) *(H+l)=*(H+l-1)+ *(h+l-1) * (*(xh+l) - *(xh+l-1))
@@ -181,47 +182,47 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
   ntrial = ntrial + (ntrial%2);
   n = ntrial/2;
 
-  Yord        = (itea   *)Calloc(ntrial,  itea);
-  pinffrac    = (double *)Calloc(nstlk, double);
-  pinffrac_ii = (double *)Calloc(nstlk, double);
-  pbounds     = (double *)Calloc(nstlk2,double);
-  pstatk      = (double *)Calloc(nstat, double);
-  pvark       = (double *)Calloc(nstat, double);
-  par         = (double *)Calloc(3,     double);
-  wt          = (double *)Calloc(ntrial,  double);
-  px          = (double *)Calloc(ngq2,  double);
-  py          = (double *)Calloc(ngq2,  double);
-  ptmp        = (double *)Calloc(ngq2,  double);
-  pintgrndx   = (double *)Calloc(ngq2,  double);
-  statk       = (double *)Calloc(1,     double);
-  vark        = (double *)Calloc(1,     double);
-  m1k         = (double *)Calloc(1,     double);
-  stat        = (double *)Calloc(1,     double);
-  var         = (double *)Calloc(1,     double);
-  m1          = (double *)Calloc(1,     double);
-  etaold      = (double *)Calloc(1,     double);
-  etanew      = (double *)Calloc(1,     double);
-  ptlook      = (double *)Calloc(1,     double);
-  pInfTold    = (double *)Calloc(2,     double);
-  pInfTnew    = (double *)Calloc(1,     double);
-  pInfTold_ii = (double *)Calloc(2,     double);
-  pInfTnew_ii = (double *)Calloc(1,     double);
-  palpha      = (double *)Calloc(2,     double);
-  pbold       = (double *)Calloc(2,     double);
-  pbnew       = (double *)Calloc(2,     double);
-  psimin      = (double *)Calloc(1,     double);
-  Vend        = (double *)Calloc(nstat, double);
-  mufuforSC   = (double *)Calloc(2,     double);
-  t_proj      = (double *)Calloc(3,     double);
+  Yord        = Calloc(ntrial,  itea);
+  pinffrac    = Calloc(nstlk, double);
+  pinffrac_ii = Calloc(nstlk, double);
+  pbounds     = Calloc(nstlk2,double);
+  pstatk      = Calloc(nstat, double);
+  pvark       = Calloc(nstat, double);
+  par         = Calloc(3,     double);
+  wt          = Calloc(ntrial, double);
+  px          = Calloc(ngq2,  double);
+  py          = Calloc(ngq2,  double);
+  ptmp        = Calloc(ngq2,  double);
+  pintgrndx   = Calloc(ngq2,  double);
+  statk       = Calloc(1,     double);
+  vark        = Calloc(1,     double);
+  m1k         = Calloc(1,     double);
+  stat        = Calloc(1,     double);
+  var         = Calloc(1,     double);
+  m1          = Calloc(1,     double);
+  etaold      = Calloc(1,     double);
+  etanew      = Calloc(1,     double);
+  ptlook      = Calloc(1,     double);
+  pInfTold    = Calloc(2,     double);
+  pInfTnew    = Calloc(1,     double);
+  pInfTold_ii = Calloc(2,     double);
+  pInfTnew_ii = Calloc(1,     double);
+  palpha      = Calloc(2,     double);
+  pbold       = Calloc(2,     double);
+  pbnew       = Calloc(2,     double);
+  psimin      = Calloc(1,     double);
+  Vend        = Calloc(nstat, double);
+  mufuforSC   = Calloc(2,     double);
+  t_proj      = Calloc(3,     double);
 
-  pntimesk    = (int    *)Calloc(1,     int);
-  pnblocks    = (int    *)Calloc(1,     int);
-  pnthslook   = (int    *)Calloc(2,     int);
-  pn          = (int    *)Calloc(1,     int);
-  pntot       = (int    *)Calloc(1,     int);
-  dlact       = (int    *)Calloc(2,     int);
-  puserVend   = (int    *)Calloc(1,     int);
-  pef         = (int    *)Calloc(1,     int);
+  pntimesk    = Calloc(1,     int);
+  pnblocks    = Calloc(1,     int);
+  pnthslook   = Calloc(2,     int);
+  pn          = Calloc(1,     int);
+  pntot       = Calloc(1,     int);
+  dlact       = Calloc(2,     int);
+  puserVend   = Calloc(1,     int);
+  pef         = Calloc(1,     int);
 
   *pn = n;
   *pnblocks = 2;
@@ -321,12 +322,12 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
 
       ntimes = *pntimes;
 
-      time_   = (double *)Calloc(ntimes, double);
-      nrisk_  = (int *)Calloc(2*ntimes, int);
-      nevent_ = (int *)Calloc(2*ntimes, int);
-      UQt     = (double *)Calloc(ntimes, double);
-      varQt   = (double *)Calloc(ntimes, double);
-      var1t   = (double *)Calloc(ntimes, double);
+      time_   = Calloc(ntimes, double);
+      nrisk_  = Calloc(2*ntimes, int);
+      nevent_ = Calloc(2*ntimes, int);
+      UQt     = Calloc(ntimes, double);
+      varQt   = Calloc(ntimes, double);
+      var1t   = Calloc(ntimes, double);
 
       pnevty = 1;
       cpblocked(Yord, pntot, time_, nrisk_, nevent_, pntimes, &pnevty, pnblocks);
@@ -416,12 +417,12 @@ void    SimPwrGSD(int *ints,double *dbls, double *pttlook,double *palphatot,doub
         handle(pn, ptlook, u, t0, t1, tc0, tc1, Yord, pntot, pntimesk);
 
 	ntimesk = *pntimesk;
-	time_ = (double *)Calloc(ntimesk, double);
-	nrisk_ = (int *)Calloc(2*ntimesk, int);
-	nevent_ = (int *)Calloc(2*ntimesk, int);
-        UQt     = (double *)Calloc(ntimes, double);
-        varQt   = (double *)Calloc(ntimes, double);
-        var1t   = (double *)Calloc(ntimes, double);
+	time_   = Calloc(ntimesk, double);
+	nrisk_  = Calloc(2*ntimesk, int);
+	nevent_ = Calloc(2*ntimesk, int);
+        UQt     = Calloc(ntimes, double);
+        varQt   = Calloc(ntimes, double);
+        var1t   = Calloc(ntimes, double);
 
         cpblocked(Yord, pntot, time_, nrisk_, nevent_, pntimesk, &pnevty, pnblocks);
  
@@ -688,7 +689,7 @@ void randfromh(int *pn, double *tcut, double *h, int *pncut, double *t)
 ---------------------------------------------------------------------------------------*/
   n = *pn;
   ncut = *pncut;
-  H = (double *)Calloc(ncut,double);
+  H = Calloc(ncut,double);
 
   COMPH(tcut,h,H,ncut,l);
 
@@ -759,28 +760,28 @@ void randhcdtl(int *pn, double *tcut, double *h, int *pncut, double *tend,
   nncutxB = MAX(ncut,ncutxB);
   ncutx = MAX(nncutxA,nncutxB);
 
-  H = (double *)Calloc(ncut,double);
-  HxA = (double *)Calloc(ncutxA,double);
-  HxB = (double *)Calloc(ncutxB,double);
-  //  if(*gradual == 1){
-    HdA = (double *)Calloc(ncutdA,double);
-    HdB = (double *)Calloc(ncutdB,double);
-    ttcutxA = (double *)Calloc(nncutxA,double);
-    hh_A = (double *)Calloc(nncutxA,double);
-    HH_A = (double *)Calloc(nncutxA,double);
-    hhxA = (double *)Calloc(nncutxA,double);
-    HHxA = (double *)Calloc(nncutxA,double);
-    ttcutxB = (double *)Calloc(nncutxB,double);
-    hh_B = (double *)Calloc(nncutxB,double);
-    HH_B = (double *)Calloc(nncutxB,double);
-    hhxB = (double *)Calloc(nncutxB,double);
-    HHxB = (double *)Calloc(nncutxB,double);
-    tcutx = (double *)Calloc(ncutx,double);
-    hx = (double *)Calloc(ncutx,double);
-    Hx = (double *)Calloc(ncutx,double);
-    pnncutxA = (int *)Calloc(1,int);
-    pnncutxB = (int *)Calloc(1,int);
-    //  }
+  H =       Calloc(ncut,double);
+  HxA =     Calloc(ncutxA,double);
+  HxB =     Calloc(ncutxB,double);
+  //  if(*gradual==1){
+  HdA =     Calloc(ncutdA,double);
+  HdB =     Calloc(ncutdB,double);
+  ttcutxA = Calloc(nncutxA,double);
+  hh_A =    Calloc(nncutxA,double);
+  HH_A =    Calloc(nncutxA,double);
+  hhxA =    Calloc(nncutxA,double);
+  HHxA =    Calloc(nncutxA,double);
+  ttcutxB = Calloc(nncutxB,double);
+  hh_B =    Calloc(nncutxB,double);
+  HH_B =    Calloc(nncutxB,double);
+  hhxB =    Calloc(nncutxB,double);
+  HHxB =    Calloc(nncutxB,double);
+  tcutx =   Calloc(ncutx,double);
+  hx =      Calloc(ncutx,double);
+  Hx =      Calloc(ncutx,double);
+  pnncutxA =Calloc(1,int);
+  pnncutxB =Calloc(1,int);
+  //  }
 
   COMPH(tcut,h,H,ncut,l);
   COMPH(tcutxA,hxA,HxA,ncutxA,l);
@@ -940,7 +941,7 @@ void commonx(double *x1,double *h1,int *pn1,double *x2,double *h2,int *pn2,
   n1 = *pn1;
   n2 = *pn2;
   n=n1+n2;
-  y = (double *)Calloc(n,double);
+  y = Calloc(n,double);
   for(l=0;l<n1;l++) *(y+l) = *(x1+l);
   for(l=0;l<n2;l++) *(y+n1+l) = *(x2+l);
   cmprdbl = &CmprDbl;

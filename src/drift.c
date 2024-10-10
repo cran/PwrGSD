@@ -1,5 +1,6 @@
 #include<stdlib.h>
 #include<R.h>
+#include "PwrGSD_mem.h"
 //
 //MACROS 
 #define MIN(x,y) (x < y ? x : y)
@@ -99,17 +100,17 @@ void drift(int *ints,double *accru,double *accrat,double *tlook,double *ppar,dou
   nnhc0 = *nhc0;
   nnhc1 = *nhc1;
 
-  Hc0 = (double *)Calloc(nnhc0, double);
-  Hc1 = (double *)Calloc(nnhc1, double);
-  V_END_uw = (double *)Calloc(nnstat, double);
-  V_END = (double *)Calloc(nnstat, double);
+  Hc0      = Calloc(nnhc0, double);
+  Hc1      = Calloc(nnhc1, double);
+  V_END_uw = Calloc(nnstat, double);
+  V_END    = Calloc(nnstat, double);
 
-  tjump = (double *)Calloc(nnsm, double);
-  tjmp = (double *)Calloc(nnsm, double);
-  tend = (double *)Calloc(1, double);
-  xi = (double *)Calloc(nngq, double);
-  Qstop = (double *)Calloc(nnstat, double);
-  one = (int *)Calloc(1, int);
+  tjump    = Calloc(nnsm, double);
+  tjmp     = Calloc(nnsm, double);
+  tend     = Calloc(1, double);
+  xi       = Calloc(nngq, double);
+  Qstop    = Calloc(nnstat, double);
+  one      = Calloc(1, int);
   *one = 1;
   Q=0.0;
 
@@ -124,19 +125,19 @@ void drift(int *ints,double *accru,double *accrat,double *tlook,double *ppar,dou
 
   nmx = MAX(nngq, nnjmp);
 
-  ftlde0 = (double *)Calloc(nmx, double);
-  Stlde0 = (double *)Calloc(nmx, double);
-  htlde0 = (double *)Calloc(nmx, double);
-  ftlde1 = (double *)Calloc(nmx, double);
-  Stlde1 = (double *)Calloc(nmx, double);
-  htlde1 = (double *)Calloc(nmx, double);
+  ftlde0 =  Calloc(nmx, double);
+  Stlde0 =  Calloc(nmx, double);
+  htlde0 =  Calloc(nmx, double);
+  ftlde1 =  Calloc(nmx, double);
+  Stlde1 =  Calloc(nmx, double);
+  htlde1 =  Calloc(nmx, double);
 
-  fftlde0 = (double *)Calloc(1, double);
-  SStlde0 = (double *)Calloc(1, double);
-  hhtlde0 = (double *)Calloc(1, double);
-  fftlde1 = (double *)Calloc(1, double);
-  SStlde1 = (double *)Calloc(1, double);
-  hhtlde1 = (double *)Calloc(1, double);
+  fftlde0 = Calloc(1, double);
+  SStlde0 = Calloc(1, double);
+  hhtlde0 = Calloc(1, double);
+  fftlde1 = Calloc(1, double);
+  SStlde1 = Calloc(1, double);
+  hhtlde1 = Calloc(1, double);
 
   *ftlde0=0.0;
   *Stlde0=1.0;

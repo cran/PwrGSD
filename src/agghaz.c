@@ -1,4 +1,5 @@
 #include <R.h>
+#include "PwrGSD_mem.h"
 
 void agghaz(double *tagg, double *time, int *nrisk, int *nevent, int *pndth, int *pnb,
 	    double *timea, int *nriska, int *neventa, int *pnagg)
@@ -21,7 +22,7 @@ void agghaz(double *tagg, double *time, int *nrisk, int *nevent, int *pndth, int
     double t_max,t_old, DT;
     ndths = *pndth;
     nb = *pnb;
-    DN = (int *)Calloc(nb, int);
+    DN = Calloc(nb, int);
 
     t_max = *(time + ndths - 1);
     nagg = (int) (floor(t_max/(*tagg)) + 1.0);

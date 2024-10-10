@@ -3,6 +3,7 @@
 #define MIN(x,y) (x < y ? x : y)
 
 #include "PwrGSD.h"
+#include "PwrGSD_mem.h"
 
 typedef struct{
   int index;
@@ -22,13 +23,13 @@ void WtdLogRank(double *TOS, int *Event, int *Arm, int *pn, int *wttyp, double *
 {
   int i,n;
   int *pnblocks, *pnevtypes;
-  pnblocks = (int *)Calloc(1, int);
-  pnevtypes = (int *)Calloc(1, int);
+  pnblocks =  Calloc(1, int);
+  pnevtypes = Calloc(1, int);
   itea *YY;
 
   n = *pn;
 
-  YY = (itea *) Calloc(n, itea);
+  YY = Calloc(n, itea);
 
   for (i=0;i<n;i++){
     (YY+i)->index = i;

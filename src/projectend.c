@@ -1,5 +1,7 @@
 #include<R.h>
 #include<Rmath.h>
+#include "PwrGSD_mem.h"
+
 #define MIN(x,y) (x<y ? x : y)
 #define MAX(x,y) (x>y ? x : y)
 #define SQ(x) ((x)*(x))
@@ -49,10 +51,10 @@ void project_end(double *T_R, double *T0, double *T1, double *Tc0, double *Tc1, 
   */
   n        = *pn;
   ntot     = 2*n;
-  int_buff = (int *)Calloc(2*ntot+2, int);
-  dbl_buff = (double *)Calloc(ntot+7, double);
-  TI       = (double *)Calloc(ntot, double);
-  Toth     = (double *)Calloc(ntot, double);
+  int_buff = Calloc(2*ntot+2, int);
+  dbl_buff = Calloc(ntot+7, double);
+  TI       = Calloc(ntot, double);
+  Toth     = Calloc(ntot, double);
 
   pntot    = int_buff;
   pntimes  = int_buff + 1;
@@ -64,7 +66,7 @@ void project_end(double *T_R, double *T0, double *T1, double *Tc0, double *Tc1, 
   pRR      = dbl_buff + 6;
   time     = dbl_buff + 7;
 
-  YY       = (itea *)Calloc(ntot, itea);
+  YY       = Calloc(ntot, itea);
 
   *tlook   = *(t_proj+1);
   *pntot   = ntot;
@@ -81,7 +83,7 @@ void project_end(double *T_R, double *T0, double *T1, double *Tc0, double *Tc1, 
   cpblocked(YY, pntot, time, nrisk, nevent, pntimes, &one, &one);
   ntimes=*pntimes;
 
-  H = (double *)Calloc(ntimes, double);
+  H = Calloc(ntimes, double);
   s=0.0;
   for(i=0;i<ntimes;i++)
   {
@@ -214,9 +216,9 @@ void Hproj(double *ti, double *H, int *pnti, double *coef2, double *t_proj, doub
   n_proj = *pn_proj;
   nti = *pnti;
 
-  t_proj_s = (double *)Calloc(n_proj, double);
-  H_proj_s = (double *)Calloc(n_proj, double);
-  ind_val = (IND_VAL *)Calloc(n_proj, IND_VAL);
+  t_proj_s = Calloc(n_proj, double);
+  H_proj_s = Calloc(n_proj, double);
+  ind_val = Calloc(n_proj, IND_VAL);
 
   max_ti = *(ti + nti -1);
   max_H = *(H + nti -1);
@@ -255,9 +257,9 @@ void ls_quad(double *ti, double *H, int *pnti, double *coef3)
   double s_ti, s_ti2, s_ti3, s_ti4, s_H, s_tiH, s_ti2H, s;
   double *XX, *XX_i, *XH;
 
-  XX   = (double *)Calloc(p*p,double);
-   XX_i = (double *)Calloc(p*p,double);
-  XH   = (double *)Calloc(p,double);
+  XX   = Calloc(p*p,double);
+  XX_i = Calloc(p*p,double);
+  XH   = Calloc(p,double);
 
   s_ti=0.0;
   s_ti2=0.0;
@@ -303,8 +305,8 @@ void invrt3by3(double *A, double *Ainv)
   int i,j,k,p=3;
   double s,a,b,c,d,e,f;
   double *buff, *sqrA;
-  buff = (double *)Calloc(p*p, double);
-  sqrA = (double *)Calloc(p*p,double);
+  buff = Calloc(p*p, double);
+  sqrA = Calloc(p*p,double);
 
   *sqrA = pow(*A, 0.5);
 

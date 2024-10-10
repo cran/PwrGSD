@@ -1,5 +1,6 @@
 #include<R.h>
 #include<Rmath.h>
+#include "PwrGSD_mem.h"
 
 #define MIN(x,y) (x <= y ? x : y);
 #define ratiodnorm(x, y) exp(-0.5*(x*x - y*y))
@@ -45,9 +46,9 @@ void grpseqbnds(int *dofu, int *nbf, int *nbnd, int *nsf, double *rho, int *pnlo
   int ef, ngq;
   int *pef, *islast;
 
-  islast = (int *)Calloc(1, int);
-  pef = (int *)Calloc(1, int);
-  pfmin = (double *)Calloc(1, double);
+  islast = Calloc(1, int);
+  pef = Calloc(1, int);
+  pfmin = Calloc(1, double);
 
   *islast = (1.0 - *pfracnew_ii < 1.0e-6);
 

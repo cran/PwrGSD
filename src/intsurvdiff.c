@@ -1,5 +1,7 @@
 #include<R.h>
 #include<Rmath.h>
+#include "PwrGSD_mem.h"
+
 #define MIN(x,y) (x < y ? x : y)
 #define EPS 1.0e-10
 
@@ -23,8 +25,8 @@ void IntSurvDiff(double *TOS, int *Event, int *Arm, int *pn, int *wttyp, double 
 {
   int i,n;
   int *pnevtypes, *pnblocks;
-  pnevtypes = (int *)Calloc(1, int);
-  pnblocks = (int *)Calloc(1, int);
+  pnevtypes = Calloc(1, int);
+  pnblocks =  Calloc(1, int);
   *pnevtypes = 1;
   *pnblocks = 2;
 
@@ -32,7 +34,7 @@ void IntSurvDiff(double *TOS, int *Event, int *Arm, int *pn, int *wttyp, double 
 
   n = *pn;
 
-  YY = (itea *) Calloc(n, itea);
+  YY = Calloc(n, itea);
 
   for (i=0;i<n;i++){
     (YY+i)->index = i;
@@ -63,8 +65,8 @@ void ISDstat(double *time, int *nrisk, int *nevent, int *pntimes, double *wt, do
   double *dV0, *dV1, *qS0dt, *qS1dt;
   nt = *pntimes;
 
-  dV0=Calloc(nt,double);
-  dV1=Calloc(nt,double);
+  dV0=  Calloc(nt,double);
+  dV1=  Calloc(nt,double);
   qS0dt=Calloc(nt,double);
   qS1dt=Calloc(nt,double);
 

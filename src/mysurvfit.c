@@ -1,5 +1,7 @@
 #include<R.h>
 #include<Rmath.h>
+#include "PwrGSD_mem.h"
+
 #define MIN(x,y) (x < y ? x : y)
 
 typedef struct{
@@ -19,7 +21,7 @@ void mysurvfit(double *TOS, int *Event, int *Arm, int *pn, double *time, int *nr
 
   n = *pn;
   
-  YY = (itea *) Calloc(n, itea);
+  YY = Calloc(n, itea);
 
   for (i=0;i<n;i++){
     (YY+i)->index = i;

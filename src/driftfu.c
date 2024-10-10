@@ -1,4 +1,5 @@
 #include<R.h>
+#include "PwrGSD_mem.h"
 
 /* MACROS */
 #define MIN(x,y) (x<y ? x : y)
@@ -52,18 +53,18 @@ void driftfu(int *ints,double *accru,double *accrat,double *tlook,double *ppar,d
   nnhc1 = *nhc1;
   qis1orQ = *pqis1orQ;
 
-  xi = (double *)Calloc(nngq, double);
-  H0 = (double *)Calloc(nnh0, double);
-  th1 = (double *)Calloc(nnh1, double);
-  h1 = (double *)Calloc(nnh1, double);
-  H1 = (double *)Calloc(nnh1, double);
-  Hc0 = (double *)Calloc(nnhc0, double);
-  Hc1 = (double *)Calloc(nnhc1, double);
-  lbuff = (int *)Calloc(1, int);
-  V_END = (double *)Calloc(nnstat, double);
-  Qstop = (double *)Calloc(nnstat, double);
-  atten = (double *)Calloc(nnstat, double);
-  Qmom_args = (double *)Calloc(7, double);
+  xi = Calloc(nngq, double);
+  H0 = Calloc(nnh0, double);
+  th1 = Calloc(nnh1, double);
+  h1 = Calloc(nnh1, double);
+  H1 = Calloc(nnh1, double);
+  Hc0 = Calloc(nnhc0, double);
+  Hc1 = Calloc(nnhc1, double);
+  lbuff = Calloc(1, int);
+  V_END = Calloc(nnstat, double);
+  Qstop = Calloc(nnstat, double);
+  atten = Calloc(nnstat, double);
+  Qmom_args = Calloc(7, double);
 
   *lbuff = nnh0;
 

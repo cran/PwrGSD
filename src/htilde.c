@@ -1,4 +1,6 @@
 #include<R.h>
+#include "PwrGSD_mem.h"
+
 //
 //MACROS 
 #define MIN(x,y) (x < y ? x : y)
@@ -41,11 +43,11 @@ void htilde(double *x,int *nx,double *gqx,double *gqw,int *ngq,
   nnlA = *nlA;
   nnlB = *nlB;
 
-  H = (double *)Calloc(nnh, double);
-  HA = (double *)Calloc(nnhA, double);
-  HB = (double *)Calloc(nnhB, double);
-  LA = (double *)Calloc(nnlA, double);
-  LB = (double *)Calloc(nnlB, double);
+  H =  Calloc(nnh, double);
+  HA = Calloc(nnhA, double);
+  HB = Calloc(nnhB, double);
+  LA = Calloc(nnlA, double);
+  LB = Calloc(nnlB, double);
 
   COMPH(xh,h,H,nnh,l);
   COMPH(xhA,hA,HA,nnhA,l);

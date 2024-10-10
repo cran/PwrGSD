@@ -1,6 +1,7 @@
 #include<R.h>
 #include<Rmath.h>
 #include<R_ext/Utils.h>
+#include "PwrGSD_mem.h"
 
 void cpy(double *x, double *y, int n);
 void zero(double *x, int n);
@@ -14,12 +15,12 @@ void gsd_dens(double *frac, double *xeff, double *gqxw, int *pngq, int *pnlooks,
   ngq = *pngq;
   nlooks = *pnlooks;
 
-  x_c_km1     = (double *)Calloc(ngq, double);
-  x_c_km1_sv  = (double *)Calloc(ngq, double);
-  dF_c_km1    = (double *)Calloc(ngq, double);
-  dF_c_km1_sv = (double *)Calloc(ngq, double);
-  x_c_k       = (double *)Calloc(ngq, double);
-  dF_c_k      = (double *)Calloc(ngq, double);
+  x_c_km1     = Calloc(ngq, double);
+  x_c_km1_sv  = Calloc(ngq, double);
+  dF_c_km1    = Calloc(ngq, double);
+  dF_c_km1_sv = Calloc(ngq, double);
+  x_c_k       = Calloc(ngq, double);
+  dF_c_k      = Calloc(ngq, double);
 
   x = *xeff;
   Phi_x = pnorm5(x, 0.0, 1.0, 1, 0);

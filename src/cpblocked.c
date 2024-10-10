@@ -1,5 +1,7 @@
 #include<R.h>
 #include<Rmath.h>
+#include "PwrGSD_mem.h"
+
 #define MIN(x,y) (x < y ? x : y)
 
 #include "PwrGSD.h"
@@ -24,9 +26,9 @@ void cpblocked(itea *Yord, int *pn, double *time, int *nrisk, int *nevent, int *
   f = &compitea;
   qsort(Yord, n, sizeof(itea), f);
 
-  dr = (int *)Calloc(nb, int);
-  nr = (int *)Calloc(nb, int);
-  dnev = (int *)Calloc(nb*nevty, int);
+  dr =   Calloc(nb, int);
+  nr =   Calloc(nb, int);
+  dnev = Calloc(nb*nevty, int);
 
   i=n-1;
   l=0;

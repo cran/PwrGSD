@@ -18,6 +18,7 @@
  */
 #include<R.h>
 #include<Rmath.h>
+#include "PwrGSD_mem.h"
 
 #define normut 8.20953615160139
 #define MAX(x,y) (x > y ? x : y)
@@ -134,30 +135,30 @@ void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *
   xntrial = *accru * *accrat;
   xntrialhlf = pow(xntrial,0.5);
 
-  pef        = (int *)Calloc(1,int);
-  pnthslook  = (int *)Calloc(2,int);
-  dlact      = (int *)Calloc(2,int);
+  pef        = Calloc(1,int);
+  pnthslook  = Calloc(2,int);
+  dlact      = Calloc(2,int);
 
-  px         = (double *)Calloc(2*ngqnodes,double);
-  py         = (double *)Calloc(2*ngqnodes,double);
-  ptmp       = (double *)Calloc(2*ngqnodes,double);
-  pintgrndx  = (double *)Calloc(2*ngqnodes,double);
-  Psiminfa_o = (double *)Calloc(ngqnodes,double);
-  Psiminfa_n = (double *)Calloc(ngqnodes,double);
-  ptlook     = (double *)Calloc(1,double);
-  pInfTold   = (double *)Calloc(2,double);
-  pInfTnew   = (double *)Calloc(1,double);
-  pInfTold_ii= (double *)Calloc(2,double);
-  pInfTnew_ii= (double *)Calloc(1,double);
-  palpha     = (double *)Calloc(2,double);
-  palpha10   = (double *)Calloc(1,double);
-  palpha11   = (double *)Calloc(1,double);
-  pbold      = (double *)Calloc(2,double);
-  pbnew      = (double *)Calloc(2,double);
-  psimin     = (double *)Calloc(1,double);
-  mu_o       = (double *)Calloc(1,double);
-  mu_n       = (double *)Calloc(1,double);
-  mufuforSC  = (double *)Calloc(2,double);
+  px         = Calloc(2*ngqnodes,double);
+  py         = Calloc(2*ngqnodes,double);
+  ptmp       = Calloc(2*ngqnodes,double);
+  pintgrndx  = Calloc(2*ngqnodes,double);
+  Psiminfa_o = Calloc(ngqnodes,double);
+  Psiminfa_n = Calloc(ngqnodes,double);
+  ptlook     = Calloc(1,double);
+  pInfTold   = Calloc(2,double);
+  pInfTnew   = Calloc(1,double);
+  pInfTold_ii= Calloc(2,double);
+  pInfTnew_ii= Calloc(1,double);
+  palpha     = Calloc(2,double);
+  palpha10   = Calloc(1,double);
+  palpha11   = Calloc(1,double);
+  pbold      = Calloc(2,double);
+  pbnew      = Calloc(2,double);
+  psimin     = Calloc(1,double);
+  mu_o       = Calloc(1,double);
+  mu_n       = Calloc(1,double);
+  mufuforSC  = Calloc(2,double);
 
   drift(ints,accru,accrat,pttlook,ppar,pgqxw,tcut0,h0,tcut1,h1,tcutc0,hc0,tcutc1,hc1,
 	tcutd0A,hd0A,tcutd0B,hd0B,tcutd1A,hd1A,tcutd1B,hd1B,tcutx0A,hx0A,tcutx0B,hx0B,
@@ -211,11 +212,11 @@ void AsyPwrGSD(int *ints,double *dbls,double *pttlook,double *palphatot,double *
   }
 
   njmp = *pnjmp;
-  tjmp = (double *)Calloc(njmp,double);
+  tjmp = Calloc(njmp,double);
    
-  rr = (double *)Calloc(njmp,double);
-  CS_q_dEta = (double *)Calloc(nstat*njmp,double);
-  q = (double *)Calloc(nstat*njmp,double);
+  rr = Calloc(njmp,double);
+  CS_q_dEta = Calloc(nstat*njmp,double);
+  q = Calloc(nstat*njmp,double);
 
   if((*sided==-1) || (*sided==-2))    
     for(l=0;l<nlook*nstat;l++) {
